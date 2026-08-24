@@ -1,6 +1,6 @@
 # Aufgabe 0 – Den Sollprozess fachlich modellieren
 
-> **Voraussetzung:** Kapitel 1 – du kennst BPMN als Notation (Events, Tasks, Gateways, Subprozesse, Boundary Events, Kompensation).
+> **Voraussetzung:** Kapitel 1 – du kennst BPMN als Notation (Events, Tasks, Gateways, Subprozesse, Boundary Events).
 > **Arbeitsverzeichnis:** ein beliebiger Ordner deiner Wahl (noch kein Code, noch kein Modul).
 > **Neu in dieser Aufgabe:** BPMN-Modeler, der vollständige Sollprozess als gemeinsame Landkarte.
 
@@ -31,8 +31,8 @@ Nach dieser Aufgabe kannst du
 
 - einen BPMN-Modeler installieren und darin ein durchgängiges Modell anlegen,
 - die Notation aus Kapitel 1 auf einen realen Geschäftsprozess anwenden – Start- und End Events,
-  User Task und Service Task, Exclusive und Parallel Gateway, eingebetteter Subprozess,
-  Boundary Events und Kompensation,
+  User Task und Service Task, Exclusive und Parallel Gateway, eingebetteter Subprozess
+  und Boundary Events,
 - Warte- und Verzweigungspunkte im Ablauf begründen (wo wartet der Prozess auf einen Menschen,
   wo auf eine Frist, wo entscheidet eine Bedingung),
 - Elemente so benennen, dass ein Fachbereich den Ablauf ohne Rückfragen vorlesen kann.
@@ -69,8 +69,7 @@ Bewerbung mit einer Absage.
 
 Verbinde Start → *Claim membership* → *Has empty spots*. Vom Gateway führt ein Pfad **No** zu
 *Send rejection mail* → *Membership rejected*. Der Pfad **Yes** bleibt zunächst offen – ihn füllst
-du im nächsten Schritt. Der Platz wird also **vor** der Prüfung reserviert; darum kümmert sich
-Schritt 6.
+du im nächsten Schritt. Der Platz wird also **vor** der Prüfung reserviert.
 
 ### 3. Die Bestätigung als Subprozess modellieren
 
@@ -122,19 +121,7 @@ mit einem **Parallel Gateway** (Fork und Join).
 Führe den Ausgang des Subprozesses in den Fork, beide Service Tasks parallel, dann in den Join
 und zu *Membership activated*.
 
-### 6. Kompensation ergänzen
-
-Ein reservierter Platz darf nicht verfallen, wenn die Bewerbung am Ende doch scheitert. Wird die
-Mitgliedschaft abgelehnt (*Membership declined*), muss die Reservierung aus Schritt 2 **rückgängig**
-gemacht werden. Genau dafür gibt es Kompensation.
-
-- Häng an *Claim membership* ein **Compensation Boundary Event** mit dem Namen *Membership declined*.
-- Lege einen Kompensations-Handler *Revoke claim* (Service Task) an und verbinde ihn per
-  **Association** mit dem Boundary Event. Er steht **außerhalb** des normalen Sequenzflusses.
-- Mach das End Event *Membership declined* zu einem **Compensating End Event** – es stößt die
-  Kompensation an.
-
-### 7. Modell sichern
+### 6. Modell sichern
 
 Speichere die Datei als `membership.bpmn` in einem Ordner deiner Wahl. Sie ist dein Referenzbild
 für alle Folgeaufgaben.
@@ -155,9 +142,9 @@ für alle Folgeaufgaben.
 ## Erwartetes Ergebnis
 
 Dein Modell bildet den vollständigen Ablauf ab: Registrierung, Platzreservierung, Kapazitäts-
-Gateway, Bestätigungs-Subprozess mit Erinnerung, Frist und Ablehnung, parallele Aktivierung und
-die Kompensation der Reservierung. Der Modeler meldet keine Fehler, und jemand aus dem Fachbereich
-könnte den Ablauf vorlesen, ohne nachzufragen, was ein einzelnes Element bedeutet.
+Gateway, Bestätigungs-Subprozess mit Erinnerung, Frist und Ablehnung sowie die parallele
+Aktivierung. Der Modeler meldet keine Fehler, und jemand aus dem Fachbereich könnte den Ablauf
+vorlesen, ohne nachzufragen, was ein einzelnes Element bedeutet.
 
 ## Selbstcheck
 
@@ -169,8 +156,6 @@ könnte den Ablauf vorlesen, ohne nachzufragen, was ein einzelnes Element bedeut
       3½-Tage-Timer (unterbrechend) und ein Message Event (unterbrechend)
 - [ ] Die Aktivierung läuft über ein Parallel Gateway (Willkommens-Mail und Community-Info
       gleichzeitig)
-- [ ] *Revoke claim* ist ein Kompensations-Handler, per Association an das Boundary Event von
-      *Claim membership* gehängt, und *Membership declined* ist ein Compensating End Event
 - [ ] Alle Elemente sind über Sequenzflüsse verbunden – kein loses Element
 - [ ] Die Datei liegt als `membership.bpmn` gespeichert vor
 
@@ -178,9 +163,8 @@ könnte den Ablauf vorlesen, ohne nachzufragen, was ein einzelnes Element bedeut
 
 Lass dich von der Größe nicht abschrecken: Jeder fortgeschrittene Baustein bekommt später seine
 **eigene Aufgabe**, in der du ihn technisch umsetzt – der Bestätigungsschritt in Aufgabe 3, das
-Kapazitäts-Gateway in Aufgabe 4, Subprozess und Boundary Events in Aufgabe 6, die Kompensation in
-Aufgabe 7. Hier zeichnest du zuerst die ganze Landkarte, damit du bei jedem Teilschritt weißt,
-wohin er gehört.
+Kapazitäts-Gateway in Aufgabe 4, Subprozess und Boundary Events in Aufgabe 6. Hier zeichnest du
+zuerst die ganze Landkarte, damit du bei jedem Teilschritt weißt, wohin er gehört.
 
 Warum ein User Task und ein Service Task? Der **User Task** wartet auf einen Menschen – jemand
 bestätigt die Mitgliedschaft. Der **Service Task** wird von einem System erledigt – der

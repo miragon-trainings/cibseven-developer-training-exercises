@@ -70,10 +70,6 @@
     <bpmn:endEvent id="endEvent_mailSentAgain" name="Mail sent again">
       <bpmn:incoming>flow_reSendConfirmationMailToMailSentAgain</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:serviceTask id="serviceTask_revokeClaim" name="Revoke claim" isForCompensation="true" />
-    <bpmn:boundaryEvent id="event_compensateClaim" name="Membership declined" attachedToRef="serviceTask_claimMembership">
-      <bpmn:compensateEventDefinition id="CompensateEventDefinition_claim" />
-    </bpmn:boundaryEvent>
     <bpmn:exclusiveGateway id="gateway_declinedJoin">
       <bpmn:incoming>flow_abortAfter3HalfDaysToMembershipDeclined</bpmn:incoming>
       <bpmn:incoming>flow_confirmationRejectedToMembershipDeclined</bpmn:incoming>
@@ -81,7 +77,6 @@
     </bpmn:exclusiveGateway>
     <bpmn:endEvent id="endEvent_membershipDeclined" name="Membership declined">
       <bpmn:incoming>flow_declinedJoinToMembershipDeclined</bpmn:incoming>
-      <bpmn:compensateEventDefinition id="CompensateEventDefinition_declined" />
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="flow_abortAfter3HalfDaysToMembershipDeclined" sourceRef="event_abortAfter3HalfDays" targetRef="gateway_declinedJoin" />
     <bpmn:sequenceFlow id="flow_confirmationRejectedToMembershipDeclined" sourceRef="event_confirmationRejected" targetRef="gateway_declinedJoin" />
@@ -117,7 +112,6 @@
     <bpmn:sequenceFlow id="flow_sendRejectionMailToMembershipRejected" sourceRef="serviceTask_sendRejectionMail" targetRef="endEvent_membershipRejected" />
     <bpmn:sequenceFlow id="flow_resendEveryDayToReSendConfirmationMail" sourceRef="event_resendEveryDay" targetRef="serviceTask_reSendConfirmationMail" />
     <bpmn:sequenceFlow id="flow_reSendConfirmationMailToMailSentAgain" sourceRef="serviceTask_reSendConfirmationMail" targetRef="endEvent_mailSentAgain" />
-    <bpmn:association id="association_compensateClaim" associationDirection="One" sourceRef="event_compensateClaim" targetRef="serviceTask_revokeClaim" />
   </bpmn:process>
   <bpmn:message id="Message_3p5jpc1" name="Registration submitted" />
   <bpmn:message id="Message_ConfirmationRejected" name="Confirmation rejected" />
@@ -211,10 +205,6 @@
           <dc:Bounds x="33" y="-475" width="74" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_125tc29" bpmnElement="serviceTask_revokeClaim">
-        <dc:Bounds x="-810" y="-970" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="gateway_declinedJoin_di" bpmnElement="gateway_declinedJoin">
         <dc:Bounds x="2" y="-955" width="50" height="50" />
       </bpmndi:BPMNShape>
@@ -240,12 +230,6 @@
         <dc:Bounds x="-218" y="-838" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="-181" y="-864" width="42" height="27" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_boundaryCompensateClaim_di" bpmnElement="event_compensateClaim">
-        <dc:Bounds x="-908" y="-778" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="-881" y="-804" width="61" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="BPMNEdge_01oybl0" bpmnElement="flow_abortAfter3HalfDaysToMembershipDeclined">
@@ -325,11 +309,6 @@
       <bpmndi:BPMNEdge id="flow_reSendConfirmationMailToMailSentAgain_di" bpmnElement="flow_reSendConfirmationMailToMailSentAgain">
         <di:waypoint x="0" y="-500" />
         <di:waypoint x="52" y="-500" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="BPMNEdge_associationCompensateClaim" bpmnElement="association_compensateClaim">
-        <di:waypoint x="-890" y="-778" />
-        <di:waypoint x="-890" y="-930" />
-        <di:waypoint x="-810" y="-930" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

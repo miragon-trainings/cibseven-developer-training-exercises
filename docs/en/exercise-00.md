@@ -1,6 +1,6 @@
 # Exercise 0 – Model the target process at the business level
 
-> **Prerequisite:** Chapter 1 – you know BPMN as a notation (events, tasks, gateways, subprocesses, boundary events, compensation).
+> **Prerequisite:** Chapter 1 – you know BPMN as a notation (events, tasks, gateways, subprocesses, boundary events).
 > **Working directory:** any folder you like (no code yet, no module yet).
 > **New in this exercise:** BPMN modeler, the complete target process as a shared map.
 
@@ -31,8 +31,8 @@ After this exercise you can
 
 - install a BPMN modeler and create an end-to-end model in it,
 - apply the notation from Chapter 1 to a real business process – Start and End Events,
-  User Task and Service Task, Exclusive and Parallel Gateway, an embedded subprocess,
-  boundary events and compensation,
+  User Task and Service Task, Exclusive and Parallel Gateway, an embedded subprocess
+  and boundary events,
 - justify the waiting and branching points in the flow (where does the process wait for a
   human, where for a deadline, where does a condition decide),
 - name elements so the business side can read the flow out loud without follow-up questions.
@@ -69,7 +69,7 @@ rejection.
 
 Connect Start → *Claim membership* → *Has empty spots*. From the gateway a **No** path leads
 to *Send rejection mail* → *Membership rejected*. The **Yes** path stays open for now – you
-fill it in the next step. The seat is reserved **before** the check; step 6 deals with that.
+fill it in the next step. The seat is reserved **before** the check.
 
 ### 3. Model the confirmation as a subprocess
 
@@ -121,19 +121,7 @@ the welcome mail goes out, and the community is notified. Model this with a **Pa
 Route the exit of the subprocess into the fork, both service tasks in parallel, then into the
 join and to *Membership activated*.
 
-### 6. Add compensation
-
-A reserved seat must not go to waste if the application fails in the end. When the membership
-is declined (*Membership declined*), the reservation from step 2 has to be **undone**. That is
-exactly what compensation is for.
-
-- Attach a **Compensation Boundary Event** named *Membership declined* to *Claim membership*.
-- Create a compensation handler *Revoke claim* (Service Task) and connect it to the boundary
-  event via an **association**. It sits **outside** the normal sequence flow.
-- Turn the End Event *Membership declined* into a **Compensating End Event** – it triggers the
-  compensation.
-
-### 7. Save the model
+### 6. Save the model
 
 Save the file as `membership.bpmn` in a folder of your choice. It is your reference picture for
 all the exercises that follow.
@@ -153,9 +141,9 @@ all the exercises that follow.
 ## Expected result
 
 Your model captures the complete flow: registration, seat reservation, the capacity gateway,
-the confirmation subprocess with reminder, deadline and rejection, the parallel activation and
-the compensation of the reservation. The modeler reports no errors, and someone from the
-business side could read the flow out loud without asking what a single element means.
+the confirmation subprocess with reminder, deadline and rejection, and the parallel activation.
+The modeler reports no errors, and someone from the business side could read the flow out loud
+without asking what a single element means.
 
 ## Self-check
 
@@ -167,8 +155,6 @@ business side could read the flow out loud without asking what a single element 
       timer (interrupting) and a message event (interrupting)
 - [ ] The activation runs through a Parallel Gateway (welcome mail and community notification
       at the same time)
-- [ ] *Revoke claim* is a compensation handler, attached via an association to the boundary
-      event of *Claim membership*, and *Membership declined* is a Compensating End Event
 - [ ] All elements are connected via sequence flows – no dangling element
 - [ ] The file is saved as `membership.bpmn`
 
@@ -176,8 +162,8 @@ business side could read the flow out loud without asking what a single element 
 
 Don't let the size scare you: every advanced building block gets its **own exercise** later, in
 which you implement it technically – the confirmation step in Exercise 3, the capacity gateway
-in Exercise 4, subprocess and boundary events in Exercise 6, compensation in Exercise 7. Here you
-first draw the whole map, so that at every partial step you know where it belongs.
+in Exercise 4, subprocess and boundary events in Exercise 6. Here you first draw the whole map,
+so that at every partial step you know where it belongs.
 
 Why a User Task and a Service Task? The **User Task** waits for a human – someone confirms the
 membership. The **Service Task** is handled by a system – the mail dispatch, the seat

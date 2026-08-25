@@ -23,7 +23,7 @@ After this exercise you can
 
 - give a business BPMN a technical foundation (element ID, process key, `isExecutable`, `historyTimeToLive`),
 - convert a Manual Task into a **User Task**,
-- explain what a **wait state** is and find it again in the data (`act_ru_task`),
+- explain what a **wait state** is and find it again in the runtime tables (`act_ru_execution`, `act_ru_task`),
 - create a **Generated Form** in the modeler yourself and link it to the User Task,
 - complete the User Task via the Tasklist.
 
@@ -82,6 +82,24 @@ cd services/process-application && ../../mvnw spring-boot:run
 Start an instance via the Tasklist (`Start process` → `Join Inner Circle`) and fill in the start
 form. This time it does **not** run through: it stops at the User Task `Confirm membership`.
 
+### 5. Look at the runtime data
+
+While CIB Seven is running and the instance is parked at the User Task, connect to the database
+(same connection as in Exercise 1: host `localhost`, port `5432`, database `cibseven-training`,
+user / password `admin`) and run these two queries against the runtime tables:
+
+```sql
+SELECT id_, proc_def_id_ FROM exercise.act_ru_execution;
+SELECT id_, name_ FROM exercise.act_ru_task;
+```
+
+What do they show? `act_ru_execution` has one row for your **still-running** instance – its
+`proc_def_id_` is the deployed `subscribeNewsletter` definition. `act_ru_task` has one row for the
+open task, with `name_` = `Confirm membership`. That is the wait state made visible: in Exercise 1
+both tables ended up empty because the instance ran straight through; now it stops, so its state
+stays parked in `act_ru_*` until someone completes the task. Complete it via the Tasklist and
+re-run both queries – the rows are gone.
+
 ## Constraints
 
 - **Element ID convention** – mandatory from now on: `startEvent_`, `endEvent_`, `userTask_`,
@@ -107,6 +125,7 @@ is one row, and in the Cockpit under **Tasklist** `Confirm membership` appears. 
 - [ ] `userTask_confirmMembership` is a User Task (no longer a Manual Task)
 - [ ] It carries a self-created Generated Form with `email` and `confirmed`
 - [ ] A started instance waits at the User Task (`act_ru_task` contains one row)
+- [ ] The two runtime queries return one row each while the instance waits, and none after completion
 - [ ] After completing it via the Tasklist, the instance ends at `Member joined`
 - [ ] The process key is `subscribeNewsletter`, `Executable` is enabled, `historyTimeToLive` = 180
 

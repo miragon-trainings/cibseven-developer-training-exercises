@@ -22,7 +22,7 @@ Nach dieser Aufgabe kannst du
 
 - ein fachliches BPMN technisch grundieren (Element-ID, Prozess-Key, `isExecutable`, `historyTimeToLive`),
 - einen Manual Task in einen **User Task** umwandeln,
-- erklären, was ein **Wait State** ist und ihn im Datenbestand (`act_ru_task`) wiederfinden,
+- erklären, was ein **Wait State** ist und ihn in den Runtime-Tabellen (`act_ru_execution`, `act_ru_task`) wiederfinden,
 - eine **Generated Form** im Modeler selbst erstellen und mit dem User Task verknüpfen,
 - den User Task über die Tasklist abschließen.
 
@@ -82,6 +82,24 @@ Starte über die Tasklist (`Start process` → `Join Inner Circle`) eine Instanz
 Start-Formular aus. Diesmal läuft sie **nicht** durch: Sie bleibt am User Task `Confirm membership`
 stehen.
 
+### 5. Die Laufzeitdaten ansehen
+
+Während CIB Seven läuft und die Instanz am User Task steht, binde die Datenbank an (dieselbe
+Verbindung wie in Aufgabe 1: Host `localhost`, Port `5432`, Datenbank `cibseven-training`, Benutzer
+/ Passwort `admin`) und führe diese zwei Abfragen gegen die Runtime-Tabellen aus:
+
+```sql
+SELECT id_, proc_def_id_ FROM exercise.act_ru_execution;
+SELECT id_, name_ FROM exercise.act_ru_task;
+```
+
+Was zeigen sie? `act_ru_execution` enthält eine Zeile für deine **noch laufende** Instanz – ihr
+`proc_def_id_` verweist auf die deployte Definition `subscribeNewsletter`. `act_ru_task` enthält
+eine Zeile für den offenen Task, mit `name_` = `Confirm membership`. Das ist der Wait State,
+sichtbar gemacht: In Aufgabe 1 waren beide Tabellen am Ende leer, weil die Instanz durchlief; jetzt
+hält sie an, und ihr Zustand bleibt in `act_ru_*` geparkt, bis jemand den Task abschließt. Schließe
+ihn über die Tasklist ab und führe beide Abfragen erneut aus – die Zeilen sind weg.
+
 ## Randbedingungen
 
 - **Element-ID-Konvention** – ab jetzt verbindlich: `startEvent_`, `endEvent_`, `userTask_`,
@@ -106,6 +124,7 @@ manuellen) „Send welcome mail" bis `Member joined` durch.
 - [ ] `userTask_confirmMembership` ist ein User Task (kein Manual Task mehr)
 - [ ] Er trägt eine selbst erstellte Generated Form mit `email` und `confirmed`
 - [ ] Eine gestartete Instanz wartet am User Task (`act_ru_task` enthält eine Zeile)
+- [ ] Die beiden Runtime-Abfragen liefern während des Wartens je eine Zeile, nach dem Abschließen keine mehr
 - [ ] Nach dem Abschließen über die Tasklist endet die Instanz an `Member joined`
 - [ ] Der Prozess-Key ist `subscribeNewsletter`, `Executable` ist aktiv, `historyTimeToLive` = 180
 

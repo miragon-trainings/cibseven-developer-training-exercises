@@ -24,8 +24,8 @@ Der ausgelagerte Sub-Prozess für die Ablehnung (Call Activity + DMN):
 ## Voraussetzungen
 
 ```bash
-# PostgreSQL und MailHog starten (im Stack-Verzeichnis)
-cd ../../stack && docker-compose up -d
+# PostgreSQL und MailHog starten (im Stack-Verzeichnis; Docker oder Podman)
+cd ../../stack && docker compose up -d      # Podman: podman compose up -d
 
 # Anwendung starten (aus diesem process-application-Verzeichnis)
 ../../mvnw spring-boot:run

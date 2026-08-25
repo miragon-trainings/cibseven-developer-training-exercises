@@ -238,8 +238,8 @@ For the full run you need three terminals: one for the stack, one each for the t
 applications. Work through the steps in order:
 
 ```bash
-# 1. Start the stack and the engine host (:8080)
-cd stack && docker-compose up -d
+# 1. Start the stack and the engine host (:8080) — Docker or Podman
+cd stack && docker compose up -d      # Podman: podman compose up -d
 cd ../solutions/exercise-10/process-application && ../../../mvnw spring-boot:run
 
 # 2. Logistics service (:8090) in a second terminal – it deploys its model at start-up

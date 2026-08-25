@@ -247,7 +247,7 @@ fails, the assertion shows you at which activity the instance actually stood.
 - [ ] `ProcessEngineTestUtils` brings the instance up to the next wait state
 - [ ] The happy-path test checks the order **and** the paths not taken
 - [ ] The rejection test checks that the welcome mail was never called
-- [ ] Both tests pass green, without the Docker stack running
+- [ ] Both tests pass green, without the container stack (Docker/Podman) running
 
 ## Reference solution
 

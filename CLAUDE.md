@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Run
 
 ```bash
-# Start PostgreSQL (required before running the app)
-cd stack && docker-compose up -d
+# Start PostgreSQL (required before running the app) — Docker or Podman
+cd stack && docker compose up -d      # Podman: podman compose up -d
 
 # Build
 ./mvnw clean install

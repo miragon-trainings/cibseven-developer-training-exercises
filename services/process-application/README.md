@@ -24,8 +24,8 @@ The extracted sub-process for the rejection (Call Activity + DMN):
 ## Prerequisites
 
 ```bash
-# Start PostgreSQL and MailHog (in the stack directory)
-cd ../../stack && docker-compose up -d
+# Start PostgreSQL and MailHog (in the stack directory; Docker or Podman)
+cd ../../stack && docker compose up -d      # Podman: podman compose up -d
 
 # Start the application (from this process-application directory)
 ../../mvnw spring-boot:run

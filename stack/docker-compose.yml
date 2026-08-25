@@ -1,4 +1,5 @@
 # Use this only in dev environments. It's not intended for production usage.
+# Works with both Docker (`docker compose up -d`) and Podman (`podman compose up -d`).
 services:
 
   postgres:

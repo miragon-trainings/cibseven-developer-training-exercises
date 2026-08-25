@@ -46,11 +46,13 @@ in this exercise – you'll bring it to life.
 
 ### 1. Start the database
 
-The engine stores its entire state in a relational database. So bring up the Docker stack first;
-it comes with PostgreSQL and MailHog:
+The engine stores its entire state in a relational database. So bring up the container stack first;
+it comes with PostgreSQL and MailHog. Use Docker or Podman — the compose file works with both:
 
 ```bash
-cd stack && docker-compose up -d
+cd stack && docker compose up -d
+# or with Podman:
+cd stack && podman compose up -d
 ```
 
 ### 2. Create the database schema
@@ -59,6 +61,8 @@ All modules share the schema `exercise`. Create it once:
 
 ```bash
 docker exec -i postgres psql -U admin -d cibseven-training < stack/init-schemas.sql
+# or with Podman:
+podman exec -i postgres psql -U admin -d cibseven-training < stack/init-schemas.sql
 ```
 
 ### 3. Enable the dependencies

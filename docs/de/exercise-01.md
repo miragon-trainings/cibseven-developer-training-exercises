@@ -48,10 +48,13 @@ Aufgabe nichts – du bringst ihn zum Laufen.
 ### 1. Datenbank starten
 
 Die Engine speichert ihren gesamten Zustand in einer relationalen Datenbank. Fahre zuerst den
-Docker-Stack hoch; er bringt PostgreSQL und MailHog mit:
+Container-Stack hoch; er bringt PostgreSQL und MailHog mit. Nutze Docker oder Podman – die
+Compose-Datei funktioniert mit beiden:
 
 ```bash
-cd stack && docker-compose up -d
+cd stack && docker compose up -d
+# oder mit Podman:
+cd stack && podman compose up -d
 ```
 
 ### 2. Datenbankschema anlegen
@@ -60,6 +63,8 @@ Alle Module teilen sich das Schema `exercise`. Lege es einmalig an:
 
 ```bash
 docker exec -i postgres psql -U admin -d cibseven-training < stack/init-schemas.sql
+# oder mit Podman:
+podman exec -i postgres psql -U admin -d cibseven-training < stack/init-schemas.sql
 ```
 
 ### 3. Dependencies aktivieren

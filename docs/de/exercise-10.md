@@ -238,8 +238,8 @@ Für den vollständigen Durchlauf brauchst du drei Terminals: eines für den Sta
 für die beiden Anwendungen. Arbeite die Schritte der Reihe nach ab:
 
 ```bash
-# 1. Stack und Engine-Host (:8080) starten
-cd stack && docker-compose up -d
+# 1. Stack und Engine-Host (:8080) starten — Docker oder Podman
+cd stack && docker compose up -d      # Podman: podman compose up -d
 cd ../solutions/exercise-10/process-application && ../../../mvnw spring-boot:run
 
 # 2. Logistik-Service (:8090) in einem zweiten Terminal – er deployt sein Modell beim Start

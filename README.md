@@ -57,8 +57,8 @@ Detailed exercise descriptions can be found in [`docs/`](docs/).
 ## Quick Start
 
 ```bash
-# Start PostgreSQL
-cd stack && docker-compose up -d
+# Start PostgreSQL + MailHog (Docker or Podman)
+cd stack && docker compose up -d      # Podman: podman compose up -d
 
 # Build everything
 ./mvnw clean install
@@ -116,7 +116,7 @@ cibseven-developer-training-exercises/
 │   └── extra-task-1/
 ├── models/                           # Reference BPMN/DMN models
 ├── stack/
-│   ├── docker-compose.yml            # PostgreSQL + MailHog
+│   ├── docker-compose.yml            # PostgreSQL + MailHog (Docker or Podman)
 │   └── init-schemas.sql
 └── pom.xml
 ```

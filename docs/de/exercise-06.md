@@ -250,7 +250,7 @@ fehl, zeigt dir die Assertion, an welcher Aktivität die Instanz tatsächlich st
 - [ ] `ProcessEngineTestUtils` bringt die Instanz bis zum nächsten Wait State
 - [ ] Der Happy-Path-Test prüft die Reihenfolge **und** die nicht genommenen Pfade
 - [ ] Der Ablehnungstest prüft, dass die Willkommens-Mail nie aufgerufen wurde
-- [ ] Beide Tests laufen grün, ohne dass der Docker-Stack läuft
+- [ ] Beide Tests laufen grün, ohne dass der Container-Stack (Docker/Podman) läuft
 
 ## Referenzlösung
 

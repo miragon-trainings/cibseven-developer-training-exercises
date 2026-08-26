@@ -286,7 +286,7 @@ beim Start) würde die Aktivierung mit zurückrollen. Deshalb stehen **zwei** Gr
 Signal-Start-Event `startEvent_memberActivated` im Logistik-Prozess. Erst damit gilt „die
 Aktivierung wartet nicht auf die Logistik" auch **vor** dem External Task.
 
-**Transaktionsgrenze am External Task (Anknüpfung an Aufgabe 5):** Der External Task ist die
+**Transaktionsgrenze am External Task (Anknüpfung an Aufgabe 6):** Der External Task ist die
 Commit-Grenze zwischen Engine und Worker. Die Engine committet, sobald sie den Task anlegt,
 und wartet als Wait State. Der Worker holt ihn per `fetchAndLock`, arbeitet in **seiner
 eigenen** Transaktion und meldet erst `complete` oder `handleFailure` zurück. Ein

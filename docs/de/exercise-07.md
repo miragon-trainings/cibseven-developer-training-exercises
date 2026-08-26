@@ -104,7 +104,7 @@ Membership erst als aktiviert, wenn Mail **und** Benachrichtigung durch sind.
 
 ### 5. Transaktionsgrenzen ergänzen
 
-Nach demselben Prinzip wie in [Aufgabe 5](exercise-05.md):
+Nach demselben Prinzip wie in [Aufgabe 6](exercise-06.md):
 
 | Marker | Element | Warum |
 |---|---|---|

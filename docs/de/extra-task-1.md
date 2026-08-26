@@ -209,7 +209,7 @@ public EngineCommandExecutor engineCommandExecutor() {
 
 `Runnable::run` führt den Engine-Command synchron im aufrufenden Thread aus – Engine-Fortschritt
 und Fachdaten committen oder rollen gemeinsam. Ein eigener Thread-Pool würde diese Grenze
-zerschneiden. Das ist die direkte Fortsetzung des Themas aus [Aufgabe 5](exercise-05.md).
+zerschneiden. Das ist die direkte Fortsetzung des Themas aus [Aufgabe 6](exercise-06.md).
 
 Ergänze in der `application.yaml` den Worker- und Adapter-Block:
 
@@ -249,7 +249,7 @@ das, was bei einem Wechsel angefasst werden müsste.
 
 - **Die `asyncBefore`-Marker entfallen.** Ein External Task ist von Natur aus ein Wait
   State: Die Engine committet, sobald sie den Task anlegt, und wartet, bis ein Worker ihn
-  fetcht und completet. Die Transaktionsgrenze, die du in Aufgabe 5 und 7 von Hand gesetzt
+  fetcht und completet. Die Transaktionsgrenze, die du in Aufgabe 6 und 7 von Hand gesetzt
   hast, bringt der External Task eingebaut mit. Darin liegt ein Teil des Gewinns.
 - Die Topic-Konstanten (`ServiceTasks.SEND_CONFIRMATION_MAIL`) stammen aus der generierten
   Process-API, die du seit [Aufgabe 6](exercise-06.md) kennst. Das Plugin ist bereits

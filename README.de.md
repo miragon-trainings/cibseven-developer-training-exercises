@@ -41,8 +41,8 @@ Detaillierte Aufgabenbeschreibungen befinden sich in [`docs/`](docs/).
 | [2](docs/de/exercise-02.md) | Der erste Wartepunkt | Aus dem Manual Task „Confirm" einen User Task machen und ihm eine selbst erstellte Generated Form geben |
 | [3](docs/de/exercise-03.md) | Einen Schritt automatisieren | Aus dem Manual Task „Send welcome mail" einen Service Task mit JavaDelegate machen (Start über Cockpit) |
 | [4](docs/de/exercise-04.md) | Die Anwendung übernimmt | Message Start Event, REST-Endpunkte für Register + Confirm, Nachrichten-Korrelation, Persistenz |
-| [5](docs/de/exercise-05.md) | Kapazitätsprüfung mit Gateway | Exclusive Gateway, Transaktionsgrenzen, Business Key, Task-Formular |
-| [6](docs/de/exercise-06.md) | Prozess-Tests | Prozess-Unit-Test mit In-Memory-Engine, gemockten Use Cases, ohne PostgreSQL |
+| [5](docs/de/exercise-05.md) | Kapazitätsprüfung mit Gateway | Exclusive Gateway, Business Key, Task-Formular |
+| [6](docs/de/exercise-06.md) | Prozess-Tests | Transaktionsgrenzen, Prozess-Unit-Test mit In-Memory-Engine, gemockten Use Cases, ohne PostgreSQL |
 | [6 · Add-on](docs/de/exercise-06-addon.md) | bpmn-to-code | Element-IDs als generierte Konstanten statt handgetippter Strings |
 | [7](docs/de/exercise-07.md) | Subprozess, Boundary Events & Parallelität | Subprozess, Timer- und Message-Boundary-Events, Parallel Gateway, Teams-Anbindung |
 | [8](docs/de/exercise-08.md) | Kompensation (SAGA) | Compensation Boundary Event, Compensating End Event, Kompensations-Handler |

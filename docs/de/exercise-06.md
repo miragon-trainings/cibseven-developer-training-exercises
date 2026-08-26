@@ -2,7 +2,7 @@
 
 > **Voraussetzung:** Aufgabe 5 ist abgeschlossen – Gateway, Kapazitätsprüfung und beide Prozessausgänge laufen.
 > **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** In-Memory-Engine mit h2, abgeschalteter Job Executor, `@MockitoBean`, Assertions mit `BpmnAwareTests`.
+> **Neu in dieser Aufgabe:** Transaktionsgrenzen (`asyncBefore`/`asyncAfter`), In-Memory-Engine mit h2, abgeschalteter Job Executor, `@MockitoBean`, Assertions mit `BpmnAwareTests`.
 
 ## Darum geht es
 
@@ -29,6 +29,8 @@ Build statt einmalig in einer Demo.
 
 Nach dieser Aufgabe kannst du
 
+- **Transaktionsgrenzen** bewusst setzen und begründen, warum ein nicht wiederholbarer
+  Schritt vor einem externen Effekt committen muss,
 - einen Prozess als Unit-Test absichern, ohne PostgreSQL und ohne laufende Infrastruktur,
 - die Engine im Test auf h2 und mit abgeschaltetem Job Executor betreiben,
 - die Use Cases hinter den Delegates mit `@MockitoBean` gezielt mocken,
@@ -40,14 +42,64 @@ Nach dieser Aufgabe kannst du
 
 ![BPMN-Modell der Aufgabe](../assets/exercise-06.svg)
 
-Es kommt **kein neues Modell** dazu. Du testest den Prozess aus Aufgabe 5: Message Start →
-Claim → Gateway → Bestätigung → Willkommens-Mail beziehungsweise Ablehnung.
+Es kommen **keine neuen Modell-Elemente** dazu. Du ergänzt am bestehenden Prozess aus
+Aufgabe 5 die Transaktionsgrenzen (Schritt 1) und sicherst ihn dann mit Tests ab:
+Message Start → Claim → Gateway → Bestätigung → Willkommens-Mail beziehungsweise Ablehnung.
 
-Referenzmodell (unverändert gegenüber Aufgabe 5): `../../models/exercise-06/membership.bpmn`
+Referenzmodell (Aufgabe-5-Prozess mit ergänzten Transaktionsgrenzen):
+`../../models/exercise-06/membership.bpmn`
 
 ## Aufgabe
 
-### 1. Test-Dependency ergänzen
+### 1. Transaktionsgrenzen setzen
+
+> Theorie dazu: Trainingskapitel **„Async & Transaction Boundaries"** (Topic 4, *Execution
+> Resilience*) – Save Points, Default- und manuelle Grenzen, Rollback in Aktion. Hier ist
+> die erste Stelle, an der du es anwendest.
+
+Bevor du den Prozess mit Tests absicherst, machst du ihn robust. Bis hierher lief er komplett
+**synchron**. Ab diesem Modell setzt du Transaktionsgrenzen – in zwei Stufen.
+
+**a) Grenzen an den Wait States.** Die Engine committet automatisch an jedem Wait State –
+an einem User Task muss sie den Zustand ohnehin speichern. Überall sonst setzt du die Grenze
+selbst, mit einer **asynchronen Continuation**: Die Marker `asyncBefore` und `asyncAfter`
+sagen der Engine, dass sie an dieser Stelle committen, einen Job anlegen und die Arbeit
+danach in einer **neuen** Transaktion fortsetzen soll.
+
+Ergänze die beiden Continuations, die hier fehlen:
+
+- `asyncBefore` am Message Start Event `startEvent_submitRegistration` – saubere Grenze
+  nach der Korrelation; der `correlateMessage`-Aufruf legt nur die Instanz an und kehrt zurück.
+- `asyncAfter` am User Task `userTask_confirmMembership` – die Completion committet sofort.
+  Sonst laufen Completion **und** der nachgelagerte Service Task in **einer** Transaktion:
+  Wirft er, rollt die Completion mit zurück und der Task erscheint wieder in der Tasklist.
+
+**b) Grenzen an den Service Tasks.** Mit `claimMembership` steht erstmals ein **nicht
+wiederholbarer** Schritt – die Platzreservierung – direkt vor einem Mailversand. Zwischen
+Message Start und User Task liegt **kein** Wait State; ohne weitere Marker laufen
+`claimMembership` und `sendConfirmationMail` deshalb in **einer** Engine-Transaktion.
+
+Wirft der Mailversand eine Exception, rollt die Engine die *gesamte* Transaktion zurück und
+führt den Job erneut aus. Ergebnis: `claimMembership` läuft ein zweites Mal – ein doppelt
+reservierter Platz, obwohl nur der Mailversand fehlgeschlagen ist.
+
+**Regel:** Trenne die *nicht wiederholbare* Arbeit vom *externen, nicht zurückrollbaren*
+Effekt durch eine eigene Transaktionsgrenze. Setze `asyncBefore` an jeden Service Task mit
+externem Effekt:
+
+| Marker | Element | Warum |
+|---|---|---|
+| `asyncBefore` | `serviceTask_sendConfirmationMail` | committet die Reservierung zuerst; ein Mail-Fehler wiederholt nur den Versand |
+| `asyncBefore` | `serviceTask_sendRejectionMail` | liegt sonst in derselben Transaktion wie `claimMembership` |
+| `asyncBefore` | `serviceTask_sendWelcomeMail` | Konsistenz; ab Aufgabe 7 zusätzlich auf einem Parallelzweig relevant |
+
+`claimMembership` bekommt bewusst **keinen** Marker – es soll früh committen, gemeinsam mit
+dem Token, das im Modell weiterrückt (das *Token* ist die gedachte Spielfigur, die den
+aktuellen Stand einer Instanz im Prozessmodell markiert). Der Marker gehört auf den *nachgelagerten* Aufruf, der die
+Reservierung sonst mit zurückrollt. Im Modeler: Element auswählen → Properties Panel →
+*Asynchronous Before*.
+
+### 2. Test-Dependency ergänzen
 
 Die Assertions kommen aus dem CIB-Seven-Port von `camunda-bpm-assert`. Die Version ist
 zentral in der Root-`pom.xml` gemanagt:
@@ -62,7 +114,7 @@ zentral in der Root-`pom.xml` gemanagt:
 
 `spring-boot-starter-test` (JUnit 5, Mockito, AssertJ) und `h2` sind bereits vorhanden.
 
-### 2. Testprofil anlegen
+### 3. Testprofil anlegen
 
 **Neue Datei:** `src/test/resources/application-test.yaml`
 
@@ -104,18 +156,18 @@ cibseven:
 ```
 
 > **Begriff: Job Executor.** Der Hintergrund-Thread der Engine. Er holt sich die Jobs, die
-> bei einer asynchronen Continuation (`asyncBefore` / `asyncAfter` aus
-> [Aufgabe 5](exercise-05.md)) entstehen, und arbeitet sie ab – im Betrieb genau richtig,
+> bei einer asynchronen Continuation (`asyncBefore` / `asyncAfter`, die du in Schritt 1
+> gesetzt hast) entstehen, und arbeitet sie ab – im Betrieb genau richtig,
 > im Test eine Quelle für Zufall: Der Test weiß nie, wie weit die Instanz gerade ist.
 > Deshalb schalten wir ihn ab und führen die Jobs selbst aus.
 
-### 3. Der Test-Helfer – bereits vorgegeben
+### 4. Der Test-Helfer – bereits vorgegeben
 
 Diese Verdrahtung schreibst du weder selbst, noch kopierst du sie: Sie liegt schon im Test-Modul
 unter `src/test/java/io/miragon/training/process/util/ProcessEngineTestUtils.java`. Sie ist für
 jeden Prozess-Test gleich; du rufst nur ihre Methoden auf. Was sie dir gibt:
 
-- **`continueToNextWaitState(processEngine)`** – weil der Job Executor aus ist (Schritt 2), holt
+- **`continueToNextWaitState(processEngine)`** – weil der Job Executor aus ist (Schritt 3), holt
   niemand die Async-Continuation-Jobs ab (`asyncBefore`/`asyncAfter`). Diese Methode führt sie aus
   dem Testthread aus, bis die Instanz ihren nächsten Wait State (User Task oder Ende) erreicht. Du
   rufst sie direkt nach dem Start des Prozesses und erneut nach dem Abschließen einer Task auf.
@@ -131,7 +183,7 @@ jeden Prozess-Test gleich; du rufst nur ihre Methoden auf. Was sie dir gibt:
 > ergänzt dafür nichts. Öffne die Datei einmal, um die zwei, drei Zeilen pro Methode zu sehen, und
 > nutze sie dann einfach.
 
-### 4. Happy-Path-Test selbst schreiben
+### 5. Happy-Path-Test selbst schreiben
 
 **Neue Datei:** `src/test/java/io/miragon/training/process/MembershipProcessTest.java`
 
@@ -210,7 +262,7 @@ Alles Weitere hast du beisammen:
   Willkommens-Mail → Bestätigungs-Ende; am Gateway zweigt der Ablehnungspfad zur Ablehnungs-Mail
   → Ablehnungs-Ende ab.
 
-### 5. Ablehnungspfad selbst testen
+### 6. Ablehnungspfad selbst testen
 
 Jetzt der zweite Test, `noCapacity_membershipIsRejected` – gleicher Ansatz, du schreibst ihn:
 
@@ -246,11 +298,20 @@ fehl, zeigt dir die Assertion, an welcher Aktivität die Instanz tatsächlich st
 
 ## Selbstcheck
 
+- [ ] `asyncBefore` steht am Message Start Event und an den drei Mail-Tasks,
+      `asyncAfter` am User Task, `claimMembership` hat **keinen** Marker
 - [ ] `application-test.yaml` existiert, der Job Executor ist im Testprofil abgeschaltet
 - [ ] `ProcessEngineTestUtils` bringt die Instanz bis zum nächsten Wait State
 - [ ] Der Happy-Path-Test prüft die Reihenfolge **und** die nicht genommenen Pfade
 - [ ] Der Ablehnungstest prüft, dass die Willkommens-Mail nie aufgerufen wurde
 - [ ] Beide Tests laufen grün, ohne dass der Container-Stack (Docker/Podman) läuft
+
+## Hinweise
+
+**Idempotenz-Merksatz:** Ein Retry darf einen Service Task erneut ausführen. Sobald eine
+Aktion nur *einmal* passieren darf (Reservierung, Zahlung), muss sie entweder vor der Grenze
+committen oder idempotent sein. Bei externen Schnittstellen begegnet dir dasselbe Muster in
+[Aufgabe 10](exercise-10.md) und in [Extra-Aufgabe 1](extra-task-1.md) wieder.
 
 ## Referenzlösung
 

@@ -38,7 +38,7 @@ beobachtbare Verhalten, Letzteres ist die abhakbare Abnahme.
 ```markdown
 > **Voraussetzung:** Aufgabe 3 ist abgeschlossen.
 > **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** Exclusive Gateway, Business Key, Transaktionsgrenzen
+> **Neu in dieser Aufgabe:** Exclusive Gateway, Business Key, generiertes Task-Formular
 ```
 
 ---
@@ -216,8 +216,8 @@ fachliche Vorgriff in Aufgabe 0 gilt nicht als doppelte Einführung.
 | 2 | Prozess-Key, Element-ID, `isExecutable`, `historyTimeToLive`, **User Task**, **Wait State**, **Generated Form selbst erstellen** (am User Task) |
 | 3 | Manual Task → **Service Task**, **JavaDelegate**, **Delegate Expression**, hexagonale Architektur (Delegate → Use Case → Service), Prozessvariable im Delegate lesen |
 | 4 | Message Start Event, Nachricht, **Korrelation** (`createMessageCorrelation` / `correlateStartMessage`), **`RuntimeService`** (Prozessstart aus Java), **REST-Endpunkt**, **Persistenz** (Repository), Task-Completion per REST (Confirm-Endpunkt), `membershipId` als Prozessreferenz |
-| 5 | Exclusive Gateway (Default-Flow, Flow-Bedingung), **Transaktionsgrenze**, **asynchrone Continuation** (`asyncBefore` / `asyncAfter`), Commit und Rollback, **Token**, Business Key, generiertes Task-Formular (Freigabe), Idempotenz |
-| 6 | Prozess-Test, In-Memory-Engine (h2), **Job Executor**, Mock (`@MockitoBean`), Assertion (`BpmnAwareTests`) |
+| 5 | Exclusive Gateway (Default-Flow, Flow-Bedingung), Business Key, generiertes Task-Formular (Freigabe) |
+| 6 | **Transaktionsgrenze**, **asynchrone Continuation** (`asyncBefore` / `asyncAfter`), Commit und Rollback, **Token**, Idempotenz, Prozess-Test, In-Memory-Engine (h2), **Job Executor**, Mock (`@MockitoBean`), Assertion (`BpmnAwareTests`) |
 | 6 · Add-on | generierte Process-API, `bpmn-to-code` |
 | 7 | eingebetteter Subprozess (technisch), Boundary Event (unterbrechend / nicht unterbrechend), Timer als Duration und als Cycle, Message Boundary Event, Parallel Gateway (Fork / Join) |
 | 8 | Kompensation (technisch), Compensation Boundary Event, Kompensations-Handler (`isForCompensation`), Association, Compensating End Event, SAGA-Muster |

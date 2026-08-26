@@ -104,7 +104,7 @@ membership only counts as activated once mail **and** notification are done.
 
 ### 5. Add transaction boundaries
 
-Following the same principle as in [Exercise 5](exercise-05.md):
+Following the same principle as in [Exercise 6](exercise-06.md):
 
 | Marker | Element | Why |
 |---|---|---|

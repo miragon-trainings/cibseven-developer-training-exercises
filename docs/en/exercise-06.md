@@ -2,7 +2,7 @@
 
 > **Prerequisite:** Exercise 5 is complete – the gateway, the capacity check, and both process outcomes are working.
 > **Working directory:** `services/process-application`
-> **New in this exercise:** in-memory engine with h2, the job executor turned off, `@MockitoBean`, assertions with `BpmnAwareTests`.
+> **New in this exercise:** transaction boundaries (`asyncBefore`/`asyncAfter`), in-memory engine with h2, the job executor turned off, `@MockitoBean`, assertions with `BpmnAwareTests`.
 
 ## What this is about
 
@@ -29,6 +29,8 @@ build instead of just once in a demo.
 
 After this exercise you can
 
+- deliberately set **transaction boundaries** and explain why a non-repeatable
+  step must commit before an external effect,
 - secure a process as a unit test, without PostgreSQL and without any running infrastructure,
 - run the engine in the test on h2 and with the job executor turned off,
 - mock the use cases behind the delegates in a targeted way using `@MockitoBean`,
@@ -40,14 +42,64 @@ After this exercise you can
 
 ![BPMN model of the exercise](../assets/exercise-06.svg)
 
-There is **no new model**. You test the process from Exercise 5: Message Start →
+There are **no new model elements**. You add the transaction boundaries (Step 1) to the
+existing process from Exercise 5 and then secure it with tests: Message Start →
 Claim → Gateway → confirmation → welcome mail, respectively rejection.
 
-Reference model (unchanged from Exercise 5): `../../models/exercise-06/membership.bpmn`
+Reference model (the Exercise 5 process with the transaction boundaries added):
+`../../models/exercise-06/membership.bpmn`
 
 ## The task
 
-### 1. Add the test dependency
+### 1. Set transaction boundaries
+
+> Theory for this: training chapter **"Async & Transaction Boundaries"** (Topic 4, *Execution
+> Resilience*) – save points, default and manual boundaries, rollback in action. This is
+> the first place where you apply it.
+
+Before you secure the process with tests, you make it resilient. Until now it ran completely
+**synchronously**. Starting with this model you set transaction boundaries – in two steps.
+
+**a) Boundaries at the wait states.** The engine commits automatically at every wait state –
+at a User Task it has to persist the state anyway. Everywhere else you set the boundary
+yourself, with an **asynchronous continuation**: the markers `asyncBefore` and `asyncAfter`
+tell the engine to commit at this point, create a job, and continue the work afterwards in a
+**new** transaction.
+
+Add the two continuations that are missing here:
+
+- `asyncBefore` on the Message Start Event `startEvent_submitRegistration` – a clean boundary
+  after correlation; the `correlateMessage` call only creates the instance and returns.
+- `asyncAfter` on the User Task `userTask_confirmMembership` – the completion commits immediately.
+  Otherwise the completion **and** the downstream Service Task run in **one** transaction:
+  if it throws, the completion rolls back with it and the task reappears in the tasklist.
+
+**b) Boundaries at the Service Tasks.** With `claimMembership` there is, for the first time, a
+**non-repeatable** step – the spot reservation – directly before a mail send. Between the
+Message Start and the User Task there is **no** wait state; without further markers,
+`claimMembership` and `sendConfirmationMail` therefore run in **one** engine transaction.
+
+If the mail send throws an exception, the engine rolls back the *entire* transaction and
+re-executes the job. Result: `claimMembership` runs a second time – a double-reserved spot,
+even though only the mail send failed.
+
+**Rule:** Separate the *non-repeatable* work from the *external, non-rollbackable*
+effect with its own transaction boundary. Set `asyncBefore` on every Service Task with an
+external effect:
+
+| Marker | Element | Why |
+|---|---|---|
+| `asyncBefore` | `serviceTask_sendConfirmationMail` | commits the reservation first; a mail failure only retries the send |
+| `asyncBefore` | `serviceTask_sendRejectionMail` | otherwise sits in the same transaction as `claimMembership` |
+| `asyncBefore` | `serviceTask_sendWelcomeMail` | consistency; from Exercise 7 on it also matters on a parallel branch |
+
+`claimMembership` deliberately gets **no** marker – it should commit early, together with
+the token that advances in the model (the *token* is the imagined game piece that marks the
+current state of an instance in the process model). The marker belongs on the *downstream*
+call, which would otherwise roll back the reservation with it. In the modeler: select the
+element → Properties Panel → *Asynchronous Before*.
+
+### 2. Add the test dependency
 
 The assertions come from the CIB Seven port of `camunda-bpm-assert`. The version is
 managed centrally in the root `pom.xml`:
@@ -62,7 +114,7 @@ managed centrally in the root `pom.xml`:
 
 `spring-boot-starter-test` (JUnit 5, Mockito, AssertJ) and `h2` are already present.
 
-### 2. Create the test profile
+### 3. Create the test profile
 
 **New file:** `src/test/resources/application-test.yaml`
 
@@ -104,18 +156,18 @@ cibseven:
 ```
 
 > **Term: job executor.** The engine's background thread. It picks up the jobs that
-> arise from an asynchronous continuation (`asyncBefore` / `asyncAfter` from
-> [Exercise 5](exercise-05.md)) and works through them – exactly right in production,
+> arise from an asynchronous continuation (`asyncBefore` / `asyncAfter`, which you set in
+> Step 1) and works through them – exactly right in production,
 > but a source of randomness in a test: the test never knows how far the instance currently is.
 > That's why we turn it off and run the jobs ourselves.
 
-### 3. The test helper – already provided
+### 4. The test helper – already provided
 
 You neither write nor copy this plumbing: it already ships in the test module at
 `src/test/java/io/miragon/training/process/util/ProcessEngineTestUtils.java`. It is the same for
 every process test; you just call its methods. What it gives you:
 
-- **`continueToNextWaitState(processEngine)`** – because the job executor is off (Step 2),
+- **`continueToNextWaitState(processEngine)`** – because the job executor is off (Step 3),
   nobody picks up the async-continuation jobs (`asyncBefore`/`asyncAfter`). This method executes
   them from the test thread until the instance reaches its next wait state (user task or end).
   You call it right after starting the process and again after completing a task.
@@ -131,7 +183,7 @@ every process test; you just call its methods. What it gives you:
 > add anything for it. Open the file once to see how the two or three lines per method work; then
 > just use it.
 
-### 4. Write the happy-path test yourself
+### 5. Write the happy-path test yourself
 
 **New file:** `src/test/java/io/miragon/training/process/MembershipProcessTest.java`
 
@@ -207,7 +259,7 @@ Everything else you need:
   modeler. The confirm path is start → claim → gateway → confirmation mail → user task → welcome
   mail → confirmed end; at the gateway the reject path branches to the rejection mail → rejected end.
 
-### 5. Test the rejection path yourself
+### 6. Test the rejection path yourself
 
 Now the second test, `noCapacity_membershipIsRejected` – same approach, you write it:
 
@@ -243,11 +295,20 @@ fails, the assertion shows you at which activity the instance actually stood.
 
 ## Self-check
 
+- [ ] `asyncBefore` is on the Message Start Event and on the three mail tasks,
+      `asyncAfter` on the User Task, `claimMembership` has **no** marker
 - [ ] `application-test.yaml` exists, the job executor is turned off in the test profile
 - [ ] `ProcessEngineTestUtils` brings the instance up to the next wait state
 - [ ] The happy-path test checks the order **and** the paths not taken
 - [ ] The rejection test checks that the welcome mail was never called
 - [ ] Both tests pass green, without the container stack (Docker/Podman) running
+
+## Hints
+
+**Idempotency rule of thumb:** A retry may re-execute a Service Task. As soon as an action
+may happen only *once* (reservation, payment), it must either commit before the boundary or
+be idempotent. With external interfaces you'll meet the same pattern again in
+[Exercise 10](exercise-10.md) and in [Extra Exercise 1](extra-task-1.md).
 
 ## Reference solution
 

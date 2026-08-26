@@ -188,7 +188,6 @@ schließt den Wait State ab. Fachliche Interaktion läuft ab jetzt über eigene 
 
 ## Nächster Schritt
 
-In Aufgabe 5 bekommt der Inner Circle seine Exklusivität – mit Kapazitätsprüfung, Gateway und
-Transaktionsgrenzen.
+In Aufgabe 5 bekommt der Inner Circle seine Exklusivität – mit Kapazitätsprüfung und Gateway.
 
 ➡️ [Weiter zu Aufgabe 5](exercise-05.md)

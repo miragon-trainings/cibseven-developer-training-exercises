@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1d2hcmz" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.20.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
   <bpmn:process id="subscribeNewsletter" isExecutable="true" camunda:historyTimeToLive="180">
-    <bpmn:startEvent id="startEvent_submitRegistration" name="Submit registration form" camunda:asyncBefore="true">
+    <bpmn:startEvent id="startEvent_submitRegistration" name="Submit registration form">
       <bpmn:outgoing>flow_submitRegistrationToClaimMembership</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_submitRegistration" messageRef="Message_SubscriptionRequested" />
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="flow_submitRegistrationToClaimMembership" sourceRef="startEvent_submitRegistration" targetRef="serviceTask_claimMembership" />
     <bpmn:sequenceFlow id="flow_confirmMembershipToSendWelcomeMail" sourceRef="userTask_confirmMembership" targetRef="serviceTask_sendWelcomeMail" />
-    <bpmn:userTask id="userTask_confirmMembership" name="Confirm membership" camunda:asyncAfter="true">
+    <bpmn:userTask id="userTask_confirmMembership" name="Confirm membership">
       <bpmn:extensionElements>
         <camunda:formData>
           <camunda:formField id="name" label="Name" type="string" />
@@ -19,7 +19,7 @@
       <bpmn:incoming>flow_sendConfirmationMailToConfirmMembership</bpmn:incoming>
       <bpmn:outgoing>flow_confirmMembershipToSendWelcomeMail</bpmn:outgoing>
     </bpmn:userTask>
-    <bpmn:serviceTask id="serviceTask_sendWelcomeMail" name="Send Welcome Mail" camunda:asyncBefore="true" camunda:delegateExpression="#{sendWelcomeMailDelegate}">
+    <bpmn:serviceTask id="serviceTask_sendWelcomeMail" name="Send Welcome Mail" camunda:delegateExpression="#{sendWelcomeMailDelegate}">
       <bpmn:incoming>flow_confirmMembershipToSendWelcomeMail</bpmn:incoming>
       <bpmn:outgoing>flow_sendWelcomeMailToMembershipConfirmed</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -28,7 +28,7 @@
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="flow_sendWelcomeMailToMembershipConfirmed" sourceRef="serviceTask_sendWelcomeMail" targetRef="endEvent_membershipConfirmed" />
     <bpmn:sequenceFlow id="flow_sendConfirmationMailToConfirmMembership" sourceRef="serviceTask_sendConfirmationMail" targetRef="userTask_confirmMembership" />
-    <bpmn:serviceTask id="serviceTask_sendConfirmationMail" name="Send confirmation mail" camunda:asyncBefore="true" camunda:delegateExpression="#{sendConfirmationMailDelegate}">
+    <bpmn:serviceTask id="serviceTask_sendConfirmationMail" name="Send confirmation mail" camunda:delegateExpression="#{sendConfirmationMailDelegate}">
       <bpmn:incoming>flow_hasEmptySpotsToSendConfirmationMail</bpmn:incoming>
       <bpmn:outgoing>flow_sendConfirmationMailToConfirmMembership</bpmn:outgoing>
     </bpmn:serviceTask>
@@ -43,7 +43,7 @@
       <bpmn:outgoing>flow_hasEmptySpotsToSendRejectionMail</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:sequenceFlow id="flow_hasEmptySpotsToSendConfirmationMail" name="Yes" sourceRef="gateway_hasEmptySpots" targetRef="serviceTask_sendConfirmationMail" />
-    <bpmn:serviceTask id="serviceTask_sendRejectionMail" name="Send rejection mail" camunda:asyncBefore="true" camunda:delegateExpression="#{sendRejectionMailDelegate}">
+    <bpmn:serviceTask id="serviceTask_sendRejectionMail" name="Send rejection mail" camunda:delegateExpression="#{sendRejectionMailDelegate}">
       <bpmn:incoming>flow_hasEmptySpotsToSendRejectionMail</bpmn:incoming>
       <bpmn:outgoing>flow_sendRejectionMailToMembershipRejected</bpmn:outgoing>
     </bpmn:serviceTask>

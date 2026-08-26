@@ -207,7 +207,7 @@ public EngineCommandExecutor engineCommandExecutor() {
 
 `Runnable::run` executes the engine command synchronously on the calling thread – engine progress
 and business data commit or roll back together. A dedicated thread pool would cut through this boundary.
-This is the direct continuation of the topic from [Exercise 5](exercise-05.md).
+This is the direct continuation of the topic from [Exercise 6](exercise-06.md).
 
 Add the worker and adapter block to `application.yaml`:
 
@@ -247,7 +247,7 @@ what you would have to touch during a switch.
 
 - **The `asyncBefore` markers are gone.** An external task is a wait
   state by nature: the engine commits as soon as it creates the task, and waits until a worker
-  fetches and completes it. The transaction boundary you set by hand in Exercise 5 and 7
+  fetches and completes it. The transaction boundary you set by hand in Exercise 6 and 7
   comes built into the external task. That's part of the payoff.
 - The topic constants (`ServiceTasks.SEND_CONFIRMATION_MAIL`) come from the generated
   Process-API you've known since [Exercise 6](exercise-06.md). The plugin is already

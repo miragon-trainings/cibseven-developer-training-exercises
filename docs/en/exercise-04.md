@@ -189,7 +189,6 @@ the generic Tasklist.
 
 ## Next step
 
-In Exercise 5 the Inner Circle gets its exclusivity – with a capacity check, a gateway, and
-transaction boundaries.
+In Exercise 5 the Inner Circle gets its exclusivity – with a capacity check and a gateway.
 
 ➡️ [Next: Exercise 5](exercise-05.md)

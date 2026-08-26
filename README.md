@@ -40,8 +40,8 @@ Detailed exercise descriptions can be found in [`docs/`](docs/).
 | [2](docs/en/exercise-02.md) | The first wait state | Turn the "Confirm" Manual Task into a User Task and give it a self-made Generated Form |
 | [3](docs/en/exercise-03.md) | Automate a step | Turn the "Send welcome mail" Manual Task into a Service Task backed by a JavaDelegate (Cockpit-started) |
 | [4](docs/en/exercise-04.md) | The application takes over | Message start event, REST register + confirm endpoints, message correlation, persistence |
-| [5](docs/en/exercise-05.md) | Capacity check with a gateway | Exclusive gateway, transaction boundaries, business key, task form |
-| [6](docs/en/exercise-06.md) | Process tests | Process unit test with an in-memory engine, mocked use cases, without PostgreSQL |
+| [5](docs/en/exercise-05.md) | Capacity check with a gateway | Exclusive gateway, business key, task form |
+| [6](docs/en/exercise-06.md) | Process tests | Transaction boundaries, process unit test with an in-memory engine, mocked use cases, without PostgreSQL |
 | [6 · Add-on](docs/en/exercise-06-addon.md) | bpmn-to-code | Element IDs as generated constants instead of hand-typed strings |
 | [7](docs/en/exercise-07.md) | Subprocess, boundary events & parallelism | Subprocess, timer and message boundary events, parallel gateway, Teams integration |
 | [8](docs/en/exercise-08.md) | Compensation (SAGA) | Compensation boundary event, compensating end event, compensation handler |

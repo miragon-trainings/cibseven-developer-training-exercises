@@ -2,7 +2,7 @@
 
 > **Voraussetzung:** Aufgabe 4 ist abgeschlossen – Double-Opt-In läuft, der Prozess startet per Nachricht.
 > **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** Exclusive Gateway, alternativer Prozessausgang, Transaktionsgrenzen, Business Key, generiertes Task-Formular.
+> **Neu in dieser Aufgabe:** Exclusive Gateway, alternativer Prozessausgang, Business Key, generiertes Task-Formular.
 
 ## Darum geht es
 
@@ -29,8 +29,6 @@ Nach dieser Aufgabe kannst du
 - ein Exclusive Gateway modellieren, seine Bedingungen setzen und einen Default-Flow wählen,
 - einen alternativen Prozessausgang (Ablehnung) umsetzen,
 - eine Entscheidung aus Java-Code als Prozessvariable an das Gateway übergeben,
-- **Transaktionsgrenzen** bewusst setzen und begründen, warum ein nicht wiederholbarer
-  Schritt vor einem externen Effekt committen muss,
 - einer Prozessinstanz einen Business Key zuordnen,
 - einem User Task ein generiertes Task-Formular für einen Freigabeschritt geben.
 
@@ -88,55 +86,7 @@ Nach dem Muster aus Aufgabe 4:
 > Service kennt die Engine nicht und gibt nur ein `boolean` zurück. Genau diese Trennung
 > prüft der `ArchitectureTest`.
 
-### 4. Transaktionsgrenzen setzen
-
-> Theorie dazu: Trainingskapitel **„Async & Transaction Boundaries"** (Topic 4, *Execution
-> Resilience*) – Save Points, Default- und manuelle Grenzen, Rollback in Aktion. Hier ist
-> die erste Stelle, an der du es anwendest.
-
-Bis hierher lief der Prozess komplett **synchron**. Ab diesem Modell setzt du
-Transaktionsgrenzen – in zwei Stufen.
-
-**a) Grenzen an den Wait States.** Die Engine committet automatisch an jedem Wait State –
-an einem User Task muss sie den Zustand ohnehin speichern. Überall sonst setzt du die Grenze
-selbst, mit einer **asynchronen Continuation**: Die Marker `asyncBefore` und `asyncAfter`
-sagen der Engine, dass sie an dieser Stelle committen, einen Job anlegen und die Arbeit
-danach in einer **neuen** Transaktion fortsetzen soll.
-
-Ergänze die beiden Continuations, die hier fehlen:
-
-- `asyncBefore` am Message Start Event `startEvent_submitRegistration` – saubere Grenze
-  nach der Korrelation; der `correlateMessage`-Aufruf legt nur die Instanz an und kehrt zurück.
-- `asyncAfter` am User Task `userTask_confirmMembership` – die Completion committet sofort.
-  Sonst laufen Completion **und** der nachgelagerte Service Task in **einer** Transaktion:
-  Wirft er, rollt die Completion mit zurück und der Task erscheint wieder in der Tasklist.
-
-**b) Grenzen an den Service Tasks.** Mit `claimMembership` steht erstmals ein **nicht
-wiederholbarer** Schritt – die Platzreservierung – direkt vor einem Mailversand. Zwischen
-Message Start und User Task liegt **kein** Wait State; ohne weitere Marker laufen
-`claimMembership` und `sendConfirmationMail` deshalb in **einer** Engine-Transaktion.
-
-Wirft der Mailversand eine Exception, rollt die Engine die *gesamte* Transaktion zurück und
-führt den Job erneut aus. Ergebnis: `claimMembership` läuft ein zweites Mal – ein doppelt
-reservierter Platz, obwohl nur der Mailversand fehlgeschlagen ist.
-
-**Regel:** Trenne die *nicht wiederholbare* Arbeit vom *externen, nicht zurückrollbaren*
-Effekt durch eine eigene Transaktionsgrenze. Setze `asyncBefore` an jeden Service Task mit
-externem Effekt:
-
-| Marker | Element | Warum |
-|---|---|---|
-| `asyncBefore` | `serviceTask_sendConfirmationMail` | committet die Reservierung zuerst; ein Mail-Fehler wiederholt nur den Versand |
-| `asyncBefore` | `serviceTask_sendRejectionMail` | liegt sonst in derselben Transaktion wie `claimMembership` |
-| `asyncBefore` | `serviceTask_sendWelcomeMail` | Konsistenz; ab Aufgabe 7 zusätzlich auf einem Parallelzweig relevant |
-
-`claimMembership` bekommt bewusst **keinen** Marker – es soll früh committen, gemeinsam mit
-dem Token, das im Modell weiterrückt (das *Token* ist die gedachte Spielfigur, die den
-aktuellen Stand einer Instanz im Prozessmodell markiert). Der Marker gehört auf den *nachgelagerten* Aufruf, der die
-Reservierung sonst mit zurückrollt. Im Modeler: Element auswählen → Properties Panel →
-*Asynchronous Before*.
-
-### 5. Business Key setzen
+### 4. Business Key setzen
 
 Setze beim Start des Prozesses die `membershipId` als Business Key. Der Correlation Builder im
 `MembershipProcessAdapter` (den du in Aufgabe 4 auf `createMessageCorrelation(...)` umgestellt
@@ -153,7 +103,7 @@ runtimeService.createMessageCorrelation(/* Message-Name */)
 Der Business Key verknüpft die Prozessinstanz mit dem fachlichen Objekt: Im Cockpit lässt
 sich jede Instanz eindeutig einer Anmeldung zuordnen und gezielt suchen.
 
-### 6. Task-Formular für die Freigabe
+### 5. Task-Formular für die Freigabe
 
 Der User Task `userTask_confirmMembership` hat bisher kein Formular – wer ihn in der Tasklist
 öffnet, sieht keine einzige Prozessvariable und kann ihn nur blind abschließen. Gib ihm ein
@@ -183,7 +133,7 @@ anlegen. Im XML entsteht dabei ein `extensionElements`-Block mit `camunda:formDa
 im User Task:
 
 ```xml
-<bpmn:userTask id="userTask_confirmMembership" name="Confirm membership" camunda:asyncAfter="true">
+<bpmn:userTask id="userTask_confirmMembership" name="Confirm membership">
   <bpmn:extensionElements>
     <camunda:formData>
       <camunda:formField id="name" label="Name" type="string" />
@@ -242,17 +192,8 @@ Erwartetes Log: `Sending rejection mail to dave@miravelo.com`. Die Instanz endet
 
 - [ ] Das Gateway hat einen Default-Flow und genau eine Bedingung (`${!hasEmptySpots}`)
 - [ ] Der Ja-Pfad endet an `Membership confirmed`, der Nein-Pfad an `Membership rejected`
-- [ ] `asyncBefore` steht am Message Start Event und an den drei Mail-Tasks,
-      `asyncAfter` am User Task, `claimMembership` hat **keinen** Marker
 - [ ] Im Cockpit trägt die Instanz die `membershipId` als Business Key
 - [ ] Das Task-Formular zeigt die vorbefüllten Felder plus die Checkbox `confirmed`
-
-## Hinweise
-
-**Idempotenz-Merksatz:** Ein Retry darf einen Service Task erneut ausführen. Sobald eine
-Aktion nur *einmal* passieren darf (Reservierung, Zahlung), muss sie entweder vor der Grenze
-committen oder idempotent sein. Bei externen Schnittstellen begegnet dir dasselbe Muster in
-[Aufgabe 10](exercise-10.md) und in [Extra-Aufgabe 1](extra-task-1.md) wieder.
 
 ## Referenzlösung
 

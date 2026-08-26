@@ -286,7 +286,7 @@ at start) would roll the activation back with it. That's why there are **two** b
 Signal Start Event `startEvent_memberActivated` in the logistics process. Only then does
 "activation doesn't wait on logistics" hold **before** the External Task too.
 
-**Transaction boundary at the External Task (tying back to Exercise 5):** The External Task is
+**Transaction boundary at the External Task (tying back to Exercise 6):** The External Task is
 the commit boundary between engine and worker. The engine commits as soon as it creates the
 task and waits as a wait state. The worker picks it up via `fetchAndLock`, works in **its
 own** transaction, and only then reports back `complete` or `handleFailure`. A

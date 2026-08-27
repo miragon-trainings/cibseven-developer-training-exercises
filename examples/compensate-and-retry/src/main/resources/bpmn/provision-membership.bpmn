@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="Definitions_provisionMembership"
+                  targetNamespace="http://miravelo.io/bpmn"
+                  exporter="Camunda Modeler" exporterVersion="5.0.0">
+  <bpmn:process id="provisionMembership" name="Provision Inner Circle membership" isExecutable="true" camunda:historyTimeToLive="180">
+
+    <!-- ============================ Happy path (left to right) ============================ -->
+    <bpmn:startEvent id="startEvent_provisioningRequested" name="Provisioning requested">
+      <bpmn:outgoing>flow_start_create</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- Plain step 1: NEVER rolled back (no compensation boundary event attached). -->
+    <bpmn:serviceTask id="serviceTask_createMemberProfile" name="Create member profile"
+                      camunda:delegateExpression="#{createMemberProfileDelegate}">
+      <bpmn:incoming>flow_start_create</bpmn:incoming>
+      <bpmn:outgoing>flow_create_assign</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- Plain step 2: NEVER rolled back. Sets the "membershipNumber" variable. -->
+    <bpmn:serviceTask id="serviceTask_assignMembershipNumber" name="Assign membership number"
+                      camunda:delegateExpression="#{assignMembershipNumberDelegate}">
+      <bpmn:incoming>flow_create_assign</bpmn:incoming>
+      <bpmn:outgoing>flow_assign_reserve</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- Compensable task A. asyncBefore gives each pass a clean transaction boundary and makes the
+         loop step visibly in Cockpit. It is also the re-entry point of the retry loop. -->
+    <bpmn:serviceTask id="serviceTask_reserveWelcomeKit" name="Reserve welcome kit"
+                      camunda:asyncBefore="true" camunda:delegateExpression="#{reserveWelcomeKitDelegate}">
+      <bpmn:incoming>flow_assign_reserve</bpmn:incoming>
+      <bpmn:incoming>flow_compensate_reserve</bpmn:incoming>
+      <bpmn:outgoing>flow_reserve_charge</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="boundaryEvent_compensateReserve" name="Cancel reservation"
+                        attachedToRef="serviceTask_reserveWelcomeKit">
+      <bpmn:compensateEventDefinition id="CompensateEventDefinition_reserve" />
+    </bpmn:boundaryEvent>
+    <!-- Compensation handler A: reachable ONLY via the association, never through a sequence flow. -->
+    <bpmn:serviceTask id="serviceTask_cancelWelcomeKitReservation" name="Cancel welcome-kit reservation"
+                      isForCompensation="true" camunda:delegateExpression="#{cancelWelcomeKitReservationDelegate}" />
+
+    <!-- Compensable task B. -->
+    <bpmn:serviceTask id="serviceTask_chargeMembershipFee" name="Charge membership fee"
+                      camunda:asyncBefore="true" camunda:delegateExpression="#{chargeMembershipFeeDelegate}">
+      <bpmn:incoming>flow_reserve_charge</bpmn:incoming>
+      <bpmn:outgoing>flow_charge_verify</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="boundaryEvent_compensateCharge" name="Refund fee"
+                        attachedToRef="serviceTask_chargeMembershipFee">
+      <bpmn:compensateEventDefinition id="CompensateEventDefinition_charge" />
+    </bpmn:boundaryEvent>
+    <!-- Compensation handler B. -->
+    <bpmn:serviceTask id="serviceTask_refundMembershipFee" name="Refund membership fee"
+                      isForCompensation="true" camunda:delegateExpression="#{refundMembershipFeeDelegate}" />
+
+    <!-- Validation: increments "attempt" and sets "provisioningOk" (false on attempt 1, true from 2). -->
+    <bpmn:serviceTask id="serviceTask_verifyProvisioning" name="Verify provisioning"
+                      camunda:asyncBefore="true" camunda:delegateExpression="#{verifyProvisioningDelegate}">
+      <bpmn:incoming>flow_charge_verify</bpmn:incoming>
+      <bpmn:outgoing>flow_verify_gateway</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <!-- Gateway: the retry edge is the DEFAULT flow, so the instance can never deadlock here. -->
+    <bpmn:exclusiveGateway id="gateway_provisioningOk" name="Provisioning OK?" default="flow_gateway_compensate">
+      <bpmn:incoming>flow_verify_gateway</bpmn:incoming>
+      <bpmn:outgoing>flow_gateway_active</bpmn:outgoing>
+      <bpmn:outgoing>flow_gateway_compensate</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Intermediate THROW compensation event (no activityRef = whole process scope). Unlike an END
+         compensation event, it has an outgoing flow, so after the rollback the token continues. -->
+    <bpmn:intermediateThrowEvent id="intermediateThrowEvent_compensateProvisioning" name="Roll back welcome kit &amp; fee">
+      <bpmn:incoming>flow_gateway_compensate</bpmn:incoming>
+      <bpmn:outgoing>flow_compensate_reserve</bpmn:outgoing>
+      <bpmn:compensateEventDefinition id="CompensateEventDefinition_scope" />
+    </bpmn:intermediateThrowEvent>
+
+    <bpmn:endEvent id="endEvent_membershipActive" name="Membership active">
+      <bpmn:incoming>flow_gateway_active</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- ================================ Sequence flows ================================ -->
+    <bpmn:sequenceFlow id="flow_start_create" sourceRef="startEvent_provisioningRequested" targetRef="serviceTask_createMemberProfile" />
+    <bpmn:sequenceFlow id="flow_create_assign" sourceRef="serviceTask_createMemberProfile" targetRef="serviceTask_assignMembershipNumber" />
+    <bpmn:sequenceFlow id="flow_assign_reserve" sourceRef="serviceTask_assignMembershipNumber" targetRef="serviceTask_reserveWelcomeKit" />
+    <bpmn:sequenceFlow id="flow_reserve_charge" sourceRef="serviceTask_reserveWelcomeKit" targetRef="serviceTask_chargeMembershipFee" />
+    <bpmn:sequenceFlow id="flow_charge_verify" sourceRef="serviceTask_chargeMembershipFee" targetRef="serviceTask_verifyProvisioning" />
+    <bpmn:sequenceFlow id="flow_verify_gateway" sourceRef="serviceTask_verifyProvisioning" targetRef="gateway_provisioningOk" />
+    <bpmn:sequenceFlow id="flow_gateway_active" name="Yes" sourceRef="gateway_provisioningOk" targetRef="endEvent_membershipActive">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${provisioningOk}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_gateway_compensate" name="No" sourceRef="gateway_provisioningOk" targetRef="intermediateThrowEvent_compensateProvisioning" />
+    <!-- THE LOOP-BACK: rollback done, redo the two compensable tasks. -->
+    <bpmn:sequenceFlow id="flow_compensate_reserve" sourceRef="intermediateThrowEvent_compensateProvisioning" targetRef="serviceTask_reserveWelcomeKit" />
+
+    <!-- Artifacts (associations) must come after all flow elements per the BPMN 2.0 schema.
+         Each wires a compensation boundary event to its handler task. -->
+    <bpmn:association id="association_compensateReserve" associationDirection="One"
+                     sourceRef="boundaryEvent_compensateReserve" targetRef="serviceTask_cancelWelcomeKitReservation" />
+    <bpmn:association id="association_compensateCharge" associationDirection="One"
+                     sourceRef="boundaryEvent_compensateCharge" targetRef="serviceTask_refundMembershipFee" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_provisionMembership">
+    <bpmndi:BPMNPlane id="BPMNPlane_provisionMembership" bpmnElement="provisionMembership">
+      <bpmndi:BPMNShape id="startEvent_provisioningRequested_di" bpmnElement="startEvent_provisioningRequested">
+        <dc:Bounds x="152" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="140" y="205" width="61" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="serviceTask_createMemberProfile_di" bpmnElement="serviceTask_createMemberProfile">
+        <dc:Bounds x="240" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="serviceTask_assignMembershipNumber_di" bpmnElement="serviceTask_assignMembershipNumber">
+        <dc:Bounds x="400" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="serviceTask_reserveWelcomeKit_di" bpmnElement="serviceTask_reserveWelcomeKit">
+        <dc:Bounds x="560" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="serviceTask_chargeMembershipFee_di" bpmnElement="serviceTask_chargeMembershipFee">
+        <dc:Bounds x="720" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="serviceTask_verifyProvisioning_di" bpmnElement="serviceTask_verifyProvisioning">
+        <dc:Bounds x="880" y="140" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="gateway_provisioningOk_di" bpmnElement="gateway_provisioningOk" isMarkerVisible="true">
+        <dc:Bounds x="1035" y="155" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1028" y="125" width="65" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="endEvent_membershipActive_di" bpmnElement="endEvent_membershipActive">
+        <dc:Bounds x="1142" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1128" y="205" width="66" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="boundaryEvent_compensateReserve_di" bpmnElement="boundaryEvent_compensateReserve">
+        <dc:Bounds x="592" y="202" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="576" y="245" width="68" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="boundaryEvent_compensateCharge_di" bpmnElement="boundaryEvent_compensateCharge">
+        <dc:Bounds x="752" y="202" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="744" y="245" width="53" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="serviceTask_cancelWelcomeKitReservation_di" bpmnElement="serviceTask_cancelWelcomeKitReservation">
+        <dc:Bounds x="560" y="300" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="serviceTask_refundMembershipFee_di" bpmnElement="serviceTask_refundMembershipFee">
+        <dc:Bounds x="720" y="300" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="intermediateThrowEvent_compensateProvisioning_di" bpmnElement="intermediateThrowEvent_compensateProvisioning">
+        <dc:Bounds x="1042" y="440" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1020" y="483" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="flow_start_create_di" bpmnElement="flow_start_create">
+        <di:waypoint x="188" y="180" />
+        <di:waypoint x="240" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_create_assign_di" bpmnElement="flow_create_assign">
+        <di:waypoint x="340" y="180" />
+        <di:waypoint x="400" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_assign_reserve_di" bpmnElement="flow_assign_reserve">
+        <di:waypoint x="500" y="180" />
+        <di:waypoint x="560" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_reserve_charge_di" bpmnElement="flow_reserve_charge">
+        <di:waypoint x="660" y="180" />
+        <di:waypoint x="720" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_charge_verify_di" bpmnElement="flow_charge_verify">
+        <di:waypoint x="820" y="180" />
+        <di:waypoint x="880" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_verify_gateway_di" bpmnElement="flow_verify_gateway">
+        <di:waypoint x="980" y="180" />
+        <di:waypoint x="1035" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_gateway_active_di" bpmnElement="flow_gateway_active">
+        <di:waypoint x="1085" y="180" />
+        <di:waypoint x="1142" y="180" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1104" y="162" width="19" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_gateway_compensate_di" bpmnElement="flow_gateway_compensate">
+        <di:waypoint x="1060" y="205" />
+        <di:waypoint x="1060" y="440" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1068" y="313" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_compensate_reserve_di" bpmnElement="flow_compensate_reserve">
+        <di:waypoint x="1042" y="458" />
+        <di:waypoint x="520" y="458" />
+        <di:waypoint x="520" y="180" />
+        <di:waypoint x="560" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="association_compensateReserve_di" bpmnElement="association_compensateReserve">
+        <di:waypoint x="610" y="238" />
+        <di:waypoint x="610" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="association_compensateCharge_di" bpmnElement="association_compensateCharge">
+        <di:waypoint x="770" y="238" />
+        <di:waypoint x="770" y="300" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

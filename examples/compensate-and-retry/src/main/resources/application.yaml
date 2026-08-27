@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+# H2 in-memory: no external database needed. Start the example with `../../mvnw spring-boot:run`
+# and everything (engine tables + this app) lives in memory for the lifetime of the process.
+spring:
+  datasource:
+    url: jdbc:h2:mem:compensate-and-retry;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+camunda:
+  bpm:
+    admin-user:
+      id: admin
+      password: admin
+    database:
+      type: h2
+      schema-update: true
+
+# The CIB Seven webapp bean validates this secret on startup, so we provide the same demo value
+# the training solutions use. Do NOT reuse this in a real deployment.
+cibseven:
+  webclient:
+    services:
+      basePath: services/v1
+    engineRest:
+      url: http://localhost:8080
+    authentication:
+      jwtSecret: M9nU3ORo3s+gK23D9mO5I2h+EIqnosCFDCJi+2bKoulKqZkeQT8pGYg5RhuORlf/fWhLu5meC/SPZCv9NNuj6SK/vE5Sid04UQGrnyh04EpBdiAosAO91xezjgmbSeALUtneibseGpS0tNE4RvLIl+gXiAKqNXyO

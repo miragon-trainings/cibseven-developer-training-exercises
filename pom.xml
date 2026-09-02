@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.0</version>
+        <version>4.1.1</version>
         <relativePath/>
     </parent>
 
@@ -35,7 +35,7 @@
         <cib7.version>2.2.0</cib7.version>
         <archunit.version>1.5.0</archunit.version>
         <bpmn-to-code.version>5.2.0</bpmn-to-code.version>
-        <openapi-generator.version>7.24.0</openapi-generator.version>
+        <openapi-generator.version>7.25.0</openapi-generator.version>
     </properties>
 
     <!--

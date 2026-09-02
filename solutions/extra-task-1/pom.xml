@@ -18,7 +18,7 @@
         <!-- bpm-crafters process-engine-api: engine-neutral abstraction layer -->
         <process-engine-api.version>1.7</process-engine-api.version>
         <process-engine-worker.version>0.8.5</process-engine-worker.version>
-        <process-engine-adapter-cib7.version>2026.07.1</process-engine-adapter-cib7.version>
+        <process-engine-adapter-cib7.version>2026.08.1</process-engine-adapter-cib7.version>
     </properties>
 
     <dependencyManagement>

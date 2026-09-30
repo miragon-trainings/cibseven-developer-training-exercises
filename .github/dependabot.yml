@@ -15,20 +15,6 @@ updates:
           - "minor"
           - "major"
 
-  # Docker Compose images
-  - package-ecosystem: "docker-compose"
-    directory: "/stack"
-    schedule:
-      interval: "weekly"
-    groups:
-      docker-compose:
-        patterns:
-          - "*"
-        update-types:
-          - "patch"
-          - "minor"
-          - "major"
-
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

@@ -41,7 +41,7 @@ Detailed exercise descriptions can be found in [`docs/`](docs/).
 | [3](docs/en/exercise-03.md) | Automate a step | Turn the "Send welcome mail" Manual Task into a Service Task backed by a JavaDelegate (Cockpit-started) |
 | [4](docs/en/exercise-04.md) | The application takes over | Message start event, REST register + confirm endpoints, message correlation, persistence |
 | [5](docs/en/exercise-05.md) | Capacity check with a gateway | Exclusive gateway, business key, task form |
-| [6](docs/en/exercise-06.md) | Process tests | Transaction boundaries, process unit test with an in-memory engine, mocked use cases, without PostgreSQL |
+| [6](docs/en/exercise-06.md) | Process tests | Transaction boundaries, process unit test with an in-memory engine, mocked use cases, without a running application |
 | [6 · Add-on](docs/en/exercise-06-addon.md) | bpmn-to-code | Element IDs as generated constants instead of hand-typed strings |
 | [7](docs/en/exercise-07.md) | Subprocess, boundary events & parallelism | Subprocess, timer and message boundary events, parallel gateway, Teams integration |
 | [8](docs/en/exercise-08.md) | Compensation (SAGA) | Compensation boundary event, compensating end event, compensation handler |
@@ -56,10 +56,12 @@ Detailed exercise descriptions can be found in [`docs/`](docs/).
 
 ## Quick Start
 
-```bash
-# Start PostgreSQL + MailHog (Docker or Podman)
-cd stack && docker compose up -d      # Podman: podman compose up -d
+No Docker needed: the engine uses an embedded H2 database that is stored as a file under
+`~/.cibseven-training` – there is no database to install or start. The data survives a restart;
+for a clean slate, stop the application and delete the folder `~/.cibseven-training`
+(on Windows `%USERPROFILE%\.cibseven-training`).
 
+```bash
 # Build everything
 ./mvnw clean install
 
@@ -68,6 +70,9 @@ cd services/process-application && ../../mvnw spring-boot:run
 
 # CIB Seven Cockpit
 open http://localhost:8080/webapp/#/seven/auth/start    # admin / admin
+
+# H2 console (engine tables) – replace the pre-filled JDBC URL jdbc:h2:~/test in the login form
+open http://localhost:8080/h2-console    # JDBC URL jdbc:h2:file:~/.cibseven-training/exercise, user sa, no password
 ```
 
 ### Loading an exercise solution
@@ -83,7 +88,8 @@ and continue working with it:
 
 The task replaces `src/main` completely (Java, `application.yaml`, BPMN/DMN); `src/test` stays
 untouched. All modules – the `process-application` module **and** all solutions – run on the same port
-(`8080`) and the same DB schema (`exercise`); so only **one** module runs at a time.
+(`8080`) and use the same embedded H2 database file; so only **one** module runs at a time (the running
+application locks the file, a second instance fails at startup).
 The CIB Seven dependencies activated in **Exercise 1** (`pom.xml`) remain in place – so only load
 a solution from `exercise-2` onward after Exercise 1 is complete.
 
@@ -115,9 +121,6 @@ cibseven-developer-training-exercises/
 │   ├── exercise-{01-10}/             # exercise-10/ is nested: process-application/ + logistics-service/
 │   └── extra-task-1/
 ├── models/                           # Reference BPMN/DMN models
-├── stack/
-│   ├── docker-compose.yml            # PostgreSQL + MailHog (Docker or Podman)
-│   └── init-schemas.sql
 └── pom.xml
 ```
 
@@ -128,7 +131,7 @@ cibseven-developer-training-exercises/
 | Language | Java 21 |
 | Framework | Spring Boot 4 |
 | Process Engine | CIB Seven 2.2.0 |
-| Database | PostgreSQL (JPA / Hibernate) |
+| Database | H2 (embedded, file-based; JPA / Hibernate) |
 | Build | Maven |
 | Architecture tests | ArchUnit |
 

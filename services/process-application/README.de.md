@@ -23,15 +23,20 @@ Der ausgelagerte Sub-Prozess für die Ablehnung (Call Activity + DMN):
 
 ## Voraussetzungen
 
-```bash
-# PostgreSQL und MailHog starten (im Stack-Verzeichnis; Docker oder Podman)
-cd ../../stack && docker compose up -d      # Podman: podman compose up -d
+Docker brauchst du nicht: Die Engine nutzt eine eingebettete H2-Datenbank, die als Datei unter
+`~/.cibseven-training` liegt – du musst keine Datenbank installieren oder starten. Der Datenbestand
+übersteht einen Neustart; für einen sauberen Neuanfang beende die Anwendung und lösche den Ordner
+`~/.cibseven-training` (unter Windows `%USERPROFILE%\.cibseven-training`).
 
+```bash
 # Anwendung starten (aus diesem process-application-Verzeichnis)
 ../../mvnw spring-boot:run
 
 # CIB Seven Cockpit
 http://localhost:8080/webapp/#/seven/auth/start  (admin / admin)
+
+# H2-Konsole (Engine-Tabellen) – im Login die vorbelegte JDBC-URL jdbc:h2:~/test ersetzen
+http://localhost:8080/h2-console  (JDBC-URL jdbc:h2:file:~/.cibseven-training/exercise, Benutzer sa, kein Passwort)
 ```
 
 > Im Auslieferungszustand startet dieses Modul im Zustand von **Aufgabe 1** – die
@@ -47,7 +52,7 @@ http://localhost:8080/webapp/#/seven/auth/start  (admin / admin)
 | [3](../../docs/de/exercise-03.md) | Einen Schritt automatisieren | Aus dem Manual Task „Send welcome mail" einen Service Task + JavaDelegate machen (Start über Cockpit) |
 | [4](../../docs/de/exercise-04.md) | Die Anwendung übernimmt | Message Start, REST-Endpunkte für Register + Confirm, Korrelation, Persistenz |
 | [5](../../docs/de/exercise-05.md) | Membership & Gateway | Exclusive Gateway, Kapazitätsprüfung |
-| [6](../../docs/de/exercise-06.md) | Prozess-Tests | Prozess-Unit-Test: In-Memory-Engine, gemockte Use Cases, ohne PostgreSQL |
+| [6](../../docs/de/exercise-06.md) | Prozess-Tests | Prozess-Unit-Test: In-Memory-Engine, gemockte Use Cases, ohne laufende Anwendung |
 | [6 · Add-on](../../docs/de/exercise-06-addon.md) | bpmn-to-code | Typsichere Process-API aus dem BPMN generieren – Strings raus, Konstanten rein |
 | [7](../../docs/de/exercise-07.md) | Boundary Events & Subprozesse | Parallel Gateway, Timer- und Message-Boundary-Events, Subprozesse |
 | [8](../../docs/de/exercise-08.md) | Kompensation (SAGA) | Automatisches Rollback via BPMN-Kompensation |
@@ -99,6 +104,7 @@ dieses Modul kopieren und mit ihr weiterarbeiten (gültige Werte: 1–10):
 ```
 
 Der Task ersetzt `src/main` komplett (Java, `application.yaml`, BPMN/DMN); `src/test` bleibt
-unberührt. Alle Module laufen auf demselben Port (`8080`) und DB-Schema (`exercise`), es läuft
-also immer nur ein Modul zur Zeit. Voraussetzung ist, dass du in **Aufgabe 1** die
+unberührt. Alle Module laufen auf demselben Port (`8080`) und nutzen dieselbe eingebettete
+H2-Datenbankdatei, es läuft also immer nur ein Modul zur Zeit (die laufende Anwendung sperrt die
+Datei, eine zweite Instanz bricht beim Start ab). Voraussetzung ist, dass du in **Aufgabe 1** die
 CIB-Seven-Abhängigkeiten aktiviert hast (die `pom.xml` wird nicht mitkopiert).

@@ -55,10 +55,9 @@ The handler therefore sits **outside** the sequence flow: no incoming flow, no o
 
 ### 2. Decouple the abort paths
 
-Route `event_abortAfter3HalfDays` and `event_confirmationRejected` through a converging
-exclusive gateway (`gateway_declinedJoin`) into `endEvent_membershipDeclined` — with no detour
-through a service task. The service task `serviceTask_revokeClaim` thereby drops out of both
-sequence flows.
+Connect `event_abortAfter3HalfDays` and `event_confirmationRejected` **directly** to
+`endEvent_membershipDeclined` — with no detour through a service task. The service task
+`serviceTask_revokeClaim` thereby drops out of both sequence flows.
 
 ### 3. Turn the end event into a trigger
 

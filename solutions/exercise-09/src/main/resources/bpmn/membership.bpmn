@@ -70,21 +70,16 @@
         <camunda:in source="membershipId" target="membershipId" />
         <camunda:in source="age" target="age" />
       </bpmn:extensionElements>
-      <bpmn:incoming>flow_rejectionJoinToHandleRejection</bpmn:incoming>
-      <bpmn:outgoing>flow_handleRejectionToMembershipDeclined</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:exclusiveGateway id="gateway_rejectionJoin">
       <bpmn:incoming>flow_abortAfter3HalfDaysToHandleRejection</bpmn:incoming>
       <bpmn:incoming>flow_confirmationRejectedToHandleRejection</bpmn:incoming>
-      <bpmn:outgoing>flow_rejectionJoinToHandleRejection</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
+      <bpmn:outgoing>flow_handleRejectionToMembershipDeclined</bpmn:outgoing>
+    </bpmn:callActivity>
     <bpmn:endEvent id="endEvent_membershipDeclined" name="Membership declined">
       <bpmn:incoming>flow_handleRejectionToMembershipDeclined</bpmn:incoming>
       <bpmn:compensateEventDefinition id="CompensateEventDefinition_declined" />
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="flow_abortAfter3HalfDaysToHandleRejection" sourceRef="event_abortAfter3HalfDays" targetRef="gateway_rejectionJoin" />
-    <bpmn:sequenceFlow id="flow_confirmationRejectedToHandleRejection" sourceRef="event_confirmationRejected" targetRef="gateway_rejectionJoin" />
-    <bpmn:sequenceFlow id="flow_rejectionJoinToHandleRejection" sourceRef="gateway_rejectionJoin" targetRef="callActivity_handleRejection" />
+    <bpmn:sequenceFlow id="flow_abortAfter3HalfDaysToHandleRejection" sourceRef="event_abortAfter3HalfDays" targetRef="callActivity_handleRejection" />
+    <bpmn:sequenceFlow id="flow_confirmationRejectedToHandleRejection" sourceRef="event_confirmationRejected" targetRef="callActivity_handleRejection" />
     <bpmn:sequenceFlow id="flow_handleRejectionToMembershipDeclined" sourceRef="callActivity_handleRejection" targetRef="endEvent_membershipDeclined" />
     <bpmn:boundaryEvent id="event_abortAfter3HalfDays" name="After 3&#10;1/2 days" camunda:asyncAfter="true" attachedToRef="subProcess_confirmMembership">
       <bpmn:outgoing>flow_abortAfter3HalfDaysToHandleRejection</bpmn:outgoing>
@@ -235,9 +230,6 @@
       <bpmndi:BPMNShape id="BPMNShape_callActivityHandleRejection_di" bpmnElement="callActivity_handleRejection">
         <dc:Bounds x="-100" y="-975" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="gateway_rejectionJoin_di" bpmnElement="gateway_rejectionJoin">
-        <dc:Bounds x="-210" y="-960" width="50" height="50" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_1rl3e7i" bpmnElement="endEvent_membershipDeclined">
         <dc:Bounds x="52" y="-953" width="36" height="36" />
         <bpmndi:BPMNLabel>
@@ -271,16 +263,12 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="BPMNEdge_01oybl0" bpmnElement="flow_abortAfter3HalfDaysToHandleRejection">
         <di:waypoint x="-200" y="-838" />
-        <di:waypoint x="-185" y="-838" />
-        <di:waypoint x="-185" y="-910" />
+        <di:waypoint x="-200" y="-935" />
+        <di:waypoint x="-100" y="-935" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="BPMNEdge_1mexfn5" bpmnElement="flow_confirmationRejectedToHandleRejection">
         <di:waypoint x="-270" y="-838" />
         <di:waypoint x="-270" y="-935" />
-        <di:waypoint x="-210" y="-935" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_rejectionJoinToHandleRejection_di" bpmnElement="flow_rejectionJoinToHandleRejection">
-        <di:waypoint x="-160" y="-935" />
         <di:waypoint x="-100" y="-935" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="BPMNEdge_Flow14y1unw" bpmnElement="flow_handleRejectionToMembershipDeclined">

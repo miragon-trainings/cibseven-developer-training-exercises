@@ -4,6 +4,9 @@
     "plugin:@miragon/rules/recommended-for-automation",
     "plugin:camunda-compat/camunda-platform-7-24"
   ],
+  "rules": {
+    "fake-join": "off"
+  },
   "moddleExtensions": {
     "camunda": "camunda-bpmn-moddle/resources/camunda.json"
   }

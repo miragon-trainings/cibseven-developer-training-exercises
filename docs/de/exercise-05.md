@@ -54,7 +54,7 @@ an (Element auswählen → Properties Panel), nicht im XML.
 | Element | Typ | ID | Name | Konfiguration |
 |---|---|---|---|---|
 | Platz reservieren | Service Task | `serviceTask_claimMembership` | Claim membership | Delegate Expression: `#{claimMembershipDelegate}` |
-| Kapazitätsentscheidung | Exclusive Gateway | `gateway_hasEmptySpots` | Has empty spots | Default-Flow: Ja-Pfad |
+| Kapazitätsentscheidung | Exclusive Gateway | `gateway_hasEmptySpots` | Free seat available? | Default-Flow: Ja-Pfad |
 | Ablehnungs-Mail | Service Task | `serviceTask_sendRejectionMail` | Send rejection mail | Delegate Expression: `#{sendRejectionMailDelegate}` |
 | Ablehnung | End Event | `endEvent_membershipRejected` | Membership rejected | – |
 

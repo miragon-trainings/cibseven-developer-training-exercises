@@ -59,10 +59,9 @@ ausgehender Flow.
 
 ### 2. Abbruchpfade entkoppeln
 
-Führe `event_abortAfter3HalfDays` und `event_confirmationRejected` über ein zusammenführendes
-Exclusive Gateway (`gateway_declinedJoin`) auf `endEvent_membershipDeclined` – ohne Umweg über
-einen Service Task. Der Service Task `serviceTask_revokeClaim` fällt damit aus beiden
-Sequenzflüssen heraus.
+Verbinde `event_abortAfter3HalfDays` und `event_confirmationRejected` **direkt** mit
+`endEvent_membershipDeclined` – ohne Umweg über einen Service Task. Der Service Task
+`serviceTask_revokeClaim` fällt damit aus beiden Sequenzflüssen heraus.
 
 ### 3. End Event zum Auslöser machen
 

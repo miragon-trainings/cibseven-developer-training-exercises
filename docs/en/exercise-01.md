@@ -1,20 +1,20 @@
 # Exercise 1 – Getting the engine running
 
-> **Prerequisite:** Exercise 0 is complete (the target process exists at the business level).
+> **Prerequisite:** Exercise 0 is complete (the core flow exists at the business level).
 > **Working directory:** `services/process-application`
 > **New in this exercise:** CIB Seven starter, engine configuration, auto-deployment, Cockpit, `act_*` tables, start form, Manual Task.
 
 ## What this is about
 
-In Exercise 0 you modeled the **complete target process** of the Inner Circle. Before anyone
-automates the whole flow, an external consultant roughed out a **deliberately tiny first
+In Exercise 0 you modeled the **core flow** of the Inner Circle at the business level. Before
+anyone automates the whole flow, an external consultant roughed out a **deliberately tiny first
 excerpt**: a start form for the registration data, followed by two **Manual Tasks** –
 "Confirm" and "Send welcome mail". Manual Tasks are placeholders: the engine simply runs
 through them. That way you get a process instance that runs from start to finish – without a
 single line of code.
 
-This mini-version is **not** the target process and **not** the target model. It exists only
-to get the engine running once and to get a feel for deployment, execution, and the data. From
+This mini-version is **not** the core flow from Exercise 0 and **not** the target model. It exists
+only to get the engine running once and to get a feel for deployment, execution, and the data. From
 Exercise 2 on you build the placeholders out into real steps, one at a time.
 
 What's still missing is the **runtime environment**: a Spring Boot module in which the CIB Seven

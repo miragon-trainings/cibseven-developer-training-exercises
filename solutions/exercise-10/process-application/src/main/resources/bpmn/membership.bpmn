@@ -42,7 +42,7 @@
       <bpmn:incoming>flow_submitRegistrationToClaimMembership</bpmn:incoming>
       <bpmn:outgoing>flow_claimMembershipToHasEmptySpots</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="gateway_hasEmptySpots" name="Has empty spots" default="flow_hasEmptySpotsToConfirmMembership">
+    <bpmn:exclusiveGateway id="gateway_hasEmptySpots" name="Free seat available?" default="flow_hasEmptySpotsToConfirmMembership">
       <bpmn:incoming>flow_claimMembershipToHasEmptySpots</bpmn:incoming>
       <bpmn:outgoing>flow_hasEmptySpotsToConfirmMembership</bpmn:outgoing>
       <bpmn:outgoing>flow_hasEmptySpotsToSendRejectionMail</bpmn:outgoing>

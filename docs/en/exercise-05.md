@@ -54,7 +54,7 @@ Modeler** (select the element → Properties Panel), not in the XML.
 | Element | Type | ID | Name | Configuration |
 |---|---|---|---|---|
 | Reserve spot | Service Task | `serviceTask_claimMembership` | Claim membership | Delegate Expression: `#{claimMembershipDelegate}` |
-| Capacity decision | Exclusive Gateway | `gateway_hasEmptySpots` | Has empty spots | Default flow: yes path |
+| Capacity decision | Exclusive Gateway | `gateway_hasEmptySpots` | Free seat available? | Default flow: yes path |
 | Rejection mail | Service Task | `serviceTask_sendRejectionMail` | Send rejection mail | Delegate Expression: `#{sendRejectionMailDelegate}` |
 | Rejection | End Event | `endEvent_membershipRejected` | Membership rejected | – |
 

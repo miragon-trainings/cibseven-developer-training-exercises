@@ -203,15 +203,17 @@ ersten Mal braucht, mit ein bis zwei Sätzen Erklärung (im Fließtext oder als
 Diese Tabelle hält fest, wo das passiert. Wer eine Aufgabe schreibt, prüft: Ist der Begriff
 schon eingeführt? Dann nur verwenden. Ist er neu? Dann hier eintragen und erklären.
 
-**Sonderfall Aufgabe 0:** Dort werden die BPMN-Grundformen aus Kapitel 1 **rein fachlich**
-angewendet – auch eingebetteter Subprozess, Boundary Events, Gateways und Kompensation. Ihre
-**technische/Ausführungs-Semantik** (Flow-Bedingungen, `async`-Marker, `isForCompensation`,
-Korrelation an Boundary Events) wird erst in den unten genannten Aufgaben eingeführt; der
-fachliche Vorgriff in Aufgabe 0 gilt nicht als doppelte Einführung.
+**Sonderfall Aufgabe 0:** Dort werden nur die BPMN-Grundformen aus Kapitel 1 **rein fachlich**
+angewendet – Start- und End Events, User Task und Service Task, Sequenzfluss, Exclusive und
+Parallel Gateway – samt den Modellierungsregeln aus Kapitel 1. Ihre
+**technische/Ausführungs-Semantik** (Flow-Bedingungen, Default-Flow, Fork/Join zur Laufzeit)
+wird erst in den unten genannten Aufgaben eingeführt; der fachliche Vorgriff in Aufgabe 0 gilt
+nicht als doppelte Einführung. Eingebetteter Subprozess, Boundary Events und Kompensation kommen
+in Aufgabe 0 bewusst **nicht** vor – sie werden erst in Aufgabe 7 bzw. 8 eingeführt.
 
 | Aufgabe | Wird hier eingeführt |
 |---|---|
-| 0 | fachliche Modellierung; Anwendung aller BPMN-Grundformen aus Kapitel 1 – Start/End Event, User Task, Service Task, Sequenzfluss, eingebetteter Subprozess, Boundary Event, Exclusive/Parallel Gateway, Kompensation (rein fachlich) |
+| 0 | fachliche Modellierung; Anwendung der BPMN-Grundformen aus Kapitel 1 – Start/End Event, User Task, Service Task, Sequenzfluss, Exclusive/Parallel Gateway (rein fachlich); Modellierungsregeln (Verb + Objekt, Gateway als Frage, Happy Path gerade, Split und Join vom selben Typ) |
 | 1 | Engine, Deployment, Cockpit, Tasklist, Prozessdefinition, **Prozessinstanz**, Prozessvariable, **Start-Formular** (Generated Form am Start Event, vorhanden), **Manual Task** (Durchlauf ohne Code), `act_*`-Tabellen (`re` / `ru` / `hi`) |
 | 2 | Prozess-Key, Element-ID, `isExecutable`, `historyTimeToLive`, **User Task**, **Wait State**, **Generated Form selbst erstellen** (am User Task) |
 | 3 | Manual Task → **Service Task**, **JavaDelegate**, **Delegate Expression**, hexagonale Architektur (Delegate → Use Case → Service), Prozessvariable im Delegate lesen |
@@ -219,8 +221,8 @@ fachliche Vorgriff in Aufgabe 0 gilt nicht als doppelte Einführung.
 | 5 | Exclusive Gateway (Default-Flow, Flow-Bedingung), Business Key, generiertes Task-Formular (Freigabe) |
 | 6 | **Transaktionsgrenze**, **asynchrone Continuation** (`asyncBefore` / `asyncAfter`), Commit und Rollback, **Token**, Idempotenz, Prozess-Test, In-Memory-Engine (h2), **Job Executor**, Mock (`@MockitoBean`), Assertion (`BpmnAwareTests`) |
 | 6 · Add-on | generierte Process-API, `bpmn-to-code` |
-| 7 | eingebetteter Subprozess (technisch), Boundary Event (unterbrechend / nicht unterbrechend), Timer als Duration und als Cycle, Message Boundary Event, Parallel Gateway (Fork / Join) |
-| 8 | Kompensation (technisch), Compensation Boundary Event, Kompensations-Handler (`isForCompensation`), Association, Compensating End Event, SAGA-Muster |
+| 7 | eingebetteter Subprozess, Boundary Event (unterbrechend / nicht unterbrechend), Timer als Duration und als Cycle, Message Boundary Event, Parallel Gateway (Fork / Join) |
+| 8 | Kompensation, Compensation Boundary Event, Kompensations-Handler (`isForCompensation`), Association, Compensating End Event, SAGA-Muster |
 | 9 | Call Activity, Called Element, In-/Out-Mapping, DMN, Entscheidungstabelle, Business Rule Task, `mapDecisionResult` |
 | 10 | **Signal** und **Broadcast**, Signal-Start-Event, Signal-End-Event, External Task, Worker, `fetchAndLock`, Deployment per REST, OpenAPI-Client |
 | Extra 1 | Process-Engine-API, `@ProcessEngineWorker`, Topic, `EngineCommandExecutor`, ArchUnit-Guardrail |

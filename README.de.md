@@ -22,7 +22,8 @@ Willkommens-Mail – fertig.
 
 Das Training findet im Kontext des exklusiven **Miravelo Inner Circle** statt — einer auf
 tausend Plätze limitierten Membership für die treuesten Kundinnen und Kunden. Du modellierst
-zuerst den kompletten Sollprozess fachlich und automatisierst ihn dann Schritt für Schritt.
+zuerst den Kernablauf fachlich, automatisierst ihn dann Schritt für Schritt und ergänzt unterwegs
+die Ausnahmen.
 
 Was folgt, ist eine Reise durch immer komplexere BPMN-Muster: Gateways, Boundary Events,
 Subprozesse, Parallel Gateways, Call Activities, DMN-Entscheidungstabellen und Kompensation —
@@ -36,7 +37,7 @@ Detaillierte Aufgabenbeschreibungen befinden sich in [`docs/`](docs/).
 
 | Aufgabe | Thema | Beschreibung |
 |---|---|---|
-| [0](docs/de/exercise-00.md) | Fachliche BPMN-Modellierung | Den kompletten Inner-Circle-Membership-Prozess rein fachlich modellieren — die gemeinsame Vorlage für das ganze Training |
+| [0](docs/de/exercise-00.md) | Fachliche BPMN-Modellierung | Den Kernablauf der Inner-Circle-Membership rein fachlich und nur mit den Grundformen aus Kapitel 1 modellieren – der Ausgangspunkt für das ganze Training |
 | [1](docs/de/exercise-01.md) | Engine zum Laufen bringen | Das vorgegebene Start-Formular-/Manual-Task-Modell durchlaufen lassen, Cockpit und `act_*`-Tabellen der Engine kennenlernen |
 | [2](docs/de/exercise-02.md) | Der erste Wartepunkt | Aus dem Manual Task „Confirm" einen User Task machen und ihm eine selbst erstellte Generated Form geben |
 | [3](docs/de/exercise-03.md) | Einen Schritt automatisieren | Aus dem Manual Task „Send welcome mail" einen Service Task mit JavaDelegate machen (Start über Cockpit) |

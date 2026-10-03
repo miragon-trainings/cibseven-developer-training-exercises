@@ -40,8 +40,6 @@ public final class SubscribeNewsletterProcessApi {
 
     public static final ElementId EVENT_RESEND_EVERY_DAY = new ElementId("event_resendEveryDay");
 
-    public static final ElementId GATEWAY_DECLINED_JOIN = new ElementId("gateway_declinedJoin");
-
     public static final ElementId GATEWAY_HAS_EMPTY_SPOTS = new ElementId("gateway_hasEmptySpots");
 
     public static final ElementId GATEWAY_NOTIFY_FORK = new ElementId("gateway_notifyFork");
@@ -118,7 +116,7 @@ public final class SubscribeNewsletterProcessApi {
    * Worker code typically does not need these.
    */
   public static final class Flows {
-    public static final BpmnFlow FLOW_ABORT_AFTER_3_HALF_DAYS_TO_MEMBERSHIP_DECLINED = new BpmnFlow("flow_abortAfter3HalfDaysToMembershipDeclined", null, "event_abortAfter3HalfDays", "gateway_declinedJoin", null, false);
+    public static final BpmnFlow FLOW_ABORT_AFTER_3_HALF_DAYS_TO_MEMBERSHIP_DECLINED = new BpmnFlow("flow_abortAfter3HalfDaysToMembershipDeclined", null, "event_abortAfter3HalfDays", "endEvent_membershipDeclined", null, false);
 
     public static final BpmnFlow FLOW_CLAIM_MEMBERSHIP_TO_HAS_EMPTY_SPOTS = new BpmnFlow("flow_claimMembershipToHasEmptySpots", null, "serviceTask_claimMembership", "gateway_hasEmptySpots", null, false);
 
@@ -126,11 +124,9 @@ public final class SubscribeNewsletterProcessApi {
 
     public static final BpmnFlow FLOW_CONFIRM_MEMBERSHIP_TO_NOTIFY_FORK = new BpmnFlow("flow_confirmMembershipToNotifyFork", null, "subProcess_confirmMembership", "gateway_notifyFork", null, false);
 
-    public static final BpmnFlow FLOW_CONFIRMATION_REJECTED_TO_MEMBERSHIP_DECLINED = new BpmnFlow("flow_confirmationRejectedToMembershipDeclined", null, "event_confirmationRejected", "gateway_declinedJoin", null, false);
+    public static final BpmnFlow FLOW_CONFIRMATION_REJECTED_TO_MEMBERSHIP_DECLINED = new BpmnFlow("flow_confirmationRejectedToMembershipDeclined", null, "event_confirmationRejected", "endEvent_membershipDeclined", null, false);
 
     public static final BpmnFlow FLOW_CONFIRMATION_REQUIRED_TO_SEND_CONFIRMATION_MAIL = new BpmnFlow("flow_confirmationRequiredToSendConfirmationMail", null, "startEvent_confirmationRequired", "serviceTask_sendConfirmationMail", null, false);
-
-    public static final BpmnFlow FLOW_DECLINED_JOIN_TO_MEMBERSHIP_DECLINED = new BpmnFlow("flow_declinedJoinToMembershipDeclined", null, "gateway_declinedJoin", "endEvent_membershipDeclined", null, false);
 
     public static final BpmnFlow FLOW_HAS_EMPTY_SPOTS_TO_CONFIRM_MEMBERSHIP = new BpmnFlow("flow_hasEmptySpotsToConfirmMembership", "Yes", "gateway_hasEmptySpots", "subProcess_confirmMembership", null, true);
 
@@ -168,21 +164,19 @@ public final class SubscribeNewsletterProcessApi {
 
     public static final BpmnRelations END_EVENT_MEMBERSHIP_CONFIRMED = new BpmnRelations("Membership confirmed", List.of("userTask_confirmMembership"), List.of(), "subProcess_confirmMembership", null, List.of(), "END_EVENT");
 
-    public static final BpmnRelations END_EVENT_MEMBERSHIP_DECLINED = new BpmnRelations("Membership declined", List.of("gateway_declinedJoin"), List.of(), null, null, List.of(), "COMPENSATION_END_EVENT");
+    public static final BpmnRelations END_EVENT_MEMBERSHIP_DECLINED = new BpmnRelations("Membership declined", List.of("event_abortAfter3HalfDays", "event_confirmationRejected"), List.of(), null, null, List.of(), "COMPENSATION_END_EVENT");
 
     public static final BpmnRelations END_EVENT_MEMBERSHIP_REJECTED = new BpmnRelations("Membership rejected", List.of("serviceTask_sendRejectionMail"), List.of(), null, null, List.of(), "END_EVENT");
 
-    public static final BpmnRelations EVENT_ABORT_AFTER_3_HALF_DAYS = new BpmnRelations("After 3 1/2 days", List.of(), List.of("gateway_declinedJoin"), null, "subProcess_confirmMembership", List.of(), "TIMER_BOUNDARY_EVENT");
+    public static final BpmnRelations EVENT_ABORT_AFTER_3_HALF_DAYS = new BpmnRelations("After 3 1/2 days", List.of(), List.of("endEvent_membershipDeclined"), null, "subProcess_confirmMembership", List.of(), "TIMER_BOUNDARY_EVENT");
 
     public static final BpmnRelations EVENT_COMPENSATE_CLAIM = new BpmnRelations("Membership declined", List.of(), List.of(), null, "serviceTask_claimMembership", List.of(), "COMPENSATION_BOUNDARY_EVENT");
 
-    public static final BpmnRelations EVENT_CONFIRMATION_REJECTED = new BpmnRelations("Confirmation rejected", List.of(), List.of("gateway_declinedJoin"), null, "subProcess_confirmMembership", List.of(), "MESSAGE_BOUNDARY_EVENT");
+    public static final BpmnRelations EVENT_CONFIRMATION_REJECTED = new BpmnRelations("Confirmation rejected", List.of(), List.of("endEvent_membershipDeclined"), null, "subProcess_confirmMembership", List.of(), "MESSAGE_BOUNDARY_EVENT");
 
     public static final BpmnRelations EVENT_RESEND_EVERY_DAY = new BpmnRelations("Every day", List.of(), List.of("serviceTask_reSendConfirmationMail"), null, "subProcess_confirmMembership", List.of(), "TIMER_BOUNDARY_EVENT");
 
-    public static final BpmnRelations GATEWAY_DECLINED_JOIN = new BpmnRelations(null, List.of("event_abortAfter3HalfDays", "event_confirmationRejected"), List.of("endEvent_membershipDeclined"), null, null, List.of(), "EXCLUSIVE_GATEWAY");
-
-    public static final BpmnRelations GATEWAY_HAS_EMPTY_SPOTS = new BpmnRelations("Has empty spots", List.of("serviceTask_claimMembership"), List.of("subProcess_confirmMembership", "serviceTask_sendRejectionMail"), null, null, List.of(), "EXCLUSIVE_GATEWAY");
+    public static final BpmnRelations GATEWAY_HAS_EMPTY_SPOTS = new BpmnRelations("Free seat available?", List.of("serviceTask_claimMembership"), List.of("subProcess_confirmMembership", "serviceTask_sendRejectionMail"), null, null, List.of(), "EXCLUSIVE_GATEWAY");
 
     public static final BpmnRelations GATEWAY_NOTIFY_FORK = new BpmnRelations(null, List.of("subProcess_confirmMembership"), List.of("serviceTask_sendWelcomeMail", "serviceTask_notifyCommunity"), null, null, List.of(), "PARALLEL_GATEWAY");
 

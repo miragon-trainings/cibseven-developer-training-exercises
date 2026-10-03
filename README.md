@@ -20,8 +20,8 @@ exclusive offers. Someone signs up, gets a welcome mail — done.
 > — Every developer who has ever underestimated a newsletter.
 
 The training takes place in the context of the exclusive **Miravelo Inner Circle** — a membership
-limited to a thousand seats for the most loyal customers. You first model the whole target process
-at the business level, then automate it step by step.
+limited to a thousand seats for the most loyal customers. You first model the core membership flow
+at the business level, then automate it step by step and add the exceptions along the way.
 
 What follows is a journey through increasingly complex BPMN patterns: gateways, boundary events,
 subprocesses, parallel gateways, call activities, DMN decision tables, and compensation —
@@ -35,7 +35,7 @@ Detailed exercise descriptions can be found in [`docs/`](docs/).
 
 | Exercise | Topic | Description |
 |---|---|---|
-| [0](docs/en/exercise-00.md) | Business-level BPMN modeling | Model the complete Inner Circle membership process at the business level — the shared target for the whole training |
+| [0](docs/en/exercise-00.md) | Business-level BPMN modeling | Model the core Inner Circle membership flow purely at the business level, using only the shapes from Chapter 1 — the starting point for the whole training |
 | [1](docs/en/exercise-01.md) | Getting the engine running | Run the given start-form / Manual-Task model end-to-end, get to know the Cockpit and the engine's `act_*` tables |
 | [2](docs/en/exercise-02.md) | The first wait state | Turn the "Confirm" Manual Task into a User Task and give it a self-made Generated Form |
 | [3](docs/en/exercise-03.md) | Automate a step | Turn the "Send welcome mail" Manual Task into a Service Task backed by a JavaDelegate (Cockpit-started) |

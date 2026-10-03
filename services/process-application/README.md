@@ -46,7 +46,7 @@ http://localhost:8080/h2-console  (JDBC URL jdbc:h2:file:~/.cibseven-training/ex
 
 | Exercise | Topic | Description |
 |---|---|---|
-| [0](../../docs/en/exercise-00.md) | Business BPMN modeling | Create the whole target process purely on the business level with the Miragon BPMN Modeler |
+| [0](../../docs/en/exercise-00.md) | Business BPMN modeling | Model the core membership flow purely on the business level with the Miragon BPMN Modeler |
 | [1](../../docs/en/exercise-01.md) | Engine & tooling | Run the given start-form / Manual-Task model, get to know the Cockpit & DB tables |
 | [2](../../docs/en/exercise-02.md) | The first wait state | Turn the "Confirm" Manual Task into a User Task with a self-made Generated Form |
 | [3](../../docs/en/exercise-03.md) | Automate a step | Turn the "Send welcome mail" Manual Task into a Service Task + JavaDelegate (Cockpit-started) |

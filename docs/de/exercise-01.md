@@ -1,21 +1,21 @@
 # Aufgabe 1 – Die Engine zum Laufen bringen
 
-> **Voraussetzung:** Aufgabe 0 ist abgeschlossen (der Sollprozess liegt fachlich vor).
+> **Voraussetzung:** Aufgabe 0 ist abgeschlossen (der Kernablauf liegt fachlich vor).
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** CIB-Seven-Starter, Engine-Konfiguration, Embedded-Datenbank (H2), Auto-Deployment, Cockpit, H2-Konsole, `act_*`-Tabellen, Start-Formular, Manual Task.
 
 ## Darum geht es
 
-In Aufgabe 0 hast du den **kompletten Sollprozess** des Inner Circle modelliert. Bevor jemand den
+In Aufgabe 0 hast du den **Kernablauf** des Inner Circle fachlich modelliert. Bevor jemand den
 ganzen Ablauf automatisiert, hat ein externer Consultant einen **bewusst winzigen ersten Ausschnitt**
 grob aufgesetzt: ein Start-Formular für die Anmeldedaten, danach zwei **Manual Tasks** –
 „Confirm" und „Send welcome mail". Manual Tasks sind Platzhalter: Die Engine läuft einfach durch
 sie hindurch. So bekommst du eine Prozessinstanz, die von vorne bis hinten durchläuft – ohne eine
 Zeile Code.
 
-Diese Mini-Fassung ist **nicht** der Sollprozess und **nicht** das Zielmodell. Sie existiert nur,
-um die Engine überhaupt einmal zu starten und ein Gefühl für Deployment, Ausführung und den
-Datenbestand zu bekommen. Ab Aufgabe 2 baust du die Platzhalter Stück für Stück zu echten
+Diese Mini-Fassung ist **nicht** der Kernablauf aus Aufgabe 0 und **nicht** das Zielmodell. Sie
+existiert nur, um die Engine überhaupt einmal zu starten und ein Gefühl für Deployment, Ausführung
+und den Datenbestand zu bekommen. Ab Aufgabe 2 baust du die Platzhalter Stück für Stück zu echten
 Schritten aus.
 
 Was jetzt fehlt, ist die **Laufzeitumgebung**: ein Spring-Boot-Modul, in dem die CIB-Seven-Engine

@@ -2,7 +2,7 @@
 
 > **Voraussetzung:** Aufgabe 0 ist abgeschlossen (der Kernablauf liegt fachlich vor).
 > **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** CIB-Seven-Starter, Engine-Konfiguration, Auto-Deployment, Cockpit, `act_*`-Tabellen, Start-Formular, Manual Task.
+> **Neu in dieser Aufgabe:** CIB-Seven-Starter, Engine-Konfiguration, Embedded-Datenbank (H2), Auto-Deployment, Cockpit, H2-Konsole, `act_*`-Tabellen, Start-Formular, Manual Task.
 
 ## Darum geht es
 
@@ -45,49 +45,46 @@ Aufgabe nichts – du bringst ihn zum Laufen.
 
 > Es geht ums **Einrichten und Kennenlernen** – kein Business-Code.
 
-### 1. Datenbank starten
-
-Die Engine speichert ihren gesamten Zustand in einer relationalen Datenbank. Fahre zuerst den
-Container-Stack hoch; er bringt PostgreSQL und MailHog mit. Nutze Docker oder Podman – die
-Compose-Datei funktioniert mit beiden:
-
-```bash
-cd stack && docker compose up -d
-# oder mit Podman:
-cd stack && podman compose up -d
-```
-
-### 2. Datenbankschema anlegen
-
-Alle Module teilen sich das Schema `exercise`. Lege es einmalig an:
-
-```bash
-docker exec -i postgres psql -U admin -d cibseven-training < stack/init-schemas.sql
-# oder mit Podman:
-podman exec -i postgres psql -U admin -d cibseven-training < stack/init-schemas.sql
-```
-
-### 3. Dependencies aktivieren
+### 1. Dependencies aktivieren
 
 Öffne `services/process-application/pom.xml` und kommentiere den Block `TODO Exercise 1` ein: die
 beiden CIB-Seven-Starter (`webapp-4` und `rest-4`). Erst damit sind Engine, Cockpit-Webapp und
 REST-API im Modul. Die Versionen kommen zentral aus der Root-`pom.xml` – trage sie **ohne**
 `<version>` ein.
 
-### 4. Konfiguration aktivieren
+### 2. Konfiguration aktivieren
+
+Die Engine speichert ihren gesamten Zustand in einer relationalen Datenbank. Im Training ist das
+eine **H2-Datenbank**, die direkt in der Anwendung mitläuft und ihre Daten in einer Datei unter
+`~/.cibseven-training/` ablegt. Du musst nichts installieren und nichts separat starten: H2 legt
+die Datei beim ersten Start an, die Engine erzeugt darin ihre `act_*`-Tabellen selbst.
 
 Kommentiere in `services/process-application/src/main/resources/application.yaml` den Block
-`TODO Exercise 1` ein: Datenbank-Anbindung, Cockpit-Admin-User und Webclient. Ohne
-Datenbankverbindung startet die Engine nicht.
+`TODO Exercise 1` ein. Er enthält:
 
-### 5. Anwendung scharf schalten
+- die Datenbank-Anbindung an die H2-Datei (`jdbc:h2:file:~/.cibseven-training/exercise`, Benutzer
+  `sa`, leeres Passwort),
+- die **H2-Konsole** – eine SQL-Oberfläche im Browser, die Teil der Anwendung ist; du brauchst sie
+  in Schritt 5,
+- den Cockpit-Admin-User,
+- den Webclient, unter anderem mit dem JWT-Secret für den Cockpit-Login.
+
+Ohne diesen Block startet die Anwendung nicht. Spring Boot weicht zwar von sich aus auf eine
+flüchtige In-Memory-H2 aus, doch der Start scheitert am Cockpit, dem das JWT-Secret fehlt
+(`Secret must be at least 155 characters long and a base64 decodable string`).
+
+> **Begriff: Embedded-Datenbank.** Eine Datenbank, die als Bibliothek **im selben Prozess** wie die
+> Anwendung läuft statt als eigener Server. Sie startet und stoppt mit der Anwendung; weil H2 hier
+> in eine Datei schreibt, übersteht der Datenbestand trotzdem einen Neustart.
+
+### 3. Anwendung scharf schalten
 
 Aktiviere in `TrainingApplication.java` die auskommentierten Annotationen
 **`@SpringBootApplication`** und **`@EnableJpaRepositories`**. Erst dadurch greifen
 Auto-Configuration und das automatische BPMN-Deployment: Alle `*.bpmn` unter `src/main/resources`
 werden beim Start in die Engine deployt.
 
-### 6. Anwendung starten
+### 4. Anwendung starten
 
 Jetzt kommt alles zusammen. Beobachte das Log – es zeigt, wie die Auto-Configuration die Engine
 hochfährt und die BPMN-Datei deployt.
@@ -96,12 +93,19 @@ hochfährt und die BPMN-Datei deployt.
 cd services/process-application && ../../mvnw spring-boot:run
 ```
 
-### 7. Die Tabellen der Engine ansehen
+### 5. Die Tabellen der Engine ansehen
 
 Beim ersten Start hat die Engine ihr Datenmodell selbst angelegt: mehrere Dutzend Tabellen mit dem
-Präfix `act_`. Binde die Datenbank mit einem Werkzeug deiner Wahl an (in IntelliJ über *Database*,
-in VS Code über *SQLTools*), Host `localhost`, Port `5432`, Datenbank `cibseven-training`, Benutzer
-`admin`, Passwort `admin`. Diese fünf Tabellen sind die wichtigsten:
+Präfix `act_`. Sieh sie dir in der H2-Konsole an, die in der laufenden Anwendung steckt:
+
+1. Öffne [http://localhost:8080/h2-console](http://localhost:8080/h2-console).
+2. Ersetze im Feld **JDBC URL** den vorbelegten Wert `jdbc:h2:~/test` durch
+   `jdbc:h2:file:~/.cibseven-training/exercise` – sonst sucht die Konsole eine Datenbank, die es
+   nicht gibt.
+3. Lass den Benutzer auf `sa`, das Passwort leer und klicke **Connect**.
+
+In der linken Spalte listet die Konsole jetzt die Tabellen auf (H2 schreibt ihre Namen groß, in SQL
+ist die Schreibweise egal). Diese fünf Tabellen sind die wichtigsten:
 
 | Tabelle | Präfix | Inhalt |
 |---|---|---|
@@ -111,13 +115,14 @@ in VS Code über *SQLTools*), Host `localhost`, Port `5432`, Datenbank `cibseven
 | `act_ru_variable` | `ru` | **Prozessvariablen** laufender Instanzen |
 | `act_hi_procinst` | `hi` = History | **abgeschlossene** Prozessinstanzen |
 
-Prüfe zum Einstieg, ob dein Modell deployt wurde:
+Prüfe zum Einstieg, ob dein Modell deployt wurde. Tippe die Abfrage ins Eingabefeld der Konsole und
+klicke **Run**:
 
 ```sql
-SELECT key_, name_, version_ FROM exercise.act_re_procdef;
+SELECT key_, name_, version_ FROM act_re_procdef;
 ```
 
-### 8. Cockpit erkunden
+### 6. Cockpit erkunden
 
 Das Cockpit ist die Weboberfläche der Engine. Öffne
 [http://localhost:8080/webapp/#/seven/auth/start](http://localhost:8080/webapp/#/seven/auth/start)
@@ -125,7 +130,7 @@ Das Cockpit ist die Weboberfläche der Engine. Öffne
 der technische Prozess-Key dahinter ist `subscribeNewsletter`. Klick dich durch **Cockpit**,
 **Tasklist** und **Admin**.
 
-### 9. Prozess durchspielen
+### 7. Prozess durchspielen
 
 Der Prozess ist deployt, aber noch nie gelaufen. Starte ihn über das Start-Formular:
 
@@ -151,7 +156,8 @@ Der Prozess ist deployt, aber noch nie gelaufen. Starte ihn über das Start-Form
 - Du arbeitest ausschließlich im Modul `services/process-application`.
 - Das Modul enthält bereits das vollständige Skelett der hexagonalen Architektur. Die
   Business-Schicht ist auskommentiert und wird hier noch nicht gebraucht.
-- Alle Module laufen auf Port `8080` und im Schema `exercise`. Starte immer nur eines.
+- Alle Module laufen auf Port `8080` und nutzen dieselbe H2-Datei unter `~/.cibseven-training/`.
+  Starte immer nur eines – die laufende Anwendung sperrt die Datei.
 
 ## Erwartetes Ergebnis
 
@@ -162,17 +168,27 @@ End Event durch.
 
 ## Selbstcheck
 
-- [ ] PostgreSQL läuft, das Schema `exercise` existiert
 - [ ] Dependencies, Konfiguration und `@SpringBootApplication` sind aktiviert
 - [ ] Die Anwendung startet und deployt `membership.bpmn`
+- [ ] Die H2-Konsole zeigt die `act_*`-Tabellen, und `act_re_procdef` enthält `subscribeNewsletter`
 - [ ] `Join Inner Circle` erscheint im Cockpit unter **Processes**
 - [ ] Eine über das Start-Formular gestartete Instanz läuft vollständig durch (History `COMPLETED`)
 - [ ] Du kannst erklären, warum die Instanz mit lauter Manual Tasks nirgends wartet
 
 ## Hinweise
 
-- Startet die Anwendung mit einem Datenbankfehler, prüfe zuerst Schritt 2: Ohne das Schema
-  `exercise` findet die Engine ihre Tabellen nicht.
+- Bricht der Start mit
+  `Database may be already in use: "…/.cibseven-training/exercise.mv.db"` ab, läuft bereits eine
+  andere Anwendung auf derselben Datei – ein anderes Modul oder dasselbe in einem zweiten Terminal.
+  Beende sie und starte neu. Aus demselben Grund öffnen externe Datenbank-Werkzeuge (etwa
+  *Database* in IntelliJ) die Datei nicht, solange die Anwendung läuft – nimm die H2-Konsole.
+- Meldet die H2-Konsole
+  `Database "…/test" not found, either pre-create it or allow remote database creation …`, steht
+  im Feld **JDBC URL** noch der vorbelegte Wert. Ersetze ihn wie in Schritt 5 durch
+  `jdbc:h2:file:~/.cibseven-training/exercise`.
+- Der Datenbestand übersteht einen Neustart der Anwendung. Für einen sauberen Neuanfang beende die
+  Anwendung und lösche den Ordner `~/.cibseven-training` (unter Windows
+  `%USERPROFILE%\.cibseven-training`); beim nächsten Start legen H2 und die Engine alles neu an.
 - Die Präfixe sind ein Merkanker: `re` liegt fest, `ru` bewegt sich, `hi` ist Vergangenheit.
 
 ## Referenzlösung

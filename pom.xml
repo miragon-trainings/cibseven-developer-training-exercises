@@ -34,7 +34,7 @@
         <postgresql.version>42.7.8</postgresql.version>
         <cib7.version>2.2.0</cib7.version>
         <archunit.version>1.5.1</archunit.version>
-        <bpmn-to-code.version>5.2.0</bpmn-to-code.version>
+        <bpmn-to-code.version>6.1.1</bpmn-to-code.version>
         <openapi-generator.version>7.25.0</openapi-generator.version>
     </properties>
 

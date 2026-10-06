@@ -118,9 +118,9 @@ produces an `extensionElements` block with `camunda:in` entries on the Call Acti
 Rejection handling now lives in the Call Activity. Add both DMN branches:
 
 - **Age outside 21–29** (for example `40`): after a timeout or withdrawal, the Call Activity runs through without a wait state, and then compensation kicks in. Check
-  `hasPassed(Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())`.
+  `hasPassed(FlowNodes.CallActivityHandleRejection.ELEMENT_ID, FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)`.
 - **Age between 21 and 29:** the called process waits at `userTask_writeRegretMail`. Because the element lives in the **called** process, its constant comes from the second generated API: fetch the task via
-  `taskDefinitionKey(HandleRejectionProcessApi.Elements.USER_TASK_WRITE_REGRET_MAIL.getValue())`,
+  `taskDefinitionKey(HandleRejectionProcessApi.FlowNodes.UserTaskWriteRegretMail.ELEMENT_ID)`,
   complete it, run the open jobs, and check the same completion.
 
 ## Constraints

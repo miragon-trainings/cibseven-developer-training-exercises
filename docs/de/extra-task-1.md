@@ -169,7 +169,7 @@ Statt des `RuntimeService` injizierst du `StartProcessApi` und `CorrelationApi`:
 public void startProcess(Membership membership) {
     var membershipId = membership.id().value().toString();
     startProcessApi.startProcess(new StartProcessByMessageCmd(
-            Messages.MESSAGE_SUBSCRIPTION_REQUESTED.getValue(),
+            Messages.SUBSCRIPTION_REQUESTED.getValue(),
             Map.of(
                     "membershipId", membershipId,
                     "email", membership.email().value(),
@@ -184,7 +184,7 @@ public void startProcess(Membership membership) {
 public void rejectMembership(MembershipId membershipId) {
     var id = membershipId.value().toString();
     correlationApi.correlateMessage(new CorrelateMessageCmd(
-            Messages.MESSAGE_CONFIRMATION_REJECTED.getValue(),
+            Messages.CONFIRMATION_REJECTED.getValue(),
             Map.of("membershipId", id),
             Correlation.withKey(id),
             CommonRestrictions.builder().withRestriction("useGlobalCorrelationKey", "true").build()

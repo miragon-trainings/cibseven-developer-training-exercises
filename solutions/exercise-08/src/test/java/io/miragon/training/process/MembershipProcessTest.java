@@ -1,7 +1,7 @@
 package io.miragon.training.process;
 
 import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi;
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.Elements;
+import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
 import io.miragon.training.application.port.inbound.ClaimMembershipUseCase;
 import io.miragon.training.application.port.inbound.NotifyCommunityUseCase;
 import io.miragon.training.application.port.inbound.ReSendConfirmationMailUseCase;
@@ -103,7 +103,7 @@ class MembershipProcessTest {
         membershipProcess.startProcess(new Membership(id, new Email(email), new Name(name), new Age(30)));
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
-        assertThat(instance).isWaitingAt(Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue());
+        assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
         return instance;
     }
 
@@ -138,15 +138,15 @@ class MembershipProcessTest {
                 // Deterministic backbone up to the fork and after the join. The two branch tasks run
                 // in parallel, so their relative order is not asserted here (see hasPassed below).
                 .hasPassedInOrder(
-                        Elements.SERVICE_TASK_SEND_CONFIRMATION_MAIL.getValue(),
-                        Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue(),
-                        Elements.GATEWAY_NOTIFY_FORK.getValue(),
-                        Elements.GATEWAY_NOTIFY_JOIN.getValue(),
-                        Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue())
+                        FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
+                        FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
+                        FlowNodes.GatewayNotifyFork.ELEMENT_ID,
+                        FlowNodes.GatewayNotifyJoin.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipActivated.ELEMENT_ID)
                 .hasPassed(
-                        Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(),
-                        Elements.SERVICE_TASK_NOTIFY_COMMUNITY.getValue())
-                .hasNotPassed(Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue());
+                        FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
+                        FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID)
+                .hasNotPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID);
 
         verify(sendWelcomeMailUseCase, times(1)).sendWelcomeMail(id);
         verify(notifyCommunityUseCase, times(1)).notifyCommunity(id);
@@ -165,8 +165,8 @@ class MembershipProcessTest {
 
         assertThat(instance)
                 .isEnded()
-                .hasPassedInOrder(Elements.SERVICE_TASK_SEND_REJECTION_MAIL.getValue(), Elements.END_EVENT_MEMBERSHIP_REJECTED.getValue())
-                .hasNotPassed(Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+                .hasPassedInOrder(FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID, FlowNodes.EndEventMembershipRejected.ELEMENT_ID)
+                .hasNotPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(sendRejectionMailUseCase).sendRejectionMail(id);
         org.assertj.core.api.Assertions.assertThat(runningInstanceCount()).isEqualTo(0L);
@@ -177,13 +177,13 @@ class MembershipProcessTest {
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, "amy@example.com", "Amy");
 
-        fireTimer(processEngine, Elements.EVENT_ABORT_AFTER_3_HALF_DAYS.getValue());
+        fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID);
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
         assertThat(instance)
                 .isEnded()
-                .hasPassed(Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())
-                .hasNotPassed(Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+                .hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)
+                .hasNotPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
         org.assertj.core.api.Assertions.assertThat(runningInstanceCount()).isEqualTo(0L);
@@ -199,8 +199,8 @@ class MembershipProcessTest {
 
         assertThat(instance)
                 .isEnded()
-                .hasPassed(Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())
-                .hasNotPassed(Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+                .hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)
+                .hasNotPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
     }
@@ -211,13 +211,13 @@ class MembershipProcessTest {
         ProcessInstance instance = startWaitingAtConfirmation(id, "cara@example.com", "Cara");
         verify(sendConfirmationMailUseCase, times(1)).sendConfirmationMail(id);
 
-        fireTimer(processEngine, Elements.EVENT_RESEND_EVERY_DAY.getValue());
+        fireTimer(processEngine, FlowNodes.EventResendEveryDay.ELEMENT_ID);
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
-        assertThat(instance).isWaitingAt(Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue());
+        assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
         verify(reSendConfirmationMailUseCase, times(1)).reSendConfirmationMail(id);
 
         completeConfirmationTask(instance);
-        assertThat(instance).isEnded().hasPassed(Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+        assertThat(instance).isEnded().hasPassed(FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
     }
 }

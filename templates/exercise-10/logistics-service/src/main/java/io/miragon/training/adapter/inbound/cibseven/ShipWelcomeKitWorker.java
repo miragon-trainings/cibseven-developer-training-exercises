@@ -10,7 +10,7 @@ import org.cibseven.bpm.client.task.ExternalTaskService;
  * and generated the Process-API):
  * <ol>
  *   <li>Make the class a Spring bean ({@code @Component}) and subscribe to the topic with
- *       {@code @ExternalTaskSubscription(topicName = SendWelcomeKitProcessApi.ServiceTasks.SHIP_WELCOME_KIT)}.
+ *       {@code @ExternalTaskSubscription(topicName = ServiceTasks.SHIP_WELCOME_KIT)}.
  *       The constant only comes into being once you have marked the service task in the model as an
  *       external task with a topic and regenerated the Process-API.</li>
  *   <li>Read the process variable {@code name} from the {@link ExternalTask}, ship the kit via

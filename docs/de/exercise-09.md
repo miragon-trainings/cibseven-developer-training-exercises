@@ -144,11 +144,11 @@ Die Ablehnungsbehandlung liegt jetzt in der Call Activity. Ergänze beide DMN-Zw
 
 - **Alter außerhalb 21–29** (zum Beispiel `40`): Nach Timeout oder Rückzug läuft die Call
   Activity ohne Wait State durch, danach greift die Kompensation. Prüfe
-  `hasPassed(Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())`.
+  `hasPassed(FlowNodes.CallActivityHandleRejection.ELEMENT_ID, FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)`.
 - **Alter zwischen 21 und 29:** Der aufgerufene Prozess wartet an `userTask_writeRegretMail`.
   Weil das Element im **aufgerufenen** Prozess liegt, kommt seine Konstante aus der zweiten
   generierten API: Hole die Aufgabe über
-  `taskDefinitionKey(HandleRejectionProcessApi.Elements.USER_TASK_WRITE_REGRET_MAIL.getValue())`,
+  `taskDefinitionKey(HandleRejectionProcessApi.FlowNodes.UserTaskWriteRegretMail.ELEMENT_ID)`,
   schließe sie ab, führe die offenen Jobs aus und prüfe denselben Abschluss.
 
 ## Randbedingungen

@@ -98,7 +98,7 @@ class MembershipProcessTest {
         membershipProcess.startProcess(new Membership(id, new Email("user@example.com"), new Name("User"), new Age(age)));
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
-        assertThat(instance).isWaitingAt(SubscribeNewsletterProcessApi.Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue());
+        assertThat(instance).isWaitingAt(SubscribeNewsletterProcessApi.FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
         return instance;
     }
 
@@ -118,8 +118,8 @@ class MembershipProcessTest {
 
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_NOTIFY_COMMUNITY.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue())
-                .hasNotPassed(SubscribeNewsletterProcessApi.Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue());
+                .hasPassed(SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipActivated.ELEMENT_ID)
+                .hasNotPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipDeclined.ELEMENT_ID);
 
         verify(sendWelcomeMailUseCase, times(1)).sendWelcomeMail(id);
         verify(notifyCommunityUseCase, times(1)).notifyCommunity(id);
@@ -138,8 +138,8 @@ class MembershipProcessTest {
 
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_SEND_REJECTION_MAIL.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_REJECTED.getValue())
-                .hasNotPassed(SubscribeNewsletterProcessApi.Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue());
+                .hasPassed(SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipRejected.ELEMENT_ID)
+                .hasNotPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID);
 
         verify(sendRejectionMailUseCase).sendRejectionMail(id);
     }
@@ -149,13 +149,13 @@ class MembershipProcessTest {
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, 40); // age 40 -> DMN: not high value
 
-        fireTimer(processEngine, SubscribeNewsletterProcessApi.Elements.EVENT_ABORT_AFTER_3_HALF_DAYS.getValue());
+        fireTimer(processEngine, SubscribeNewsletterProcessApi.FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID);
         continueToNextWaitState(processEngine);
 
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())
-                .hasNotPassed(SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+                .hasPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)
+                .hasNotPassed(SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
     }
@@ -170,7 +170,7 @@ class MembershipProcessTest {
 
         // the called handleRejection instance now waits for the regret mail to be written
         String regretTaskId = taskService.createTaskQuery()
-                .taskDefinitionKey(HandleRejectionProcessApi.Elements.USER_TASK_WRITE_REGRET_MAIL.getValue())
+                .taskDefinitionKey(HandleRejectionProcessApi.FlowNodes.UserTaskWriteRegretMail.ELEMENT_ID)
                 .singleResult()
                 .getId();
         taskService.complete(regretTaskId);
@@ -178,7 +178,7 @@ class MembershipProcessTest {
 
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue());
+                .hasPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipDeclined.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
     }
@@ -189,16 +189,16 @@ class MembershipProcessTest {
         ProcessInstance instance = startWaitingAtConfirmation(id, 30);
         verify(sendConfirmationMailUseCase, times(1)).sendConfirmationMail(id);
 
-        fireTimer(processEngine, SubscribeNewsletterProcessApi.Elements.EVENT_RESEND_EVERY_DAY.getValue());
+        fireTimer(processEngine, SubscribeNewsletterProcessApi.FlowNodes.EventResendEveryDay.ELEMENT_ID);
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
-        assertThat(instance).isWaitingAt(SubscribeNewsletterProcessApi.Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue());
+        assertThat(instance).isWaitingAt(SubscribeNewsletterProcessApi.FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
         verify(reSendConfirmationMailUseCase, times(1)).reSendConfirmationMail(id);
 
         String taskId = taskService.createTaskQuery()
                 .processInstanceId(instance.getProcessInstanceId()).singleResult().getId();
         taskService.complete(taskId);
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
-        assertThat(instance).isEnded().hasPassed(SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+        assertThat(instance).isEnded().hasPassed(SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
     }
 }

@@ -176,7 +176,7 @@ resend a kit or in case the signal doesn't get through some time.
 Activate the two commented-out generator blocks in `pom.xml`:
 
 - **Process API** (`bpmn-to-code`) – produces the constant
-  `SendWelcomeKitProcessApi.ServiceTasks.SHIP_WELCOME_KIT` from your External Task.
+  `ServiceTasks.SHIP_WELCOME_KIT` from your External Task.
 - **Engine client** (`openapi-generator`) – produces a typed `/engine-rest` client from
   CIB Seven's official OpenAPI spec instead of hand-written REST calls.
   Set the two `TODO` values: `generatorName` = `java`, `library` = `restclient`.
@@ -198,7 +198,7 @@ not create a second deployment.
 
 **Class:** `ShipWelcomeKitWorker` – deliberately empty. Make it a bean (`@Component`),
 subscribe to the topic
-(`@ExternalTaskSubscription(topicName = SendWelcomeKitProcessApi.ServiceTasks.SHIP_WELCOME_KIT)`),
+(`@ExternalTaskSubscription(topicName = ServiceTasks.SHIP_WELCOME_KIT)`),
 have it extend `BaseExternalTaskWorker`, read the `name` variable, ship the kit
 through the use case, and complete the task.
 

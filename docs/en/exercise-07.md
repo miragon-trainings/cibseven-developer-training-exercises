@@ -170,14 +170,14 @@ So far your test covers the happy path and the rejection due to missing capacity
 tests:
 
 - **Timeout (interrupting):** Wait at the user task, fire the timer with the helper
-  `fireTimer(processEngine, Elements.TIMER_ABORT_AFTER_3_HALF_DAYS.getValue())`, execute the
+  `fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID)`, execute the
   open jobs and check
-  `hasPassed(Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())`.
+  `hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)`.
   Mock `RevokeClaimUseCase` for this.
 - **Withdrawal via message:** Instead of the timer, call `membershipProcess.rejectMembership(id)`
   – same outcome.
 - **Reminder (non-interrupting):**
-  `fireTimer(..., Elements.TIMER_RESEND_EVERY_DAY.getValue())`, then check that
+  `fireTimer(..., FlowNodes.EventResendEveryDay.ELEMENT_ID)`, then check that
   `reSendConfirmationMailUseCase` was called a **second** time and the process is
   still waiting at the user task. Mock `ReSendConfirmationMailUseCase`.
 
@@ -192,7 +192,7 @@ You'll find the `fireTimer` helper (executes a timer job regardless of its due d
 - The element IDs of the boundary events follow the grown convention `timer_` and
   `event_` instead of `boundaryEvent_` – that's how it stands in the reference model, and
   that's how it stays.
-- New element IDs automatically appear as `Elements.*` constants after the next `generate-sources`.
+- New element IDs automatically appear as `FlowNodes.*` constants after the next `generate-sources`.
 - In the test, also mock `NotifyCommunityUseCase` so that no real Teams call goes out.
 - Never commit a real webhook URL – it comes from `TEAMS_WEBHOOK_URL`.
 

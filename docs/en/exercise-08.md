@@ -113,7 +113,7 @@ rollback acts *before* the commit, compensation *after* it.
 
 **Why your process test stays unchanged:** functionally the outcome does not change –
 `serviceTask_revokeClaim` still runs, just as a handler. Your assertions
-`hasPassed(Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())`
+`hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)`
 and `verify(revokeClaimUseCase).revokeClaim(id)` still hold. That is exactly a good sign: a
 remodeling change that does not alter behavior must not break the test.
 

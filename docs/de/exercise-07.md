@@ -170,14 +170,14 @@ Dein Test deckt bisher Happy Path und Ablehnung wegen fehlender Kapazität ab. E
 Tests:
 
 - **Timeout (unterbrechend):** Warte am User Task, feuere den Timer mit dem Helfer
-  `fireTimer(processEngine, Elements.TIMER_ABORT_AFTER_3_HALF_DAYS.getValue())`, führe die
+  `fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID)`, führe die
   offenen Jobs aus und prüfe
-  `hasPassed(Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())`.
+  `hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)`.
   Mocke dafür `RevokeClaimUseCase`.
 - **Rückzug per Nachricht:** Statt des Timers `membershipProcess.rejectMembership(id)`
   aufrufen – gleicher Ausgang.
 - **Erinnerung (nicht unterbrechend):**
-  `fireTimer(..., Elements.TIMER_RESEND_EVERY_DAY.getValue())`, dann prüfen, dass
+  `fireTimer(..., FlowNodes.EventResendEveryDay.ELEMENT_ID)`, dann prüfen, dass
   `reSendConfirmationMailUseCase` ein **zweites** Mal aufgerufen wurde und der Prozess
   weiterhin am User Task wartet. Mocke `ReSendConfirmationMailUseCase`.
 
@@ -192,7 +192,7 @@ du in `ProcessEngineTestUtils`.
 - Die Element-IDs der Boundary Events folgen der gewachsenen Konvention `timer_` und
   `event_` statt `boundaryEvent_` – so steht es im Referenzmodell, und dabei bleibt es.
 - Neue Element-IDs erscheinen nach dem nächsten `generate-sources` automatisch als
-  `Elements.*`-Konstanten.
+  `FlowNodes.*`-Konstanten.
 - Mocke im Test auch `NotifyCommunityUseCase`, damit kein echter Teams-Aufruf hinausgeht.
 - Committe niemals eine echte Webhook-URL – sie kommt aus `TEAMS_WEBHOOK_URL`.
 

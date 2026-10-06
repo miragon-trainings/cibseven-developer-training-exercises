@@ -6,7 +6,7 @@ import dev.bpmcrafters.processengineapi.correlation.Correlation;
 import dev.bpmcrafters.processengineapi.correlation.CorrelationApi;
 import dev.bpmcrafters.processengineapi.process.StartProcessApi;
 import dev.bpmcrafters.processengineapi.process.StartProcessByMessageCmd;
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.Messages;
+import io.miragon.training.adapter.process.Messages;
 import io.miragon.training.application.port.outbound.MembershipProcess;
 import io.miragon.training.domain.Membership;
 import io.miragon.training.domain.MembershipId;
@@ -35,7 +35,7 @@ public class MembershipProcessAdapter implements MembershipProcess {
         var membershipId = membership.id().value().toString();
         startProcessApi.startProcess(
                 new StartProcessByMessageCmd(
-                        Messages.MESSAGE_SUBSCRIPTION_REQUESTED.getValue(),
+                        Messages.SUBSCRIPTION_REQUESTED.getValue(),
                         Map.of(
                                 "membershipId", membershipId,
                                 "email", membership.email().value(),
@@ -53,7 +53,7 @@ public class MembershipProcessAdapter implements MembershipProcess {
         var id = membershipId.value().toString();
         correlationApi.correlateMessage(
                 new CorrelateMessageCmd(
-                        Messages.MESSAGE_CONFIRMATION_REJECTED.getValue(),
+                        Messages.CONFIRMATION_REJECTED.getValue(),
                         Map.of("membershipId", id),
                         Correlation.withKey(id),
                         CommonRestrictions.builder()

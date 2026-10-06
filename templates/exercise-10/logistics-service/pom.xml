@@ -169,7 +169,7 @@
                  TODO Exercise 10 (step 2): Generate the type-safe Process-API.
 
                  From your BPMN model, bpmn-to-code produces constants for element IDs, topics, etc.
-                 It generates a topic constant (SendWelcomeKitProcessApi.ServiceTasks.SHIP_WELCOME_KIT)
+                 It generates a topic constant (ServiceTasks.SHIP_WELCOME_KIT)
                  but ONLY once you have modelled the process (incl. an external service task with a topic) –
                  that is why this block is commented out. Order:
                    1. Model the sendWelcomeKit process in send-welcome-kit.bpmn (see docs/en/exercise-10.md).

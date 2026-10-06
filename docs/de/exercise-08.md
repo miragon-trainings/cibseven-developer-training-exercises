@@ -119,7 +119,7 @@ Kompensation *danach*.
 
 **Warum dein Prozess-Test unverändert bleibt:** Fachlich ändert sich am Ergebnis nichts –
 `serviceTask_revokeClaim` läuft weiterhin, nur als Handler. Deine Assertions
-`hasPassed(Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())`
+`hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)`
 und `verify(revokeClaimUseCase).revokeClaim(id)` gelten weiter. Genau das ist ein gutes
 Zeichen: Ein Umbau der Modellierung, der das Verhalten nicht ändert, darf den Test nicht
 brechen.

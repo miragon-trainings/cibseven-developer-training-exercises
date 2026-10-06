@@ -1,6 +1,6 @@
 package io.miragon.training.process;
 
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.Elements;
+import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
 import io.miragon.training.application.port.inbound.ClaimMembershipUseCase;
 import io.miragon.training.application.port.inbound.SendConfirmationMailUseCase;
 import io.miragon.training.application.port.inbound.SendRejectionMailUseCase;
@@ -82,7 +82,7 @@ class MembershipProcessTest {
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
         continueToNextWaitState(processEngine);
 
-        assertThat(instance).isWaitingAt(Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue());
+        assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
 
         String taskId = taskService.createTaskQuery()
                 .processInstanceId(instance.getProcessInstanceId())
@@ -94,16 +94,16 @@ class MembershipProcessTest {
         assertThat(instance)
                 .isEnded()
                 .hasPassedInOrder(
-                        Elements.START_EVENT_SUBMIT_REGISTRATION.getValue(),
-                        Elements.SERVICE_TASK_CLAIM_MEMBERSHIP.getValue(),
-                        Elements.GATEWAY_HAS_EMPTY_SPOTS.getValue(),
-                        Elements.SERVICE_TASK_SEND_CONFIRMATION_MAIL.getValue(),
-                        Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue(),
-                        Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(),
-                        Elements.END_EVENT_MEMBERSHIP_CONFIRMED.getValue())
+                        FlowNodes.StartEventSubmitRegistration.ELEMENT_ID,
+                        FlowNodes.ServiceTaskClaimMembership.ELEMENT_ID,
+                        FlowNodes.GatewayHasEmptySpots.ELEMENT_ID,
+                        FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
+                        FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
+                        FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipConfirmed.ELEMENT_ID)
                 .hasNotPassed(
-                        Elements.SERVICE_TASK_SEND_REJECTION_MAIL.getValue(),
-                        Elements.END_EVENT_MEMBERSHIP_REJECTED.getValue());
+                        FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipRejected.ELEMENT_ID);
 
         verify(claimMembershipUseCase).claimMembership(id);
         verify(sendConfirmationMailUseCase).sendConfirmationMail(id);
@@ -125,15 +125,15 @@ class MembershipProcessTest {
         assertThat(instance)
                 .isEnded()
                 .hasPassedInOrder(
-                        Elements.SERVICE_TASK_CLAIM_MEMBERSHIP.getValue(),
-                        Elements.GATEWAY_HAS_EMPTY_SPOTS.getValue(),
-                        Elements.SERVICE_TASK_SEND_REJECTION_MAIL.getValue(),
-                        Elements.END_EVENT_MEMBERSHIP_REJECTED.getValue())
+                        FlowNodes.ServiceTaskClaimMembership.ELEMENT_ID,
+                        FlowNodes.GatewayHasEmptySpots.ELEMENT_ID,
+                        FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipRejected.ELEMENT_ID)
                 .hasNotPassed(
-                        Elements.SERVICE_TASK_SEND_CONFIRMATION_MAIL.getValue(),
-                        Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue(),
-                        Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(),
-                        Elements.END_EVENT_MEMBERSHIP_CONFIRMED.getValue());
+                        FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
+                        FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
+                        FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipConfirmed.ELEMENT_ID);
 
         verify(sendRejectionMailUseCase).sendRejectionMail(id);
         verify(sendWelcomeMailUseCase, never()).sendWelcomeMail(any());

@@ -1,7 +1,7 @@
 package io.miragon.training.adapter.inbound.cibseven;
 
 import dev.bpmcrafters.processengine.worker.ProcessEngineWorker;
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.ServiceTasks;
+import io.miragon.training.adapter.process.ServiceTasks;
 import io.miragon.training.application.port.inbound.NotifyCommunityUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

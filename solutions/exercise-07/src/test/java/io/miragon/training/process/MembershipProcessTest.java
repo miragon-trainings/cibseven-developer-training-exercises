@@ -7,7 +7,7 @@ import io.miragon.training.application.port.inbound.RevokeClaimUseCase;
 import io.miragon.training.application.port.inbound.SendConfirmationMailUseCase;
 import io.miragon.training.application.port.inbound.SendRejectionMailUseCase;
 import io.miragon.training.application.port.inbound.SendWelcomeMailUseCase;
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.Elements;
+import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
 import io.miragon.training.application.port.outbound.MembershipProcess;
 import io.miragon.training.domain.Age;
 import io.miragon.training.domain.Email;
@@ -90,7 +90,7 @@ class MembershipProcessTest {
         membershipProcess.startProcess(new Membership(id, new Email(email), new Name(name), new Age(30)));
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
         continueToNextWaitState(processEngine);
-        assertThat(instance).isWaitingAt(Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue());
+        assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
         return instance;
     }
 
@@ -119,20 +119,20 @@ class MembershipProcessTest {
                 // Deterministic backbone up to the fork and after the join. The two branch tasks run
                 // in parallel, so their relative order is not asserted here (see hasPassed below).
                 .hasPassedInOrder(
-                        Elements.SERVICE_TASK_CLAIM_MEMBERSHIP.getValue(),
-                        Elements.SERVICE_TASK_SEND_CONFIRMATION_MAIL.getValue(),
-                        Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue(),
-                        Elements.GATEWAY_NOTIFY_FORK.getValue(),
-                        Elements.GATEWAY_NOTIFY_JOIN.getValue(),
-                        Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue())
+                        FlowNodes.ServiceTaskClaimMembership.ELEMENT_ID,
+                        FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
+                        FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
+                        FlowNodes.GatewayNotifyFork.ELEMENT_ID,
+                        FlowNodes.GatewayNotifyJoin.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipActivated.ELEMENT_ID)
                 .hasPassed(
-                        Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(),
-                        Elements.SERVICE_TASK_NOTIFY_COMMUNITY.getValue())
+                        FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
+                        FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID)
                 .hasNotPassed(
-                        Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(),
-                        Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue(),
-                        Elements.SERVICE_TASK_SEND_REJECTION_MAIL.getValue(),
-                        Elements.END_EVENT_MEMBERSHIP_REJECTED.getValue());
+                        FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipDeclined.ELEMENT_ID,
+                        FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipRejected.ELEMENT_ID);
 
         verify(sendConfirmationMailUseCase, times(1)).sendConfirmationMail(id);
         verify(sendWelcomeMailUseCase, times(1)).sendWelcomeMail(id);
@@ -151,8 +151,8 @@ class MembershipProcessTest {
 
         assertThat(instance)
                 .isEnded()
-                .hasPassedInOrder(Elements.SERVICE_TASK_SEND_REJECTION_MAIL.getValue(), Elements.END_EVENT_MEMBERSHIP_REJECTED.getValue())
-                .hasNotPassed(Elements.SUB_PROCESS_CONFIRM_MEMBERSHIP.getValue(), Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue());
+                .hasPassedInOrder(FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID, FlowNodes.EndEventMembershipRejected.ELEMENT_ID)
+                .hasNotPassed(FlowNodes.SubProcessConfirmMembership.ELEMENT_ID, FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID);
 
         verify(sendRejectionMailUseCase).sendRejectionMail(id);
         verify(sendWelcomeMailUseCase, never()).sendWelcomeMail(any());
@@ -163,16 +163,16 @@ class MembershipProcessTest {
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, "amy@example.com", "Amy");
 
-        fireTimer(processEngine, Elements.EVENT_ABORT_AFTER_3_HALF_DAYS.getValue());
+        fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID);
         continueToNextWaitState(processEngine);
 
         assertThat(instance)
                 .isEnded()
                 .hasPassedInOrder(
-                        Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue(),
-                        Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(),
-                        Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())
-                .hasNotPassed(Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+                        FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
+                        FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)
+                .hasNotPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
         verify(sendWelcomeMailUseCase, never()).sendWelcomeMail(any());
@@ -188,8 +188,8 @@ class MembershipProcessTest {
 
         assertThat(instance)
                 .isEnded()
-                .hasPassed(Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())
-                .hasNotPassed(Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+                .hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)
+                .hasNotPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
     }
@@ -200,16 +200,16 @@ class MembershipProcessTest {
         ProcessInstance instance = startWaitingAtConfirmation(id, "cara@example.com", "Cara");
         verify(sendConfirmationMailUseCase, times(1)).sendConfirmationMail(id);
 
-        fireTimer(processEngine, Elements.EVENT_RESEND_EVERY_DAY.getValue());
+        fireTimer(processEngine, FlowNodes.EventResendEveryDay.ELEMENT_ID);
         continueToNextWaitState(processEngine);
 
-        assertThat(instance).isWaitingAt(Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue());
+        assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
         verify(reSendConfirmationMailUseCase, times(1)).reSendConfirmationMail(id);
 
         completeConfirmationTask(instance);
 
         assertThat(instance)
                 .isEnded()
-                .hasPassed(Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+                .hasPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
     }
 }

@@ -1,9 +1,9 @@
 package io.miragon.training.process;
 
 import io.miragon.training.adapter.process.SendWelcomeKitProcessApi;
-import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.Elements;
-import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.ServiceTasks;
-import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.Signals;
+import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.FlowNodes;
+import io.miragon.training.adapter.process.ServiceTasks;
+import io.miragon.training.adapter.process.Signals;
 import org.cibseven.bpm.engine.ProcessEngine;
 import org.cibseven.bpm.engine.impl.cfg.StandaloneInMemProcessEngineConfiguration;
 import org.cibseven.bpm.engine.runtime.ProcessInstance;
@@ -57,7 +57,7 @@ class SendWelcomeKitProcessTest {
 
     @Test
     void theSignalStartsTheProcessAndTheWorkerShipsTheKitToTheEnd() {
-        broadcastSignal(processEngine, Signals.SIGNAL_MEMBER_ACTIVATED.getValue(), Map.of("name", "Jane"));
+        broadcastSignal(processEngine, Signals.MEMBER_ACTIVATED.getValue(), Map.of("name", "Jane"));
         ProcessInstance instance = findInstance(processEngine, SendWelcomeKitProcessApi.PROCESS_ID.getValue());
 
         // The signal start is asyncBefore: the instance commits at once and only reaches the external task
@@ -68,9 +68,9 @@ class SendWelcomeKitProcessTest {
         assertThat(instance)
                 .isEnded()
                 .hasPassedInOrder(
-                        Elements.START_EVENT_MEMBER_ACTIVATED.getValue(),
-                        Elements.SERVICE_TASK_SHIP_WELCOME_KIT.getValue(),
-                        Elements.END_EVENT_WELCOME_KIT_SHIPPED.getValue());
+                        FlowNodes.StartEventMemberActivated.ELEMENT_ID,
+                        FlowNodes.ServiceTaskShipWelcomeKit.ELEMENT_ID,
+                        FlowNodes.EndEventWelcomeKitShipped.ELEMENT_ID);
     }
 
     @Test
@@ -85,8 +85,8 @@ class SendWelcomeKitProcessTest {
         assertThat(instance)
                 .isEnded()
                 .hasPassedInOrder(
-                        Elements.START_EVENT_MANUAL_START.getValue(),
-                        Elements.SERVICE_TASK_SHIP_WELCOME_KIT.getValue(),
-                        Elements.END_EVENT_WELCOME_KIT_SHIPPED.getValue());
+                        FlowNodes.StartEventManualStart.ELEMENT_ID,
+                        FlowNodes.ServiceTaskShipWelcomeKit.ELEMENT_ID,
+                        FlowNodes.EndEventWelcomeKitShipped.ELEMENT_ID);
     }
 }

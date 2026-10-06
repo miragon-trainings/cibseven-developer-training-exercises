@@ -86,38 +86,40 @@ Danach liegt `io.miragon.training.adapter.process.SubscribeNewsletterProcessApi`
 
 ### 3. Strings im Test ersetzen
 
-Die Wrapper-Typen (`ElementId`, `MessageName`, `ProcessId`) sind keine Strings – in
-String-Kontexten rufst du `.getValue()` auf:
+Jedes BPMN-Element bekommt unter `FlowNodes` eine eigene Klasse; deren `ELEMENT_ID` ist eine
+normale String-Konstante:
 
 ```java
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.Elements;
+import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
 
 assertThat(instance)
         .isEnded()
         .hasPassedInOrder(
-                Elements.START_EVENT_SUBMIT_REGISTRATION.getValue(),
-                Elements.SERVICE_TASK_CLAIM_MEMBERSHIP.getValue(),
-                Elements.GATEWAY_HAS_EMPTY_SPOTS.getValue(),
-                Elements.SERVICE_TASK_SEND_CONFIRMATION_MAIL.getValue(),
-                Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue(),
-                Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(),
-                Elements.END_EVENT_MEMBERSHIP_CONFIRMED.getValue())
+                FlowNodes.StartEventSubmitRegistration.ELEMENT_ID,
+                FlowNodes.ServiceTaskClaimMembership.ELEMENT_ID,
+                FlowNodes.GatewayHasEmptySpots.ELEMENT_ID,
+                FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
+                FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
+                FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
+                FlowNodes.EndEventMembershipConfirmed.ELEMENT_ID)
         .hasNotPassed(
-                Elements.SERVICE_TASK_SEND_REJECTION_MAIL.getValue(),
-                Elements.END_EVENT_MEMBERSHIP_REJECTED.getValue());
+                FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID,
+                FlowNodes.EndEventMembershipRejected.ELEMENT_ID);
 ```
 
 ### 4. Prozess-Key und Message-Namen ersetzen
 
 Nicht nur der Test hat handgetippte Strings: Der Test-Helfer sucht Instanzen über den
-Prozess-Key, der Outbound-Adapter korreliert über den Message-Namen. Ersetze beide:
+Prozess-Key, der Outbound-Adapter korreliert über den Message-Namen. Ersetze beide –
+`ProcessId` und `MessageName` sind Wrapper-Typen, in String-Kontexten rufst du `.getValue()` auf.
+Die Message-Namen liegen in einer eigenen generierten Klasse `Messages` neben der Process-API:
 
 ```java
 // ProcessEngineTestUtils: statt "subscribeNewsletter"
 private static final String PROCESS_DEFINITION_KEY = SubscribeNewsletterProcessApi.PROCESS_ID.getValue();
 
 // MembershipProcessAdapter: statt "Message_SubscriptionRequested"
-runtimeService.createMessageCorrelation(Messages.MESSAGE_SUBSCRIPTION_REQUESTED.getValue()) ...
+runtimeService.createMessageCorrelation(Messages.SUBSCRIPTION_REQUESTED.getValue()) ...
 ```
 
 ## Randbedingungen

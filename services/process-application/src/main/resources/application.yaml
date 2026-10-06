@@ -1,27 +1,29 @@
 # TODO Exercise 1: Uncomment the configuration.
 #
-# It connects the engine to the PostgreSQL from stack/ (docker-compose), creates the
-# Cockpit admin user and configures the web client (among other things the JWT secret for the Cockpit login).
-# Without this configuration the engine finds no database and the application does not start.
+# It connects the engine to an embedded H2 database (a file in your home directory – nothing to
+# install or start), creates the Cockpit admin user and configures the web client (among other
+# things the JWT secret for the Cockpit login). Without this configuration the application does not start.
 #
-# The engine runs on port 8080 with its own schema `exercise`.
+# The engine runs on port 8080; the H2 console for the engine tables is at /h2-console.
 
 server:
   port: 8080
 
 #spring:
 #  datasource:
-#    url: jdbc:postgresql://localhost:5432/cibseven-training?currentSchema=exercise
-#    username: admin
-#    password: admin
-#    driver-class-name: org.postgresql.Driver
+#    # Embedded H2 database, stored as a file in your home directory – nothing to install or start.
+#    # The engine state survives a restart. To reset: stop the application, delete ~/.cibseven-training.
+#    url: jdbc:h2:file:~/.cibseven-training/exercise
+#    username: sa
+#    password:
+#    driver-class-name: org.h2.Driver
 #  jpa:
 #    hibernate:
 #      ddl-auto: create
-#    properties:
-#      hibernate:
-#        dialect: org.hibernate.dialect.PostgreSQLDialect
-#        default_schema: exercise
+#  h2:
+#    console:
+#      # SQL console in the browser: http://localhost:8080/h2-console (same JDBC URL, user sa, no password)
+#      enabled: true
 #
 #camunda:
 #  bpm:
@@ -29,7 +31,7 @@ server:
 #      id: admin
 #      password: admin
 #    database:
-#      type: postgres
+#      type: h2
 #      schema-update: true
 #
 #cibseven:

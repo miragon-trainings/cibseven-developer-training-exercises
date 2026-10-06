@@ -23,15 +23,20 @@ The extracted sub-process for the rejection (Call Activity + DMN):
 
 ## Prerequisites
 
-```bash
-# Start PostgreSQL and MailHog (in the stack directory; Docker or Podman)
-cd ../../stack && docker compose up -d      # Podman: podman compose up -d
+No Docker needed: the engine uses an embedded H2 database that is stored as a file under
+`~/.cibseven-training` – there is no database to install or start. The data survives a restart;
+for a clean slate, stop the application and delete the folder `~/.cibseven-training`
+(on Windows `%USERPROFILE%\.cibseven-training`).
 
+```bash
 # Start the application (from this process-application directory)
 ../../mvnw spring-boot:run
 
 # CIB Seven Cockpit
 http://localhost:8080/webapp/#/seven/auth/start  (admin / admin)
+
+# H2 console (engine tables) – replace the pre-filled JDBC URL jdbc:h2:~/test in the login form
+http://localhost:8080/h2-console  (JDBC URL jdbc:h2:file:~/.cibseven-training/exercise, user sa, no password)
 ```
 
 > On delivery this module starts in the state of **Exercise 1** – the
@@ -47,7 +52,7 @@ http://localhost:8080/webapp/#/seven/auth/start  (admin / admin)
 | [3](../../docs/en/exercise-03.md) | Automate a step | Turn the "Send welcome mail" Manual Task into a Service Task + JavaDelegate (Cockpit-started) |
 | [4](../../docs/en/exercise-04.md) | The application takes over | Message start, REST register + confirm endpoints, correlation, persistence |
 | [5](../../docs/en/exercise-05.md) | Membership & gateway | Exclusive gateway, capacity check |
-| [6](../../docs/en/exercise-06.md) | Process tests | Process unit test: in-memory engine, mocked use cases, without PostgreSQL |
+| [6](../../docs/en/exercise-06.md) | Process tests | Process unit test: in-memory engine, mocked use cases, without a running application |
 | [6 · Add-on](../../docs/en/exercise-06-addon.md) | bpmn-to-code | Generate a type-safe process API from the BPMN – strings out, constants in |
 | [7](../../docs/en/exercise-07.md) | Boundary events & subprocesses | Parallel gateway, timer and message boundary events, subprocesses |
 | [8](../../docs/en/exercise-08.md) | Compensation (SAGA) | Automatic rollback via BPMN compensation |
@@ -99,6 +104,7 @@ this module and continue working with it (valid values: 1–10):
 ```
 
 The task replaces `src/main` completely (Java, `application.yaml`, BPMN/DMN); `src/test` stays
-untouched. All modules run on the same port (`8080`) and DB schema (`exercise`), so only ever
-one module runs at a time. The prerequisite is that you enabled the CIB Seven dependencies in
+untouched. All modules run on the same port (`8080`) and the same embedded H2 database file, so only
+ever one module runs at a time (the running application locks the file, a second instance fails at
+startup). The prerequisite is that you enabled the CIB Seven dependencies in
 **Exercise 1** (the `pom.xml` is not copied along).

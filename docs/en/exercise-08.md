@@ -66,7 +66,7 @@ trigger compensation.
 
 ## Constraints
 
-- **Nothing changes in the Java code.** `RevokeClaimDelegate` stays unchanged – it is just
+- **Nothing changes in the production Java code.** `RevokeClaimDelegate` stays unchanged – it is just
   called differently: by the engine as a compensation handler instead of via a sequence flow.
 - All other elements (subprocess, timer, parallel branches, rejection due to missing capacity)
   stay untouched.
@@ -96,7 +96,7 @@ trigger compensation.
 - [ ] `endEvent_membershipDeclined` is a Compensating End Event
 - [ ] The release is triggered on timeout **and** on withdrawal
 - [ ] In the Cockpit the compensation handler is visible in the process history
-- [ ] The process test from Exercise 7 still passes unchanged
+- [ ] The process test from Exercise 7 passes with adjusted paths – all `verify(...)` unchanged
 
 ## Hints
 
@@ -111,11 +111,27 @@ automatically and invisibly. Compensation is the business counterpart: it undoes
 committed* work through **new** transactions, long after the wait state has passed. In short:
 rollback acts *before* the commit, compensation *after* it.
 
-**Why your process test stays unchanged:** functionally the outcome does not change –
-`serviceTask_revokeClaim` still runs, just as a handler. Your assertions
-`hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)`
-and `verify(revokeClaimUseCase).revokeClaim(id)` still hold. That is exactly a good sign: a
-remodeling change that does not alter behavior must not break the test.
+**What changes in your process test – and what does not:** functionally the outcome does not
+change – `serviceTask_revokeClaim` still runs, just as a handler. So `isEnded()` and
+`verify(revokeClaimUseCase).revokeClaim(id)` still hold unchanged. The two paths for timeout
+and withdrawal, however, no longer compile after `generate-sources`:
+`next.serviceTaskRevokeClaim()` no longer exists behind the boundary events, because the task
+is no longer in the sequence flow. That is exactly what path navigation is for – the compiler
+shows you the places where your test still describes the old flow. The new path ends directly
+at the compensating end event and names the handler it triggers:
+
+```java
+var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
+        .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+        .end(next -> next.endEventMembershipDeclined())
+        .throwingCompensation(FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
+```
+
+`throwingCompensation(...)` takes the compensation boundary event of the compensated activity
+and picks the handler from its `Next`. Check this path with
+`hasPassed(abortPath.getIds())` instead of `hasPassedInOrder`: the
+engine orders passed activities by their end time, and the handler finishes before the end
+event that triggers it completes.
 
 **Going further:** compensation is the BPMN tool for **SAGA patterns** in distributed systems –
 each step gets a compensation step, and on failure the engine compensates the successful steps in

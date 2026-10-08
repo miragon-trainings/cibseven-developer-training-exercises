@@ -1,5 +1,6 @@
 package io.miragon.training.process;
 
+import io.miragon.bpmn.runtime.path.PathWalk;
 import io.miragon.training.adapter.process.HandleRejectionProcessApi;
 import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi;
 import io.miragon.training.application.port.inbound.ClaimMembershipUseCase;
@@ -116,9 +117,29 @@ class MembershipProcessTest {
         // parallel as in-engine delegates, so the parallel join fires on its own (the external-task
         // /remote-worker variant is introduced later, in exercise 9).
 
+        // The subprocess is a scope bracket: onto() steps onto it without recording it, inside() walks
+        // its interior and resumes on the subprocess, so the step to the fork is checked again.
+        var happyPath = PathWalk.from(SubscribeNewsletterProcessApi.FlowNodes.startEventSubmitRegistration())
+                .then(next -> next.serviceTaskClaimMembership())
+                .then(next -> next.gatewayHasEmptySpots())
+                .onto(next -> next.subProcessConfirmMembership())
+                .inside(SubscribeNewsletterProcessApi.FlowNodes.subProcessConfirmMembership(), start -> PathWalk.from(start.startEventConfirmationRequired())
+                        .then(next -> next.serviceTaskSendConfirmationMail())
+                        .then(next -> next.userTaskConfirmMembership())
+                        .end(next -> next.endEventMembershipConfirmed()))
+                .then(next -> next.gatewayNotifyFork())
+                .then(next -> next.serviceTaskSendWelcomeMail())
+                .then(next -> next.gatewayNotifyJoin())
+                .end(next -> next.endEventMembershipActivated());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipActivated.ELEMENT_ID)
+                // An ordered path only makes sense within one sequential branch. The path above walks the
+                // welcome-mail branch; the parallel community branch is asserted unordered below.
+                .hasPassedInOrder(happyPath.getIds())
+                .hasPassed(
+                        SubscribeNewsletterProcessApi.FlowNodes.SubProcessConfirmMembership.ELEMENT_ID,
+                        SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID)
                 .hasNotPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipDeclined.ELEMENT_ID);
 
         verify(sendWelcomeMailUseCase, times(1)).sendWelcomeMail(id);
@@ -136,9 +157,15 @@ class MembershipProcessTest {
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
+        var rejectionPath = PathWalk.from(SubscribeNewsletterProcessApi.FlowNodes.startEventSubmitRegistration())
+                .then(next -> next.serviceTaskClaimMembership())
+                .then(next -> next.gatewayHasEmptySpots())
+                .then(next -> next.serviceTaskSendRejectionMail())
+                .end(next -> next.endEventMembershipRejected());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipRejected.ELEMENT_ID)
+                .hasPassedInOrder(rejectionPath.getIds())
                 .hasNotPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID);
 
         verify(sendRejectionMailUseCase).sendRejectionMail(id);
@@ -152,9 +179,17 @@ class MembershipProcessTest {
         fireTimer(processEngine, SubscribeNewsletterProcessApi.FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID);
         continueToNextWaitState(processEngine);
 
+        // Asserted unordered: the engine orders passed activities by end time, and the compensation
+        // handler finishes before the end event that throws the compensation.
+        var abortPath = PathWalk.from(SubscribeNewsletterProcessApi.FlowNodes.userTaskConfirmMembership())
+                .interruptedBy(SubscribeNewsletterProcessApi.FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+                .then(next -> next.callActivityHandleRejection())
+                .end(next -> next.endEventMembershipDeclined())
+                .throwingCompensation(SubscribeNewsletterProcessApi.FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)
+                .hasPassed(abortPath.getIds())
                 .hasNotPassed(SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
@@ -176,9 +211,15 @@ class MembershipProcessTest {
         taskService.complete(regretTaskId);
         continueToNextWaitState(processEngine);
 
+        var rejectPath = PathWalk.from(SubscribeNewsletterProcessApi.FlowNodes.userTaskConfirmMembership())
+                .interruptedBy(SubscribeNewsletterProcessApi.FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventConfirmationRejected())
+                .then(next -> next.callActivityHandleRejection())
+                .end(next -> next.endEventMembershipDeclined())
+                .throwingCompensation(SubscribeNewsletterProcessApi.FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipDeclined.ELEMENT_ID);
+                .hasPassed(rejectPath.getIds());
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
     }

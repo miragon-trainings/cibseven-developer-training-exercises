@@ -1,5 +1,6 @@
 package io.miragon.training.process;
 
+import io.miragon.bpmn.runtime.path.PathWalk;
 import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi;
 import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
 import io.miragon.training.application.port.inbound.ClaimMembershipUseCase;
@@ -133,18 +134,28 @@ class MembershipProcessTest {
 
         completeConfirmationTask(instance);
 
+        // The subprocess is a scope bracket: onto() steps onto it without recording it, inside() walks
+        // its interior and resumes on the subprocess, so the step to the fork is checked again.
+        var happyPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
+                .then(next -> next.serviceTaskClaimMembership())
+                .then(next -> next.gatewayHasEmptySpots())
+                .onto(next -> next.subProcessConfirmMembership())
+                .inside(FlowNodes.subProcessConfirmMembership(), start -> PathWalk.from(start.startEventConfirmationRequired())
+                        .then(next -> next.serviceTaskSendConfirmationMail())
+                        .then(next -> next.userTaskConfirmMembership())
+                        .end(next -> next.endEventMembershipConfirmed()))
+                .then(next -> next.gatewayNotifyFork())
+                .then(next -> next.serviceTaskSendWelcomeMail())
+                .then(next -> next.gatewayNotifyJoin())
+                .end(next -> next.endEventMembershipActivated());
+
         assertThat(instance)
                 .isEnded()
-                // Deterministic backbone up to the fork and after the join. The two branch tasks run
-                // in parallel, so their relative order is not asserted here (see hasPassed below).
-                .hasPassedInOrder(
-                        FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
-                        FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
-                        FlowNodes.GatewayNotifyFork.ELEMENT_ID,
-                        FlowNodes.GatewayNotifyJoin.ELEMENT_ID,
-                        FlowNodes.EndEventMembershipActivated.ELEMENT_ID)
+                // An ordered path only makes sense within one sequential branch. The path above walks the
+                // welcome-mail branch; the parallel community branch is asserted unordered below.
+                .hasPassedInOrder(happyPath.getIds())
                 .hasPassed(
-                        FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
+                        FlowNodes.SubProcessConfirmMembership.ELEMENT_ID,
                         FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID)
                 .hasNotPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID);
 
@@ -163,9 +174,15 @@ class MembershipProcessTest {
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
+        var rejectionPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
+                .then(next -> next.serviceTaskClaimMembership())
+                .then(next -> next.gatewayHasEmptySpots())
+                .then(next -> next.serviceTaskSendRejectionMail())
+                .end(next -> next.endEventMembershipRejected());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassedInOrder(FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID, FlowNodes.EndEventMembershipRejected.ELEMENT_ID)
+                .hasPassedInOrder(rejectionPath.getIds())
                 .hasNotPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(sendRejectionMailUseCase).sendRejectionMail(id);
@@ -180,9 +197,16 @@ class MembershipProcessTest {
         fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID);
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
+        // Asserted unordered: the engine orders passed activities by end time, and the compensation
+        // handler finishes before the end event that throws the compensation.
+        var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
+                .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+                .end(next -> next.endEventMembershipDeclined())
+                .throwingCompensation(FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)
+                .hasPassed(abortPath.getIds())
                 .hasNotPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
@@ -197,9 +221,14 @@ class MembershipProcessTest {
         membershipProcess.rejectMembership(id);
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
+        var rejectPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
+                .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventConfirmationRejected())
+                .end(next -> next.endEventMembershipDeclined())
+                .throwingCompensation(FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)
+                .hasPassed(rejectPath.getIds())
                 .hasNotPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);

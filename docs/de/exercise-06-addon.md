@@ -2,7 +2,7 @@
 
 > **Voraussetzung:** [Aufgabe 6](exercise-06.md) ist abgeschlossen – beide Prozess-Tests sind grün.
 > **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** das Maven-Plugin `bpmn-to-code`, generierte Process-API, Konstanten statt String-Literale.
+> **Neu in dieser Aufgabe:** das Maven-Plugin `bpmn-to-code`, generierte Process-API, Konstanten statt String-Literale, compile-sichere Pfad-Navigation mit `PathWalk`.
 
 ## Darum geht es
 
@@ -22,14 +22,21 @@ pro Prozess, in der jede Element-ID, jeder Message-Name und der Prozess-Key als 
 steht. Umbenennen im Modeler → nächster Build → aus dem stillen Laufzeitfehler wird ein
 **Compilerfehler**.
 
+Die Process-API kennt aber nicht nur die IDs, sondern auch den **Fluss**: Jedes Element weiß,
+welche Elemente im Modell auf es folgen. Damit beschreibst du den erwarteten Pfad nicht mehr
+als ID-Liste, sondern **navigierst** ihn durch das Modell – ein Schritt, den es im Modell
+nicht gibt, kompiliert nicht.
+
 ## Lernziele
 
 Nach diesem Add-on kannst du
 
 - `bpmn-to-code` als Maven-Plugin einbinden und die Process-API generieren,
 - Element-IDs, Message-Namen und den Prozess-Key über generierte Konstanten referenzieren,
+- den erwarteten Pfad eines Tests mit `PathWalk` compile-sicher durch das Modell navigieren,
 - begründen, warum handgetippte IDs in Tests eine Fehlerquelle sind,
-- die Gegenprobe fahren: eine Umbenennung im Modell muss den Build brechen.
+- die Gegenprobe fahren: eine Umbenennung oder ein umgehängter Fluss im Modell muss den
+  Build brechen.
 
 ## Ziel-Modell
 
@@ -84,30 +91,56 @@ Klassen entstehen – ab dann passiert das bei jedem Build automatisch:
 Danach liegt `io.miragon.training.adapter.process.SubscribeNewsletterProcessApi` unter
 `src/main/java`.
 
-### 3. Strings im Test ersetzen
+### 3. Einzelne Element-IDs im Test ersetzen
 
 Jedes BPMN-Element bekommt unter `FlowNodes` eine eigene Klasse; deren `ELEMENT_ID` ist eine
-normale String-Konstante:
+normale String-Konstante. Nutze sie überall, wo dein Test **ein einzelnes** Element benennt –
+also in `isWaitingAt(...)` und `hasNotPassed(...)`:
 
 ```java
 import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
 
+assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
+```
+
+### 4. Den erwarteten Pfad durch das Modell navigieren
+
+Für `hasPassedInOrder(...)` reichen Konstanten allein nicht: Eine Liste von Konstanten
+kompiliert auch dann, wenn die Reihenfolge im Modell längst eine andere ist. Beschreibe den
+Pfad stattdessen mit `PathWalk` aus `bpmn-to-code-runtime`:
+
+```java
+import io.miragon.bpmn.runtime.path.PathWalk;
+
+var happyPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
+        .then(next -> next.serviceTaskClaimMembership())
+        .then(next -> next.gatewayHasEmptySpots())
+        .then(next -> next.serviceTaskSendConfirmationMail())
+        .then(next -> next.userTaskConfirmMembership())
+        .then(next -> next.serviceTaskSendWelcomeMail())
+        .end(next -> next.endEventMembershipConfirmed());
+
 assertThat(instance)
         .isEnded()
-        .hasPassedInOrder(
-                FlowNodes.StartEventSubmitRegistration.ELEMENT_ID,
-                FlowNodes.ServiceTaskClaimMembership.ELEMENT_ID,
-                FlowNodes.GatewayHasEmptySpots.ELEMENT_ID,
-                FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
-                FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
-                FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
-                FlowNodes.EndEventMembershipConfirmed.ELEMENT_ID)
+        .hasPassedInOrder(happyPath.getIds())
         .hasNotPassed(
                 FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID,
                 FlowNodes.EndEventMembershipRejected.ELEMENT_ID);
 ```
 
-### 4. Prozess-Key und Message-Namen ersetzen
+- `PathWalk.from(...)` startet am Start-Event. Jedes Element hat unter `FlowNodes` neben
+  seiner Klasse eine gleichnamige Methode in camelCase, die seine Instanz liefert.
+- Jedes `then(...)` bekommt das `Next` des aktuellen Elements. Dort stehen **nur dessen echte
+  Nachfolger** – die Autovervollständigung zeigt dir also genau die Sequenzflüsse aus dem
+  Modell. Am Gateway `gateway_hasEmptySpots` stehen beide Zweige zur Wahl; der Test wählt
+  den, den er erwartet.
+- `end(...)` schließt den Pfad am End-Event ab, `getIds()` liefert die Element-IDs in
+  Laufreihenfolge als `String[]` – genau das, was `hasPassedInOrder` braucht.
+
+Navigiere den Ablehnungspfad im zweiten Test genauso: vom Start-Event über das Gateway zu
+`serviceTask_sendRejectionMail` und `endEvent_membershipRejected`.
+
+### 5. Prozess-Key und Message-Namen ersetzen
 
 Nicht nur der Test hat handgetippte Strings: Der Test-Helfer sucht Instanzen über den
 Prozess-Key, der Outbound-Adapter korreliert über den Message-Namen. Ersetze beide –
@@ -126,7 +159,10 @@ runtimeService.createMessageCorrelation(Messages.SUBSCRIPTION_REQUESTED.getValue
 
 - **Ab hier nutzen alle Lösungen die generierte Process-API.** Jede weitere Stufe
   (Boundary Events, Kompensation, Call Activity) referenziert ihre neuen Elemente über
-  Konstanten statt über Strings.
+  Konstanten statt über Strings und navigiert ihre Pfade mit `PathWalk`.
+- `PathWalk` prüft die **Struktur**: Jeder Schritt ist ein Nachfolger, den das Modell
+  erlaubt. Ob die Engine ihn zur Laufzeit wirklich nimmt, prüft weiterhin
+  `hasPassedInOrder`.
 - Variablennamen wie `"membershipId"` oder `"hasEmptySpots"` bleiben bewusst Strings – die
   Process-API kann sie zwar auch typisieren, hier geht es aber um die Element-IDs.
 - Das Plugin läuft in der Phase `generate-sources`; ein normaler Build genügt, ein
@@ -142,16 +178,23 @@ Lass die Tests aus Aufgabe 6 erneut laufen – am Verhalten darf sich nichts ge�
 
 Die Tests sind weiterhin grün, enthalten aber kein einziges Element-ID-Literal mehr.
 
-**Gegenprobe:** Benenne testweise ein Element im `membership.bpmn` um und führe
-`generate-sources` erneut aus – die zugehörige Konstante verschwindet und dein Test
+**Gegenprobe 1 – ID umbenennen:** Benenne testweise ein Element im `membership.bpmn` um und
+führe `generate-sources` erneut aus – die zugehörige Konstante verschwindet und dein Test
 **kompiliert nicht mehr**. Genau das war das Ziel.
+
+**Gegenprobe 2 – Fluss umhängen:** Mach die Umbenennung rückgängig und hänge stattdessen
+einen Sequenzfluss um, zum Beispiel vom User Task direkt zum End-Event. Nach
+`generate-sources` kompiliert `next.serviceTaskSendWelcomeMail()` nicht mehr, obwohl sich
+keine einzige ID geändert hat. Eine reine Konstanten-Liste hätte das erst zur Laufzeit
+bemerkt.
 
 ## Selbstcheck
 
 - [ ] `SubscribeNewsletterProcessApi` wird beim Build generiert
 - [ ] Im Prozess-Test steht kein Element-ID-String mehr
+- [ ] Beide Tests beschreiben ihren Pfad mit `PathWalk` statt mit einer ID-Liste
 - [ ] `ProcessEngineTestUtils` nutzt `PROCESS_ID`, der Outbound-Adapter nutzt `Messages.*`
-- [ ] Die Gegenprobe erzeugt einen Compilerfehler statt eines stillen Fehlschlags
+- [ ] Beide Gegenproben erzeugen einen Compilerfehler statt eines stillen Fehlschlags
 
 ## Hinweise
 

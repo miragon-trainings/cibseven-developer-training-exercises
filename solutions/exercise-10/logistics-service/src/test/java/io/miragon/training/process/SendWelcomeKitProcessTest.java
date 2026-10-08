@@ -1,5 +1,6 @@
 package io.miragon.training.process;
 
+import io.miragon.bpmn.runtime.path.PathWalk;
 import io.miragon.training.adapter.process.SendWelcomeKitProcessApi;
 import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.FlowNodes;
 import io.miragon.training.adapter.process.ServiceTasks;
@@ -29,8 +30,8 @@ import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.init;
  * signal, completing the external task) is outsourced to {@code ProcessEngineTestUtils}.
  *
  * <p>The process is minimal — signal start → one external service task → end — so a single test covers it
- * end to end: the broadcast starts it, the worker (stood in for) completes the task, and all three
- * elements are passed in order.
+ * end to end: the broadcast starts it, the worker (stood in for) completes the task, and the whole
+ * path is passed in order.
  */
 class SendWelcomeKitProcessTest {
 
@@ -65,12 +66,14 @@ class SendWelcomeKitProcessTest {
         continueToNextWaitState(processEngine);
         completeExternalTask(processEngine, ServiceTasks.SHIP_WELCOME_KIT); // stands in for the remote worker
 
+        var signalPath = PathWalk.from(FlowNodes.startEventMemberActivated())
+                .then(next -> next.gatewayStart())
+                .then(next -> next.serviceTaskShipWelcomeKit())
+                .end(next -> next.endEventWelcomeKitShipped());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassedInOrder(
-                        FlowNodes.StartEventMemberActivated.ELEMENT_ID,
-                        FlowNodes.ServiceTaskShipWelcomeKit.ELEMENT_ID,
-                        FlowNodes.EndEventWelcomeKitShipped.ELEMENT_ID);
+                .hasPassedInOrder(signalPath.getIds());
     }
 
     @Test
@@ -82,11 +85,13 @@ class SendWelcomeKitProcessTest {
 
         completeExternalTask(processEngine, ServiceTasks.SHIP_WELCOME_KIT);
 
+        var manualPath = PathWalk.from(FlowNodes.startEventManualStart())
+                .then(next -> next.gatewayStart())
+                .then(next -> next.serviceTaskShipWelcomeKit())
+                .end(next -> next.endEventWelcomeKitShipped());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassedInOrder(
-                        FlowNodes.StartEventManualStart.ELEMENT_ID,
-                        FlowNodes.ServiceTaskShipWelcomeKit.ELEMENT_ID,
-                        FlowNodes.EndEventWelcomeKitShipped.ELEMENT_ID);
+                .hasPassedInOrder(manualPath.getIds());
     }
 }

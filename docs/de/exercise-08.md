@@ -70,7 +70,7 @@ löst der Abbruch die Kompensation aus.
 
 ## Randbedingungen
 
-- **Am Java-Code ändert sich nichts.** `RevokeClaimDelegate` bleibt unverändert – er wird
+- **Am produktiven Java-Code ändert sich nichts.** `RevokeClaimDelegate` bleibt unverändert – er wird
   nur anders aufgerufen: von der Engine als Kompensations-Handler statt über einen
   Sequenzfluss.
 - Alle übrigen Elemente (Subprozess, Timer, Parallelzweige, Ablehnung wegen fehlender
@@ -101,7 +101,7 @@ löst der Abbruch die Kompensation aus.
 - [ ] `endEvent_membershipDeclined` ist ein Compensating End Event
 - [ ] Die Freigabe wird bei Timeout **und** bei Rückzug ausgelöst
 - [ ] Im Cockpit ist der Kompensations-Handler in der Prozesshistorie sichtbar
-- [ ] Der Prozess-Test aus Aufgabe 7 läuft unverändert grün
+- [ ] Der Prozess-Test aus Aufgabe 7 läuft mit angepassten Pfaden grün – alle `verify(...)` unverändert
 
 ## Hinweise
 
@@ -117,12 +117,27 @@ Gegenstück: Sie macht *bereits committete* Arbeit über **neue** Transaktionen 
 lange nachdem der Wait State passiert ist. Kurz: Rollback greift *vor* dem Commit,
 Kompensation *danach*.
 
-**Warum dein Prozess-Test unverändert bleibt:** Fachlich ändert sich am Ergebnis nichts –
-`serviceTask_revokeClaim` läuft weiterhin, nur als Handler. Deine Assertions
-`hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)`
-und `verify(revokeClaimUseCase).revokeClaim(id)` gelten weiter. Genau das ist ein gutes
-Zeichen: Ein Umbau der Modellierung, der das Verhalten nicht ändert, darf den Test nicht
-brechen.
+**Was sich an deinem Prozess-Test ändert – und was nicht:** Fachlich ändert sich am Ergebnis
+nichts – `serviceTask_revokeClaim` läuft weiterhin, nur als Handler. `isEnded()` und
+`verify(revokeClaimUseCase).revokeClaim(id)` gelten deshalb unverändert weiter. Die beiden
+Pfade für Timeout und Rückzug kompilieren nach `generate-sources` dagegen nicht mehr:
+`next.serviceTaskRevokeClaim()` gibt es hinter den Boundary Events nicht mehr, weil der Task
+nicht mehr im Sequenzfluss liegt. Genau dafür ist die Pfad-Navigation da – der Compiler zeigt
+dir die Stellen, an denen dein Test noch den alten Fluss beschreibt. Der neue Pfad endet
+direkt am Compensating End Event und nennt den Handler, den es auslöst:
+
+```java
+var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
+        .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+        .end(next -> next.endEventMembershipDeclined())
+        .throwingCompensation(FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
+```
+
+`throwingCompensation(...)` nimmt das Compensation Boundary Event der kompensierten Aktivität
+und wählt aus dessen `Next` den Handler. Prüfe diesen Pfad mit
+`hasPassed(abortPath.getIds())` statt mit `hasPassedInOrder`: Die
+Engine sortiert durchlaufene Aktivitäten nach ihrem Endzeitpunkt, und der Handler ist fertig,
+bevor das End-Event abschließt, das ihn auslöst.
 
 **Weiterführend:** Kompensation ist das BPMN-Werkzeug für **SAGA-Muster** in verteilten
 Systemen – jeder Schritt bekommt einen Kompensationsschritt, und bei einem Fehler

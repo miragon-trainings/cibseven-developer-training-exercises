@@ -1,5 +1,6 @@
 package io.miragon.training.process;
 
+import io.miragon.bpmn.runtime.path.PathWalk;
 import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
 import io.miragon.training.application.port.inbound.ClaimMembershipUseCase;
 import io.miragon.training.application.port.inbound.SendConfirmationMailUseCase;
@@ -91,16 +92,17 @@ class MembershipProcessTest {
         taskService.complete(taskId);
         continueToNextWaitState(processEngine);
 
+        var happyPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
+                .then(next -> next.serviceTaskClaimMembership())
+                .then(next -> next.gatewayHasEmptySpots())
+                .then(next -> next.serviceTaskSendConfirmationMail())
+                .then(next -> next.userTaskConfirmMembership())
+                .then(next -> next.serviceTaskSendWelcomeMail())
+                .end(next -> next.endEventMembershipConfirmed());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassedInOrder(
-                        FlowNodes.StartEventSubmitRegistration.ELEMENT_ID,
-                        FlowNodes.ServiceTaskClaimMembership.ELEMENT_ID,
-                        FlowNodes.GatewayHasEmptySpots.ELEMENT_ID,
-                        FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
-                        FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
-                        FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
-                        FlowNodes.EndEventMembershipConfirmed.ELEMENT_ID)
+                .hasPassedInOrder(happyPath.getIds())
                 .hasNotPassed(
                         FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID,
                         FlowNodes.EndEventMembershipRejected.ELEMENT_ID);
@@ -122,13 +124,15 @@ class MembershipProcessTest {
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
         continueToNextWaitState(processEngine);
 
+        var rejectionPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
+                .then(next -> next.serviceTaskClaimMembership())
+                .then(next -> next.gatewayHasEmptySpots())
+                .then(next -> next.serviceTaskSendRejectionMail())
+                .end(next -> next.endEventMembershipRejected());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassedInOrder(
-                        FlowNodes.ServiceTaskClaimMembership.ELEMENT_ID,
-                        FlowNodes.GatewayHasEmptySpots.ELEMENT_ID,
-                        FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID,
-                        FlowNodes.EndEventMembershipRejected.ELEMENT_ID)
+                .hasPassedInOrder(rejectionPath.getIds())
                 .hasNotPassed(
                         FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
                         FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,

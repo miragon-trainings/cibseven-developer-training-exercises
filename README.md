@@ -42,7 +42,7 @@ Detailed exercise descriptions can be found in [`docs/`](docs/).
 | [4](docs/en/exercise-04.md) | The application takes over | Message start event, REST register + confirm endpoints, message correlation, persistence |
 | [5](docs/en/exercise-05.md) | Capacity check with a gateway | Exclusive gateway, business key, task form |
 | [6](docs/en/exercise-06.md) | Process tests | Transaction boundaries, process unit test with an in-memory engine, mocked use cases, without PostgreSQL |
-| [6 · Add-on](docs/en/exercise-06-addon.md) | bpmn-to-code | Element IDs as generated constants instead of hand-typed strings |
+| [6 · Add-on](docs/en/exercise-06-addon.md) | bpmn-to-code | Element IDs as generated constants instead of hand-typed strings, compile-safe path navigation with `PathWalk` |
 | [7](docs/en/exercise-07.md) | Subprocess, boundary events & parallelism | Subprocess, timer and message boundary events, parallel gateway, Teams integration |
 | [8](docs/en/exercise-08.md) | Compensation (SAGA) | Compensation boundary event, compensating end event, compensation handler |
 | [9](docs/en/exercise-09.md) | Call activity & DMN | Call activity, DMN decision table, business rule task |

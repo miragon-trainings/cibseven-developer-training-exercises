@@ -2,7 +2,7 @@
 
 > **Prerequisite:** [Exercise 6](exercise-06.md) is complete – both process tests are green.
 > **Working directory:** `services/process-application`
-> **New in this exercise:** the Maven plugin `bpmn-to-code`, a generated Process-API, constants instead of string literals.
+> **New in this exercise:** the Maven plugin `bpmn-to-code`, a generated Process-API, constants instead of string literals, compile-safe path navigation with `PathWalk`.
 
 ## What this is about
 
@@ -21,14 +21,19 @@ a **type-safe Process-API** from your BPMN files at build time: one Java class p
 in which every element ID, every message name, and the process key becomes a constant.
 Rename in the modeler → next build → the silent runtime error becomes a **compiler error**.
 
+The Process-API knows more than the IDs, though: it also knows the **flow**. Every element
+knows which elements follow it in the model. So instead of listing IDs, you **navigate** the
+expected path through the model – a step that does not exist in the model does not compile.
+
 ## Learning goals
 
 After this add-on you can
 
 - wire in `bpmn-to-code` as a Maven plugin and generate the Process-API,
 - reference element IDs, message names, and the process key via generated constants,
+- navigate a test's expected path through the model in a compile-safe way with `PathWalk`,
 - explain why hand-typed IDs in tests are a source of errors,
-- run the counter-check: a rename in the model must break the build.
+- run the counter-check: a rename or a rerouted flow in the model must break the build.
 
 ## Target model
 
@@ -83,30 +88,56 @@ come into being – from then on it happens automatically on every build:
 Afterwards `io.miragon.training.adapter.process.SubscribeNewsletterProcessApi` sits under
 `src/main/java`.
 
-### 3. Replace the strings in the test
+### 3. Replace the single element IDs in the test
 
 Every BPMN element gets its own class under `FlowNodes`; its `ELEMENT_ID` is a plain
-string constant:
+string constant. Use it wherever your test names **a single** element – that is, in
+`isWaitingAt(...)` and `hasNotPassed(...)`:
 
 ```java
 import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
 
+assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
+```
+
+### 4. Navigate the expected path through the model
+
+For `hasPassedInOrder(...)` constants alone are not enough: a list of constants still
+compiles when the order in the model has long since changed. Describe the path with
+`PathWalk` from `bpmn-to-code-runtime` instead:
+
+```java
+import io.miragon.bpmn.runtime.path.PathWalk;
+
+var happyPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
+        .then(next -> next.serviceTaskClaimMembership())
+        .then(next -> next.gatewayHasEmptySpots())
+        .then(next -> next.serviceTaskSendConfirmationMail())
+        .then(next -> next.userTaskConfirmMembership())
+        .then(next -> next.serviceTaskSendWelcomeMail())
+        .end(next -> next.endEventMembershipConfirmed());
+
 assertThat(instance)
         .isEnded()
-        .hasPassedInOrder(
-                FlowNodes.StartEventSubmitRegistration.ELEMENT_ID,
-                FlowNodes.ServiceTaskClaimMembership.ELEMENT_ID,
-                FlowNodes.GatewayHasEmptySpots.ELEMENT_ID,
-                FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID,
-                FlowNodes.UserTaskConfirmMembership.ELEMENT_ID,
-                FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
-                FlowNodes.EndEventMembershipConfirmed.ELEMENT_ID)
+        .hasPassedInOrder(happyPath.getIds())
         .hasNotPassed(
                 FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID,
                 FlowNodes.EndEventMembershipRejected.ELEMENT_ID);
 ```
 
-### 4. Replace the process key and the message names
+- `PathWalk.from(...)` starts at the start event. Next to its class, every element has a
+  method of the same name in camelCase under `FlowNodes` that returns its instance.
+- Every `then(...)` receives the `Next` of the current element. It offers **only that
+  element's real successors** – so autocompletion shows you exactly the sequence flows of
+  the model. At the gateway `gateway_hasEmptySpots` both branches are on offer; the test
+  picks the one it expects.
+- `end(...)` closes the path at the end event, and `getIds()` returns the element IDs in
+  walk order as a `String[]` – exactly what `hasPassedInOrder` needs.
+
+Navigate the rejection path in the second test the same way: from the start event via the
+gateway to `serviceTask_sendRejectionMail` and `endEvent_membershipRejected`.
+
+### 5. Replace the process key and the message names
 
 It is not only the test that has hand-typed strings: the test helper looks up instances via
 the process key, and the outbound adapter correlates via the message name. Replace both –
@@ -125,7 +156,9 @@ runtimeService.createMessageCorrelation(Messages.SUBSCRIPTION_REQUESTED.getValue
 
 - **From here on all solutions use the generated Process-API.** Every further stage
   (boundary events, compensation, call activity) references its new elements via
-  constants instead of strings.
+  constants instead of strings and navigates its paths with `PathWalk`.
+- `PathWalk` checks the **structure**: every step is a successor the model allows. Whether
+  the engine really takes it at runtime is still checked by `hasPassedInOrder`.
 - Variable names like `"membershipId"` or `"hasEmptySpots"` deliberately stay strings – the
   Process-API could type them too, but here it is about the element IDs.
 - The plugin runs in the `generate-sources` phase; a normal build is enough, a separate
@@ -141,16 +174,22 @@ Run the tests from Exercise 6 again – the behavior must not have changed at al
 
 The tests are still green, but no longer contain a single element-ID literal.
 
-**Counter-check:** As an experiment, rename an element in `membership.bpmn` and run
-`generate-sources` again – the corresponding constant disappears and your test **no longer
-compiles**. That was exactly the goal.
+**Counter-check 1 – rename an ID:** As an experiment, rename an element in `membership.bpmn`
+and run `generate-sources` again – the corresponding constant disappears and your test **no
+longer compiles**. That was exactly the goal.
+
+**Counter-check 2 – reroute a flow:** Undo the rename and reroute a sequence flow instead,
+for example from the user task straight to the end event. After `generate-sources`,
+`next.serviceTaskSendWelcomeMail()` no longer compiles, although not a single ID has changed.
+A plain list of constants would only have noticed that at runtime.
 
 ## Self-check
 
 - [ ] `SubscribeNewsletterProcessApi` is generated at build time
 - [ ] The process test no longer contains any element-ID string
+- [ ] Both tests describe their path with `PathWalk` instead of an ID list
 - [ ] `ProcessEngineTestUtils` uses `PROCESS_ID`, the outbound adapter uses `Messages.*`
-- [ ] The counter-check produces a compiler error instead of a silent failure
+- [ ] Both counter-checks produce a compiler error instead of a silent failure
 
 ## Hints
 

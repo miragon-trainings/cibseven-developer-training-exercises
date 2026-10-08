@@ -166,16 +166,50 @@ notification:
 
 ### 9. Prozess-Test erweitern
 
-Dein Test deckt bisher Happy Path und Ablehnung wegen fehlender Kapazität ab. Ergänze drei
-Tests:
+Dein Test deckt bisher Happy Path und Ablehnung wegen fehlender Kapazität ab. Nach dem
+nächsten `generate-sources` kompiliert der Happy Path aus dem Add-on nicht mehr: Hinter dem
+Gateway liegt jetzt der Subprozess, hinter dem User Task der Fork. Navigiere ihn neu:
+
+```java
+var happyPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
+        .then(next -> next.serviceTaskClaimMembership())
+        .then(next -> next.gatewayHasEmptySpots())
+        .onto(next -> next.subProcessConfirmMembership())
+        .inside(FlowNodes.subProcessConfirmMembership(), start -> PathWalk.from(start.startEventConfirmationRequired())
+                .then(next -> next.serviceTaskSendConfirmationMail())
+                .then(next -> next.userTaskConfirmMembership())
+                .end(next -> next.endEventMembershipConfirmed()))
+        .then(next -> next.gatewayNotifyFork())
+        .then(next -> next.serviceTaskSendWelcomeMail())
+        .then(next -> next.gatewayNotifyJoin())
+        .end(next -> next.endEventMembershipActivated());
+```
+
+- **Subprozess:** `onto(...)` tritt auf den Subprozess, ohne ihn in den Pfad aufzunehmen.
+  `inside(...)` läuft sein Inneres ab und setzt danach wieder am Subprozess auf – der Schritt
+  zum Fork ist also wieder geprüft.
+- **Parallel Gateway:** Ein geordneter Pfad ergibt nur innerhalb **eines** sequenziellen
+  Zweigs Sinn. Der Pfad folgt dem Welcome-Mail-Zweig; den parallelen Zweig prüfst du
+  ungeordnet mit `hasPassed(FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID)`.
+
+Ergänze danach drei Tests:
 
 - **Timeout (unterbrechend):** Warte am User Task, feuere den Timer mit dem Helfer
-  `fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID)`, führe die
-  offenen Jobs aus und prüfe
-  `hasPassed(FlowNodes.ServiceTaskRevokeClaim.ELEMENT_ID, FlowNodes.EndEventMembershipDeclined.ELEMENT_ID)`.
-  Mocke dafür `RevokeClaimUseCase`.
+  `fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID)` und führe die
+  offenen Jobs aus. Das Token verlässt den Subprozess vorzeitig über das Boundary Event –
+  `interruptedBy(...)` nennt dafür den Subprozess, an dem das Event hängt:
+
+  ```java
+  var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
+          .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+          .then(next -> next.serviceTaskRevokeClaim())
+          .end(next -> next.endEventMembershipDeclined());
+  ```
+
+  Prüfe den Pfad mit `hasPassedInOrder(abortPath.getIds())` und mocke
+  dafür `RevokeClaimUseCase`.
 - **Rückzug per Nachricht:** Statt des Timers `membershipProcess.rejectMembership(id)`
-  aufrufen – gleicher Ausgang.
+  aufrufen – gleicher Ausgang, der Pfad läuft über `eventConfirmationRejected()`.
 - **Erinnerung (nicht unterbrechend):**
   `fireTimer(..., FlowNodes.EventResendEveryDay.ELEMENT_ID)`, dann prüfen, dass
   `reSendConfirmationMailUseCase` ein **zweites** Mal aufgerufen wurde und der Prozess
@@ -192,7 +226,7 @@ du in `ProcessEngineTestUtils`.
 - Die Element-IDs der Boundary Events folgen der gewachsenen Konvention `timer_` und
   `event_` statt `boundaryEvent_` – so steht es im Referenzmodell, und dabei bleibt es.
 - Neue Element-IDs erscheinen nach dem nächsten `generate-sources` automatisch als
-  `FlowNodes.*`-Konstanten.
+  `FlowNodes.*`-Konstanten, neue Sequenzflüsse als Nachfolger im jeweiligen `Next`.
 - Mocke im Test auch `NotifyCommunityUseCase`, damit kein echter Teams-Aufruf hinausgeht.
 - Committe niemals eine echte Webhook-URL – sie kommt aus `TEAMS_WEBHOOK_URL`.
 

@@ -1,6 +1,6 @@
 package io.miragon.training.adapter.inbound.cibseven;
 
-import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.ServiceTasks;
+import io.miragon.training.adapter.process.ServiceTasks;
 import io.miragon.training.application.port.inbound.ShipWelcomeKitUseCase;
 import io.miragon.training.domain.Member;
 import org.cibseven.bpm.client.spring.annotation.ExternalTaskSubscription;

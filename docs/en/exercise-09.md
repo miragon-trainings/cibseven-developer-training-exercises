@@ -117,11 +117,20 @@ produces an `extensionElements` block with `camunda:in` entries on the Call Acti
 
 Rejection handling now lives in the Call Activity. Add both DMN branches:
 
-- **Age outside 21–29** (for example `40`): after a timeout or withdrawal, the Call Activity runs through without a wait state, and then compensation kicks in. Check
-  `hasPassed(Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())`.
+- **Age outside 21–29** (for example `40`): after a timeout or withdrawal, the Call Activity runs through without a wait state, and then compensation kicks in. The Call Activity now sits between the boundary event and the end event – add the step to the path:
+
+  ```java
+  var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
+          .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+          .then(next -> next.callActivityHandleRejection())
+          .end(next -> next.endEventMembershipDeclined())
+          .throwingCompensation(FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
+  ```
+
+  As in Exercise 8, check it with `hasPassed(...)`. For the path the Call Activity is a single step; the interior of the called process belongs to that process's own API.
 - **Age between 21 and 29:** the called process waits at `userTask_writeRegretMail`. Because the element lives in the **called** process, its constant comes from the second generated API: fetch the task via
-  `taskDefinitionKey(HandleRejectionProcessApi.Elements.USER_TASK_WRITE_REGRET_MAIL.getValue())`,
-  complete it, run the open jobs, and check the same completion.
+  `taskDefinitionKey(HandleRejectionProcessApi.FlowNodes.UserTaskWriteRegretMail.ELEMENT_ID)`,
+  complete it, run the open jobs, and check the same path – for the withdrawal via message through `eventConfirmationRejected()`.
 
 ## Constraints
 

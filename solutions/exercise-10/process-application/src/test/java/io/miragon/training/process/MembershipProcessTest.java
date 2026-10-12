@@ -1,5 +1,6 @@
 package io.miragon.training.process;
 
+import io.miragon.bpmn.runtime.path.PathWalk;
 import io.miragon.training.adapter.process.HandleRejectionProcessApi;
 import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi;
 import io.miragon.training.application.port.inbound.ClaimMembershipUseCase;
@@ -98,7 +99,7 @@ class MembershipProcessTest {
         membershipProcess.startProcess(new Membership(id, new Email("user@example.com"), new Name("User"), new Age(age)));
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
-        assertThat(instance).isWaitingAt(SubscribeNewsletterProcessApi.Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue());
+        assertThat(instance).isWaitingAt(SubscribeNewsletterProcessApi.FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
         return instance;
     }
 
@@ -116,10 +117,30 @@ class MembershipProcessTest {
         // parallel as in-engine delegates, so the parallel join fires on its own (the external-task
         // /remote-worker variant is introduced later, in exercise 9).
 
+        // The subprocess is a scope bracket: onto() steps onto it without recording it, inside() walks
+        // its interior and resumes on the subprocess, so the step to the fork is checked again.
+        var happyPath = PathWalk.from(SubscribeNewsletterProcessApi.FlowNodes.startEventSubmitRegistration())
+                .then(next -> next.serviceTaskClaimMembership())
+                .then(next -> next.gatewayHasEmptySpots())
+                .onto(next -> next.subProcessConfirmMembership())
+                .inside(SubscribeNewsletterProcessApi.FlowNodes.subProcessConfirmMembership(), start -> PathWalk.from(start.startEventConfirmationRequired())
+                        .then(next -> next.serviceTaskSendConfirmationMail())
+                        .then(next -> next.userTaskConfirmMembership())
+                        .end(next -> next.endEventMembershipConfirmed()))
+                .then(next -> next.gatewayNotifyFork())
+                .then(next -> next.serviceTaskSendWelcomeMail())
+                .then(next -> next.gatewayNotifyJoin())
+                .end(next -> next.endEventMembershipActivated());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_NOTIFY_COMMUNITY.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue())
-                .hasNotPassed(SubscribeNewsletterProcessApi.Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue());
+                // An ordered path only makes sense within one sequential branch. The path above walks the
+                // welcome-mail branch; the parallel community branch is asserted unordered below.
+                .hasPassedInOrder(happyPath.getIds())
+                .hasPassed(
+                        SubscribeNewsletterProcessApi.FlowNodes.SubProcessConfirmMembership.ELEMENT_ID,
+                        SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID)
+                .hasNotPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipDeclined.ELEMENT_ID);
 
         verify(sendWelcomeMailUseCase, times(1)).sendWelcomeMail(id);
         verify(notifyCommunityUseCase, times(1)).notifyCommunity(id);
@@ -136,10 +157,16 @@ class MembershipProcessTest {
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
+        var rejectionPath = PathWalk.from(SubscribeNewsletterProcessApi.FlowNodes.startEventSubmitRegistration())
+                .then(next -> next.serviceTaskClaimMembership())
+                .then(next -> next.gatewayHasEmptySpots())
+                .then(next -> next.serviceTaskSendRejectionMail())
+                .end(next -> next.endEventMembershipRejected());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_SEND_REJECTION_MAIL.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_REJECTED.getValue())
-                .hasNotPassed(SubscribeNewsletterProcessApi.Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue());
+                .hasPassedInOrder(rejectionPath.getIds())
+                .hasNotPassed(SubscribeNewsletterProcessApi.FlowNodes.CallActivityHandleRejection.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID);
 
         verify(sendRejectionMailUseCase).sendRejectionMail(id);
     }
@@ -149,13 +176,21 @@ class MembershipProcessTest {
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, 40); // age 40 -> DMN: not high value
 
-        fireTimer(processEngine, SubscribeNewsletterProcessApi.Elements.EVENT_ABORT_AFTER_3_HALF_DAYS.getValue());
+        fireTimer(processEngine, SubscribeNewsletterProcessApi.FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID);
         continueToNextWaitState(processEngine);
+
+        // Asserted unordered: the engine orders passed activities by end time, and the compensation
+        // handler finishes before the end event that throws the compensation.
+        var abortPath = PathWalk.from(SubscribeNewsletterProcessApi.FlowNodes.userTaskConfirmMembership())
+                .interruptedBy(SubscribeNewsletterProcessApi.FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+                .then(next -> next.callActivityHandleRejection())
+                .end(next -> next.endEventMembershipDeclined())
+                .throwingCompensation(SubscribeNewsletterProcessApi.FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
 
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())
-                .hasNotPassed(SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_SEND_WELCOME_MAIL.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+                .hasPassed(abortPath.getIds())
+                .hasNotPassed(SubscribeNewsletterProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
     }
@@ -170,15 +205,21 @@ class MembershipProcessTest {
 
         // the called handleRejection instance now waits for the regret mail to be written
         String regretTaskId = taskService.createTaskQuery()
-                .taskDefinitionKey(HandleRejectionProcessApi.Elements.USER_TASK_WRITE_REGRET_MAIL.getValue())
+                .taskDefinitionKey(HandleRejectionProcessApi.FlowNodes.UserTaskWriteRegretMail.ELEMENT_ID)
                 .singleResult()
                 .getId();
         taskService.complete(regretTaskId);
         continueToNextWaitState(processEngine);
 
+        var rejectPath = PathWalk.from(SubscribeNewsletterProcessApi.FlowNodes.userTaskConfirmMembership())
+                .interruptedBy(SubscribeNewsletterProcessApi.FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventConfirmationRejected())
+                .then(next -> next.callActivityHandleRejection())
+                .end(next -> next.endEventMembershipDeclined())
+                .throwingCompensation(SubscribeNewsletterProcessApi.FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassed(SubscribeNewsletterProcessApi.Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), SubscribeNewsletterProcessApi.Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue());
+                .hasPassed(rejectPath.getIds());
 
         verify(revokeClaimUseCase, times(1)).revokeClaim(id);
     }
@@ -189,16 +230,16 @@ class MembershipProcessTest {
         ProcessInstance instance = startWaitingAtConfirmation(id, 30);
         verify(sendConfirmationMailUseCase, times(1)).sendConfirmationMail(id);
 
-        fireTimer(processEngine, SubscribeNewsletterProcessApi.Elements.EVENT_RESEND_EVERY_DAY.getValue());
+        fireTimer(processEngine, SubscribeNewsletterProcessApi.FlowNodes.EventResendEveryDay.ELEMENT_ID);
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
-        assertThat(instance).isWaitingAt(SubscribeNewsletterProcessApi.Elements.USER_TASK_CONFIRM_MEMBERSHIP.getValue());
+        assertThat(instance).isWaitingAt(SubscribeNewsletterProcessApi.FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
         verify(reSendConfirmationMailUseCase, times(1)).reSendConfirmationMail(id);
 
         String taskId = taskService.createTaskQuery()
                 .processInstanceId(instance.getProcessInstanceId()).singleResult().getId();
         taskService.complete(taskId);
         continueToNextWaitState(processEngine, instance.getProcessInstanceId());
-        assertThat(instance).isEnded().hasPassed(SubscribeNewsletterProcessApi.Elements.END_EVENT_MEMBERSHIP_ACTIVATED.getValue());
+        assertThat(instance).isEnded().hasPassed(SubscribeNewsletterProcessApi.FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
     }
 }

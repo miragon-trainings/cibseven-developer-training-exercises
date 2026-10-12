@@ -143,13 +143,26 @@ Ein Out-Mapping brauchst du hier nicht: Der Hauptprozess verarbeitet kein Ergebn
 Die Ablehnungsbehandlung liegt jetzt in der Call Activity. Ergänze beide DMN-Zweige:
 
 - **Alter außerhalb 21–29** (zum Beispiel `40`): Nach Timeout oder Rückzug läuft die Call
-  Activity ohne Wait State durch, danach greift die Kompensation. Prüfe
-  `hasPassed(Elements.CALL_ACTIVITY_HANDLE_REJECTION.getValue(), Elements.SERVICE_TASK_REVOKE_CLAIM.getValue(), Elements.END_EVENT_MEMBERSHIP_DECLINED.getValue())`.
+  Activity ohne Wait State durch, danach greift die Kompensation. Zwischen Boundary Event
+  und End-Event liegt jetzt die Call Activity – ergänze den Schritt im Pfad:
+
+  ```java
+  var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
+          .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+          .then(next -> next.callActivityHandleRejection())
+          .end(next -> next.endEventMembershipDeclined())
+          .throwingCompensation(FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
+  ```
+
+  Geprüft wird er wie in Aufgabe 8 mit `hasPassed(...)`. Für den Pfad ist die Call Activity
+  ein einzelner Schritt; das Innere des aufgerufenen
+  Prozesses gehört zu dessen eigener API.
 - **Alter zwischen 21 und 29:** Der aufgerufene Prozess wartet an `userTask_writeRegretMail`.
   Weil das Element im **aufgerufenen** Prozess liegt, kommt seine Konstante aus der zweiten
   generierten API: Hole die Aufgabe über
-  `taskDefinitionKey(HandleRejectionProcessApi.Elements.USER_TASK_WRITE_REGRET_MAIL.getValue())`,
-  schließe sie ab, führe die offenen Jobs aus und prüfe denselben Abschluss.
+  `taskDefinitionKey(HandleRejectionProcessApi.FlowNodes.UserTaskWriteRegretMail.ELEMENT_ID)`,
+  schließe sie ab, führe die offenen Jobs aus und prüfe denselben Pfad – beim Rückzug per
+  Nachricht über `eventConfirmationRejected()`.
 
 ## Randbedingungen
 

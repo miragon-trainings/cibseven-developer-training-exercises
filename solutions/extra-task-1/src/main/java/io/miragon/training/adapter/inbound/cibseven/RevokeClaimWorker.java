@@ -2,7 +2,7 @@ package io.miragon.training.adapter.inbound.cibseven;
 
 import dev.bpmcrafters.processengine.worker.ProcessEngineWorker;
 import dev.bpmcrafters.processengine.worker.Variable;
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.ServiceTasks;
+import io.miragon.training.adapter.process.ServiceTasks;
 import io.miragon.training.application.port.inbound.RevokeClaimUseCase;
 import io.miragon.training.domain.MembershipId;
 import org.slf4j.Logger;

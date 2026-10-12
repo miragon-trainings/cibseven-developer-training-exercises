@@ -1,9 +1,10 @@
 package io.miragon.training.process;
 
+import io.miragon.bpmn.runtime.path.PathWalk;
 import io.miragon.training.adapter.process.SendWelcomeKitProcessApi;
-import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.Elements;
-import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.ServiceTasks;
-import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.Signals;
+import io.miragon.training.adapter.process.SendWelcomeKitProcessApi.FlowNodes;
+import io.miragon.training.adapter.process.ServiceTasks;
+import io.miragon.training.adapter.process.Signals;
 import org.cibseven.bpm.engine.ProcessEngine;
 import org.cibseven.bpm.engine.impl.cfg.StandaloneInMemProcessEngineConfiguration;
 import org.cibseven.bpm.engine.runtime.ProcessInstance;
@@ -29,8 +30,8 @@ import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.init;
  * signal, completing the external task) is outsourced to {@code ProcessEngineTestUtils}.
  *
  * <p>The process is minimal — signal start → one external service task → end — so a single test covers it
- * end to end: the broadcast starts it, the worker (stood in for) completes the task, and all three
- * elements are passed in order.
+ * end to end: the broadcast starts it, the worker (stood in for) completes the task, and the whole
+ * path is passed in order.
  */
 class SendWelcomeKitProcessTest {
 
@@ -57,7 +58,7 @@ class SendWelcomeKitProcessTest {
 
     @Test
     void theSignalStartsTheProcessAndTheWorkerShipsTheKitToTheEnd() {
-        broadcastSignal(processEngine, Signals.SIGNAL_MEMBER_ACTIVATED.getValue(), Map.of("name", "Jane"));
+        broadcastSignal(processEngine, Signals.MEMBER_ACTIVATED.getValue(), Map.of("name", "Jane"));
         ProcessInstance instance = findInstance(processEngine, SendWelcomeKitProcessApi.PROCESS_ID.getValue());
 
         // The signal start is asyncBefore: the instance commits at once and only reaches the external task
@@ -65,12 +66,14 @@ class SendWelcomeKitProcessTest {
         continueToNextWaitState(processEngine);
         completeExternalTask(processEngine, ServiceTasks.SHIP_WELCOME_KIT); // stands in for the remote worker
 
+        var signalPath = PathWalk.from(FlowNodes.startEventMemberActivated())
+                .then(next -> next.gatewayStart())
+                .then(next -> next.serviceTaskShipWelcomeKit())
+                .end(next -> next.endEventWelcomeKitShipped());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassedInOrder(
-                        Elements.START_EVENT_MEMBER_ACTIVATED.getValue(),
-                        Elements.SERVICE_TASK_SHIP_WELCOME_KIT.getValue(),
-                        Elements.END_EVENT_WELCOME_KIT_SHIPPED.getValue());
+                .hasPassedInOrder(signalPath.getIds());
     }
 
     @Test
@@ -82,11 +85,13 @@ class SendWelcomeKitProcessTest {
 
         completeExternalTask(processEngine, ServiceTasks.SHIP_WELCOME_KIT);
 
+        var manualPath = PathWalk.from(FlowNodes.startEventManualStart())
+                .then(next -> next.gatewayStart())
+                .then(next -> next.serviceTaskShipWelcomeKit())
+                .end(next -> next.endEventWelcomeKitShipped());
+
         assertThat(instance)
                 .isEnded()
-                .hasPassedInOrder(
-                        Elements.START_EVENT_MANUAL_START.getValue(),
-                        Elements.SERVICE_TASK_SHIP_WELCOME_KIT.getValue(),
-                        Elements.END_EVENT_WELCOME_KIT_SHIPPED.getValue());
+                .hasPassedInOrder(manualPath.getIds());
     }
 }

@@ -213,7 +213,7 @@ Das nutzt das manuelle Start Event und steckt hinter der Aktion `POST /api/welco
 - Der Host trägt **kein** `send-welcome-kit.bpmn`. Wenn es dort landet, ist die Aussage der
   Aufgabe kaputt.
 - CIB Seven läuft weiterhin eingebettet im Host. „Remote" ist die Sicht des **Clients**; eine
-  echte Standalone-Engine (`cibseven/cibseven:run`) ergäbe dasselbe Bild mit ausgetauschtem Host.
+  echte Standalone-Engine (CIB Seven Run) ergäbe dasselbe Bild mit ausgetauschtem Host.
 - Der Logistik-Service läuft auf Port `8090`, der Host auf `8080`.
 - Der Aufbau orientiert sich am Blueprint
   [`miragon-blueprints/cibseven-remote-example`](https://github.com/miragon-blueprints/cibseven-remote-example)

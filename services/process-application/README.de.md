@@ -21,12 +21,12 @@ Der ausgelagerte Sub-Prozess für die Ablehnung (Call Activity + DMN):
 
 ![Membership-Rejection Sub-Prozess](../../docs/assets/exercise-10-sub.svg)
 
-## Voraussetzungen
+## Quick Start
 
-Docker brauchst du nicht: Die Engine nutzt eine eingebettete H2-Datenbank, die als Datei unter
-`~/.cibseven-training` liegt – du musst keine Datenbank installieren oder starten. Der Datenbestand
-übersteht einen Neustart; für einen sauberen Neuanfang beende die Anwendung und lösche den Ordner
-`~/.cibseven-training` (unter Windows `%USERPROFILE%\.cibseven-training`).
+Die Engine nutzt eine eingebettete H2-Datenbank, die als Datei unter `~/.cibseven-training` liegt –
+du musst keine Datenbank installieren oder starten. Der Datenbestand übersteht einen Neustart; für
+einen sauberen Neuanfang beende die Anwendung und lösche den Ordner `~/.cibseven-training`
+(unter Windows `%USERPROFILE%\.cibseven-training`).
 
 ```bash
 # Anwendung starten (aus diesem process-application-Verzeichnis)

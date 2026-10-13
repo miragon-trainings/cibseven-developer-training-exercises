@@ -184,7 +184,7 @@ Gehe jede Aufgabe aus vier Blickwinkeln durch und halte die Befunde **getrennt**
 4. **Teilnehmende** – Ist ohne Rückfrage klar, womit man beginnt und wann man fertig ist?
    Welche Frage entstünde beim Bearbeiten? Ist der Selbstcheck ohne Trainer prüfbar?
    Erklärt jeder Schritt, **wozu** er dient – oder gibt es nur einen Befehl zum Abtippen?
-   Wo ein Werkzeug gebraucht wird (Datenbank-Client, Modeler, Terminal), steht auch, wie man
+   Wo ein Werkzeug gebraucht wird (H2-Konsole, Modeler, Terminal), steht auch, wie man
    es anbindet.
 
 ### Schritt 4 – Konsistenz über das ganze Training

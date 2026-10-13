@@ -21,12 +21,11 @@ The extracted sub-process for the rejection (Call Activity + DMN):
 
 ![Membership rejection sub-process](../../docs/assets/exercise-10-sub.svg)
 
-## Prerequisites
+## Quick Start
 
-No Docker needed: the engine uses an embedded H2 database that is stored as a file under
-`~/.cibseven-training` – there is no database to install or start. The data survives a restart;
-for a clean slate, stop the application and delete the folder `~/.cibseven-training`
-(on Windows `%USERPROFILE%\.cibseven-training`).
+The engine uses an embedded H2 database that is stored as a file under `~/.cibseven-training` –
+there is no database to install or start. The data survives a restart; for a clean slate, stop the
+application and delete the folder `~/.cibseven-training` (on Windows `%USERPROFILE%\.cibseven-training`).
 
 ```bash
 # Start the application (from this process-application directory)

@@ -2,7 +2,7 @@
 
 > **Prerequisite:** Exercise 5 is complete – the gateway, the capacity check, and both process outcomes are working.
 > **Working directory:** `services/process-application`
-> **New in this exercise:** transaction boundaries (`asyncBefore`/`asyncAfter`), in-memory engine with h2, the job executor turned off, `@MockitoBean`, assertions with `BpmnAwareTests`.
+> **New in this exercise:** transaction boundaries (`asyncBefore`/`asyncAfter`), in-memory engine with H2, the job executor turned off, `@MockitoBean`, assertions with `BpmnAwareTests`.
 
 ## What this is about
 
@@ -13,7 +13,7 @@ Cockpit demo everything worked – once. But how do you know it will **still** w
 next week, when someone attaches a boundary event, reroutes a sequence flow, or
 flips a condition?
 
-Are you going to click through the Cockpit every single time? Start PostgreSQL, fire off curl calls,
+Are you going to click through the Cockpit every single time? Start the application, fire off curl calls,
 read logs? Nobody does that reliably. That's exactly where processes die quietly: a sequence flow
 points into the void after a refactoring, the gateway takes the wrong path – and nobody notices
 until someone gets a rejection despite a free spot.
@@ -31,8 +31,9 @@ After this exercise you can
 
 - deliberately set **transaction boundaries** and explain why a non-repeatable
   step must commit before an external effect,
-- secure a process as a unit test, without PostgreSQL and without any running infrastructure,
-- run the engine in the test on h2 and with the job executor turned off,
+- secure a process as a unit test, without a running application and independent of its data,
+- run the engine in the test on its own in-memory database (H2) and with the job executor
+  turned off,
 - mock the use cases behind the delegates in a targeted way using `@MockitoBean`,
 - execute the async continuations yourself in the test and thereby drive the instance in a controlled way up to
   the next wait state,
@@ -118,22 +119,21 @@ managed centrally in the root `pom.xml`:
 
 **New file:** `src/test/resources/application-test.yaml`
 
+The `test` profile runs the engine on its own in-memory H2 (`jdbc:h2:mem:…`) and turns the job
+executor off:
+
 ```yaml
 spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:h2:mem:cibseven-test;DB_CLOSE_DELAY=-1;INIT=CREATE SCHEMA IF NOT EXISTS exercise
+    url: jdbc:h2:mem:cibseven-test;DB_CLOSE_DELAY=-1
     username: sa
     password:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-        default_schema: exercise
 
 camunda:
   bpm:
@@ -271,10 +271,11 @@ Now the second test, `noCapacity_membershipIsRejected` – same approach, you wr
 
 ## Constraints
 
-- The test runs **without** PostgreSQL and without a running stack. Two knobs make
-  it fast and reproducible:
-  1. **h2 instead of PostgreSQL** – an in-memory database that is freshly created
-     and discarded for each test run (`ddl-auto: create-drop`).
+- The test needs **no** running application. Two knobs make it fast and reproducible:
+  1. **Its own in-memory H2** – the application keeps its state in an H2 file under
+     `~/.cibseven-training`. The test uses a separate in-memory database that is freshly
+     created for each test run and gone afterwards: no leftovers from earlier test runs,
+     no dependency on the application's data.
   2. **Job executor off** – you run the continuations yourself from the test thread. This way
      you determine how far the instance is when you write your assertion.
 - Only **the use cases** get mocked. Delegates, model, and engine run for real – otherwise
@@ -290,7 +291,7 @@ Run just this one test class – from the repository root directory:
 ./mvnw -pl services/process-application test -Dtest=MembershipProcessTest
 ```
 
-Both tests pass in a few seconds, without PostgreSQL running. If one
+Both tests pass in a few seconds – the application doesn't need to be running for this. If one
 fails, the assertion shows you at which activity the instance actually stood.
 
 ## Self-check
@@ -301,7 +302,7 @@ fails, the assertion shows you at which activity the instance actually stood.
 - [ ] `ProcessEngineTestUtils` brings the instance up to the next wait state
 - [ ] The happy-path test checks the order **and** the paths not taken
 - [ ] The rejection test checks that the welcome mail was never called
-- [ ] Both tests pass green, without the container stack (Docker/Podman) running
+- [ ] Both tests pass green without the application running
 
 ## Hints
 

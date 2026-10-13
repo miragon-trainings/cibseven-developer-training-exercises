@@ -234,13 +234,13 @@ Remote-Adapter-Test gegen einen HTTP-Stub (`MockRestServiceServer`):
 
 ### End-to-End mit beiden Services
 
-Für den vollständigen Durchlauf brauchst du drei Terminals: eines für den Stack, je eines
-für die beiden Anwendungen. Arbeite die Schritte der Reihe nach ab:
+Für den vollständigen Durchlauf brauchst du drei Terminals: je eines für die beiden
+Anwendungen, die gleichzeitig laufen, und eines für die `curl`-Aufrufe. Arbeite die Schritte
+der Reihe nach ab:
 
 ```bash
-# 1. Stack und Engine-Host (:8080) starten — Docker oder Podman
-cd stack && docker compose up -d      # Podman: podman compose up -d
-cd ../solutions/exercise-10/process-application && ../../../mvnw spring-boot:run
+# 1. Engine-Host (:8080) starten
+cd solutions/exercise-10/process-application && ../../../mvnw spring-boot:run
 
 # 2. Logistik-Service (:8090) in einem zweiten Terminal – er deployt sein Modell beim Start
 cd solutions/exercise-10/logistics-service && ../../../mvnw spring-boot:run

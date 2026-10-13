@@ -214,12 +214,12 @@ in Aufgabe 0 bewusst **nicht** vor – sie werden erst in Aufgabe 7 bzw. 8 einge
 | Aufgabe | Wird hier eingeführt |
 |---|---|
 | 0 | fachliche Modellierung; Anwendung der BPMN-Grundformen aus Kapitel 1 – Start/End Event, User Task, Service Task, Sequenzfluss, Exclusive/Parallel Gateway (rein fachlich); Modellierungsregeln (Verb + Objekt, Gateway als Frage, Happy Path gerade, Split und Join vom selben Typ) |
-| 1 | Engine, Deployment, Cockpit, Tasklist, Prozessdefinition, **Prozessinstanz**, Prozessvariable, **Start-Formular** (Generated Form am Start Event, vorhanden), **Manual Task** (Durchlauf ohne Code), `act_*`-Tabellen (`re` / `ru` / `hi`) |
+| 1 | Engine, Deployment, Cockpit, Tasklist, Prozessdefinition, **Prozessinstanz**, Prozessvariable, **Start-Formular** (Generated Form am Start Event, vorhanden), **Manual Task** (Durchlauf ohne Code), **Embedded-Datenbank** (H2 als Datei), H2-Konsole, `act_*`-Tabellen (`re` / `ru` / `hi`) |
 | 2 | Prozess-Key, Element-ID, `isExecutable`, `historyTimeToLive`, **User Task**, **Wait State**, **Generated Form selbst erstellen** (am User Task) |
 | 3 | Manual Task → **Service Task**, **JavaDelegate**, **Delegate Expression**, hexagonale Architektur (Delegate → Use Case → Service), Prozessvariable im Delegate lesen |
 | 4 | Message Start Event, Nachricht, **Korrelation** (`createMessageCorrelation` / `correlateStartMessage`), **`RuntimeService`** (Prozessstart aus Java), **REST-Endpunkt**, **Persistenz** (Repository), Task-Completion per REST (Confirm-Endpunkt), `membershipId` als Prozessreferenz |
 | 5 | Exclusive Gateway (Default-Flow, Flow-Bedingung), Business Key, generiertes Task-Formular (Freigabe) |
-| 6 | **Transaktionsgrenze**, **asynchrone Continuation** (`asyncBefore` / `asyncAfter`), Commit und Rollback, **Token**, Idempotenz, Prozess-Test, In-Memory-Engine (h2), **Job Executor**, Mock (`@MockitoBean`), Assertion (`BpmnAwareTests`) |
+| 6 | **Transaktionsgrenze**, **asynchrone Continuation** (`asyncBefore` / `asyncAfter`), Commit und Rollback, **Token**, Idempotenz, Prozess-Test, In-Memory-Engine (H2), **Job Executor**, Mock (`@MockitoBean`), Assertion (`BpmnAwareTests`) |
 | 6 · Add-on | generierte Process-API, `bpmn-to-code` |
 | 7 | eingebetteter Subprozess, Boundary Event (unterbrechend / nicht unterbrechend), Timer als Duration und als Cycle, Message Boundary Event, Parallel Gateway (Fork / Join) |
 | 8 | Kompensation, Compensation Boundary Event, Kompensations-Handler (`isForCompensation`), Association, Compensating End Event, SAGA-Muster |

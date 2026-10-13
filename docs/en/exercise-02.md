@@ -84,13 +84,15 @@ form. This time it does **not** run through: it stops at the User Task `Confirm 
 
 ### 5. Look at the runtime data
 
-While CIB Seven is running and the instance is parked at the User Task, connect to the database
-(same connection as in Exercise 1: host `localhost`, port `5432`, database `cibseven-training`,
-user / password `admin`) and run these two queries against the runtime tables:
+While CIB Seven is running and the instance is parked at the User Task, open the H2 console at
+[http://localhost:8080/h2-console](http://localhost:8080/h2-console) and log in as in Exercise 1:
+JDBC URL `jdbc:h2:file:~/.cibseven-training/exercise` (instead of the pre-filled
+`jdbc:h2:~/test`), user `sa`, empty password. Then run these two queries against the runtime
+tables:
 
 ```sql
-SELECT id_, proc_def_id_ FROM exercise.act_ru_execution;
-SELECT id_, name_ FROM exercise.act_ru_task;
+SELECT id_, proc_def_id_ FROM act_ru_execution;
+SELECT id_, name_ FROM act_ru_task;
 ```
 
 What do they show? `act_ru_execution` has one row for your **still-running** instance – its

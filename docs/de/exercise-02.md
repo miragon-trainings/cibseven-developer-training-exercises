@@ -84,13 +84,15 @@ stehen.
 
 ### 5. Die Laufzeitdaten ansehen
 
-Während CIB Seven läuft und die Instanz am User Task steht, binde die Datenbank an (dieselbe
-Verbindung wie in Aufgabe 1: Host `localhost`, Port `5432`, Datenbank `cibseven-training`, Benutzer
-/ Passwort `admin`) und führe diese zwei Abfragen gegen die Runtime-Tabellen aus:
+Während CIB Seven läuft und die Instanz am User Task steht, öffne die H2-Konsole unter
+[http://localhost:8080/h2-console](http://localhost:8080/h2-console) und melde dich wie in
+Aufgabe 1 an: JDBC-URL `jdbc:h2:file:~/.cibseven-training/exercise` (statt der vorbelegten
+`jdbc:h2:~/test`), Benutzer `sa`, Passwort leer. Führe dann diese zwei Abfragen gegen die
+Runtime-Tabellen aus:
 
 ```sql
-SELECT id_, proc_def_id_ FROM exercise.act_ru_execution;
-SELECT id_, name_ FROM exercise.act_ru_task;
+SELECT id_, proc_def_id_ FROM act_ru_execution;
+SELECT id_, name_ FROM act_ru_task;
 ```
 
 Was zeigen sie? `act_ru_execution` enthält eine Zeile für deine **noch laufende** Instanz – ihr

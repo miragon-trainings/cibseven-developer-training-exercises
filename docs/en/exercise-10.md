@@ -234,13 +234,12 @@ remote-adapter test against an HTTP stub (`MockRestServiceServer`):
 
 ### End-to-end with both services
 
-For the full run you need three terminals: one for the stack, one each for the two
-applications. Work through the steps in order:
+For the full run you need three terminals: one each for the two applications, which run at
+the same time, and one for the `curl` calls. Work through the steps in order:
 
 ```bash
-# 1. Start the stack and the engine host (:8080) — Docker or Podman
-cd stack && docker compose up -d      # Podman: podman compose up -d
-cd ../solutions/exercise-10/process-application && ../../../mvnw spring-boot:run
+# 1. Start the engine host (:8080)
+cd solutions/exercise-10/process-application && ../../../mvnw spring-boot:run
 
 # 2. Logistics service (:8090) in a second terminal – it deploys its model at start-up
 cd solutions/exercise-10/logistics-service && ../../../mvnw spring-boot:run

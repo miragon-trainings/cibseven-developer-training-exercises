@@ -2,7 +2,7 @@
 
 > **Voraussetzung:** Aufgabe 5 ist abgeschlossen – Gateway, Kapazitätsprüfung und beide Prozessausgänge laufen.
 > **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** Transaktionsgrenzen (`asyncBefore`/`asyncAfter`), In-Memory-Engine mit h2, abgeschalteter Job Executor, `@MockitoBean`, Assertions mit `BpmnAwareTests`.
+> **Neu in dieser Aufgabe:** Transaktionsgrenzen (`asyncBefore`/`asyncAfter`), In-Memory-Engine mit H2, abgeschalteter Job Executor, `@MockitoBean`, Assertions mit `BpmnAwareTests`.
 
 ## Darum geht es
 
@@ -13,7 +13,7 @@ Cockpit-Demo hat alles funktioniert – einmal. Aber woher weißt du, dass er **
 noch** funktioniert, wenn jemand ein Boundary Event anhängt, einen Sequenzfluss umbiegt oder
 eine Bedingung dreht?
 
-Klickst du dann jedes Mal durchs Cockpit? Startest PostgreSQL, schickst curl-Aufrufe ab,
+Klickst du dann jedes Mal durchs Cockpit? Startest die Anwendung, schickst curl-Aufrufe ab,
 liest Logs? Das macht niemand zuverlässig. Genau da sterben Prozesse leise: Ein Sequenzfluss
 zeigt nach dem Refactoring ins Leere, das Gateway nimmt den falschen Pfad – und keiner merkt
 es, bis jemand trotz freiem Platz eine Absage bekommt.
@@ -31,8 +31,9 @@ Nach dieser Aufgabe kannst du
 
 - **Transaktionsgrenzen** bewusst setzen und begründen, warum ein nicht wiederholbarer
   Schritt vor einem externen Effekt committen muss,
-- einen Prozess als Unit-Test absichern, ohne PostgreSQL und ohne laufende Infrastruktur,
-- die Engine im Test auf h2 und mit abgeschaltetem Job Executor betreiben,
+- einen Prozess als Unit-Test absichern, ohne laufende Anwendung und unabhängig von ihren Daten,
+- die Engine im Test auf einer eigenen In-Memory-Datenbank (H2) und mit abgeschaltetem Job
+  Executor betreiben,
 - die Use Cases hinter den Delegates mit `@MockitoBean` gezielt mocken,
 - die Async-Continuations im Test selbst ausführen und die Instanz damit kontrolliert bis
   zum nächsten Wait State bringen,
@@ -118,22 +119,21 @@ zentral in der Root-`pom.xml` gemanagt:
 
 **Neue Datei:** `src/test/resources/application-test.yaml`
 
+Das Profil `test` lässt die Engine auf einer eigenen In-Memory-H2 (`jdbc:h2:mem:…`) laufen und
+schaltet den Job Executor ab:
+
 ```yaml
 spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:h2:mem:cibseven-test;DB_CLOSE_DELAY=-1;INIT=CREATE SCHEMA IF NOT EXISTS exercise
+    url: jdbc:h2:mem:cibseven-test;DB_CLOSE_DELAY=-1
     username: sa
     password:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-        default_schema: exercise
 
 camunda:
   bpm:
@@ -274,10 +274,12 @@ Jetzt der zweite Test, `noCapacity_membershipIsRejected` – gleicher Ansatz, du
 
 ## Randbedingungen
 
-- Der Test läuft **ohne** PostgreSQL und ohne laufenden Stack. Zwei Stellschrauben machen
-  ihn schnell und reproduzierbar:
-  1. **h2 statt PostgreSQL** – eine In-Memory-Datenbank, die pro Testlauf frisch angelegt
-     und verworfen wird (`ddl-auto: create-drop`).
+- Der Test braucht **keine** laufende Anwendung. Zwei Stellschrauben machen ihn schnell und
+  reproduzierbar:
+  1. **Eigene In-Memory-H2** – die Anwendung speichert ihren Stand in einer H2-Datei unter
+     `~/.cibseven-training`. Der Test nutzt eine separate In-Memory-Datenbank, die pro
+     Testlauf frisch angelegt wird und danach wieder weg ist: keine Reste früherer Testläufe,
+     keine Abhängigkeit von den Daten der Anwendung.
   2. **Job Executor aus** – die Continuations führst du selbst aus dem Testthread aus. Damit
      bestimmst du, wie weit die Instanz ist, wenn du deine Assertion schreibst.
 - Gemockt werden **nur die Use Cases**. Delegates, Modell und Engine laufen echt – sonst
@@ -293,8 +295,8 @@ Führe nur diese eine Testklasse aus – aus dem Wurzelverzeichnis des Repositor
 ./mvnw -pl services/process-application test -Dtest=MembershipProcessTest
 ```
 
-Beide Tests laufen in wenigen Sekunden durch, ohne dass PostgreSQL läuft. Schlägt einer
-fehl, zeigt dir die Assertion, an welcher Aktivität die Instanz tatsächlich stand.
+Beide Tests laufen in wenigen Sekunden durch – die Anwendung muss dafür nicht laufen. Schlägt
+einer fehl, zeigt dir die Assertion, an welcher Aktivität die Instanz tatsächlich stand.
 
 ## Selbstcheck
 
@@ -304,7 +306,7 @@ fehl, zeigt dir die Assertion, an welcher Aktivität die Instanz tatsächlich st
 - [ ] `ProcessEngineTestUtils` bringt die Instanz bis zum nächsten Wait State
 - [ ] Der Happy-Path-Test prüft die Reihenfolge **und** die nicht genommenen Pfade
 - [ ] Der Ablehnungstest prüft, dass die Willkommens-Mail nie aufgerufen wurde
-- [ ] Beide Tests laufen grün, ohne dass der Container-Stack (Docker/Podman) läuft
+- [ ] Beide Tests laufen grün, ohne dass die Anwendung gestartet ist
 
 ## Hinweise
 

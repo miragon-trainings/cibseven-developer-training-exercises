@@ -5,9 +5,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Run
 
 ```bash
-# Start PostgreSQL (required before running the app) — Docker or Podman
-cd stack && docker compose up -d      # Podman: podman compose up -d
-
 # Build
 ./mvnw clean install
 
@@ -28,6 +25,16 @@ cd solutions/exercise-01 && ../../mvnw spring-boot:run
 ```
 
 CIB Seven Cockpit: `http://localhost:8080/webapp/#/seven/auth/start` (admin/admin)
+
+H2 console: `http://localhost:8080/h2-console` — JDBC URL `jdbc:h2:file:~/.cibseven-training/exercise`, user `sa`,
+empty password (the login form pre-fills `jdbc:h2:~/test`; replace it).
+
+**Database:** no Docker, nothing to install or start. The app runs the engine on an embedded, file-based H2
+(`~/.cibseven-training/exercise.mv.db`), created on first start; the engine creates its `act_*` tables itself
+(`camunda.bpm.database.schema-update: true`) in H2's default schema, so SQL needs no schema prefix. State
+survives restarts; reset = stop the app and delete `~/.cibseven-training` (Windows: `%USERPROFILE%\.cibseven-training`).
+The running app locks the file — external DB tools cannot open it meanwhile (use the H2 console). Process tests
+(Exercise 6+) use the `test` profile with a separate in-memory H2 (`jdbc:h2:mem:cibseven-test`).
 
 ## Architecture
 
@@ -83,8 +90,9 @@ Multi-module Maven project:
   engine host, which additively broadcasts `Signal_MemberActivated`) + `solutions/exercise-10/logistics-service/`
   (the remote owner of the `sendWelcomeKit` process; generates its own typed engine client in-module).
 - `models/` — Reference BPMN/DMN models
-- All modules (process-application + every solution) run on the same port (`8080`) and DB schema (`exercise`) —
-  one module at a time. `stack/init-schemas.sql` creates just that one schema.
+- All modules (process-application + every solution) run on the same port (`8080`) and the same H2 file
+  (`~/.cibseven-training/exercise.mv.db`) — one module at a time; a second instance fails at startup with
+  "Database may be already in use".
 - The `load-solution` antrun task replaces `services/process-application/src/main` wholesale (Java, `application.yaml`,
   BPMN/DMN) from a solution; `src/test` and `pom.xml` are left untouched.
 

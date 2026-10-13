@@ -119,11 +119,6 @@
 
     <repositories>
         <repository>
-            <id>mvn-cibseven-enterprise-snapshots</id>
-            <name>CIB seven EE Snapshots repository</name>
-            <url>https://artifacts.cibseven.org/repository/enterprise-snapshots</url>
-        </repository>
-        <repository>
             <id>mvn-cibseven-public</id>
             <name>CIB seven public repository</name>
             <url>https://artifacts.cibseven.org/repository/public</url>

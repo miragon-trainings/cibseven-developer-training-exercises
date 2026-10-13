@@ -34,7 +34,7 @@
         <cib7.version>2.2.0</cib7.version>
         <archunit.version>1.5.1</archunit.version>
         <bpmn-to-code.version>6.2.0</bpmn-to-code.version>
-        <openapi-generator.version>7.25.0</openapi-generator.version>
+        <openapi-generator.version>7.26.0</openapi-generator.version>
     </properties>
 
     <!--

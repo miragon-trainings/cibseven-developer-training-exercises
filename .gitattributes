@@ -1,4 +1,4 @@
-# Bash cannot run scripts with CRLF line endings. The Windows leg of .github/workflows/load-solution.yml
-# checks the repository out with CRLF on purpose (like Git for Windows does for participants) and runs
-# its helper script in Git Bash, so the CI scripts always keep LF. Everything else keeps the default.
+# Bash cannot run scripts with CRLF line endings. Git for Windows checks text files out with CRLF
+# (core.autocrlf), so the helper scripts under .github/scripts always keep LF to stay runnable in
+# Git Bash. Everything else keeps the default.
 /.github/scripts/*.sh text eol=lf

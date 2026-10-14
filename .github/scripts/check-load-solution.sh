@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
-# CI checks for the load-solution task of services/process-application (catch-up, GitHub issue #95).
+# Checks for the load-solution task of services/process-application (catch-up, GitHub issue #95).
+# CI (build.yml) runs only "baseline". Run "load" and "sequence" locally before changing the task,
+# the starter or a solution.
 #
 #   check-load-solution.sh baseline
 #       templates/process-application-starter/ (src/ + pom.xml) must be a byte copy of the starter
@@ -19,8 +21,8 @@
 #       equal a fresh load of the last solution; then verify (+ smoke start).
 #
 # The caller's checkout is never modified: every run works on a copy of the working tree (without
-# .git, target/, node_modules/, .load-solution-backup/) in a temporary directory, so in CI the
-# "pristine" state is the fresh checkout. KEEP_WORKDIR=1 keeps that directory for debugging,
+# .git, target/, node_modules/, .load-solution-backup/) in a temporary directory, so the "pristine"
+# state is the caller's working tree. KEEP_WORKDIR=1 keeps that directory for debugging,
 # SMOKE_TIMEOUT (seconds, default 180) bounds the smoke start.
 #
 # Needs bash (3.2 is enough), a JDK (JAVA_HOME or java on PATH), tar, diff, awk; curl for the HTTP
@@ -54,7 +56,7 @@ die() {
     exit 1
 }
 usage() {
-    sed -n '3,19p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' >&2
+    sed -n '3,22p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' >&2
     exit 2
 }
 

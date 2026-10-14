@@ -157,7 +157,8 @@ build_expected_src() { # repo NN dest
 
 # Expected pom.xml: the starter pom with the "<!--" line after and the "-->" line before the body of
 # every prepared block <!-- @exercise-N[-suffix]:begin ... --> ... <!-- @exercise-N[-suffix]:end -->
-# with N <= NN removed. Keeps the line endings of the starter (CRLF on a Windows checkout).
+# with N <= NN removed. Compared without carriage returns: awk in Git Bash does not reliably keep the
+# CRs of a CRLF checkout. The line endings are checked separately (check_eol).
 EXPECTED_POM_AWK='
 function trim(s) { sub(/\r$/, "", s); gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
 { t = trim($0) }
@@ -230,13 +231,25 @@ COORDS_AWK='
 }
 '
 
+crs() { tr -cd '\r' <"$1" | wc -c | tr -d ' '; }
+lfs() { tr -cd '\n' <"$1" | wc -c | tr -d ' '; }
+
+check_eol() { # starter-pom loaded-pom: load-solution keeps the starter's line endings (CRLF on Windows)
+    local want=lf got=mixed
+    if [ "$(crs "$1")" -gt 0 ]; then want=crlf; fi
+    if [ "$(crs "$2")" -eq 0 ]; then got=lf; elif [ "$(crs "$2")" -eq "$(lfs "$2")" ]; then got=crlf; fi
+    [ "$got" = "$want" ] || die "pom.xml has $got line endings after the load, the starter pom has $want"
+}
+
 check_pom() { # repo NN
     local repo=$1 nn=$2 pom="$repo/$MODULE/pom.xml" expected="$WORK/expected-pom-$2.xml" missing
     awk -v nn=$((10#$nn)) "$BLOCK_STATE_AWK" "$pom" || die "pom.xml: prepared blocks in the wrong state after load-solution $nn"
     awk -v nn=$((10#$nn)) "$EXPECTED_POM_AWK" "$repo/$STARTER/pom.xml" >"$expected" \
         || die "$STARTER/pom.xml: malformed prepared block"
-    diff "$expected" "$pom" || die "pom.xml after load-solution $nn is not the starter pom with the blocks <= $nn switched on" \
-        "(left: expected, right: loaded)"
+    diff <(tr -d '\r' <"$expected") <(tr -d '\r' <"$pom") \
+        || die "pom.xml after load-solution $nn is not the starter pom with the blocks <= $nn switched on" \
+            "(left: expected, right: loaded)"
+    check_eol "$repo/$STARTER/pom.xml" "$pom"
     if [ "$nn" != 00 ]; then
         # Independent of the markers: everything solution NN's own pom declares must be active.
         missing=$(LC_ALL=C comm -23 \

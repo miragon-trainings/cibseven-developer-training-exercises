@@ -15,7 +15,8 @@ jobs:
 
       # load-solution resets services/process-application to templates/process-application-starter/,
       # so the template must stay a byte copy of the module's starter state (src/ + pom.xml).
-      # The load-solution task itself is exercised in load-solution.yml.
+      # The task itself is not run in CI; check it locally before changing it, the starter or a solution:
+      #   bash .github/scripts/check-load-solution.sh load NN | sequence A B ...
       - name: Check starter baseline
         run: bash .github/scripts/check-load-solution.sh baseline
 

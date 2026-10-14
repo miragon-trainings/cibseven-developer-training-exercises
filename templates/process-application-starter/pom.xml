@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.miragon</groupId>
+        <artifactId>cibseven-developer-training-exercises</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>process-application</artifactId>
+    <name>process-application</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <!-- Embedded H2 database: the engine and JPA need no external database server -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- H2 web console (http://localhost:8080/h2-console) for looking into the engine tables -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-h2console</artifactId>
+        </dependency>
+        <!--
+          TODO Exercise 1: Uncomment the CIB Seven starters so the engine starts with
+          the web Cockpit and REST API. The versions come centrally from the root pom.xml
+          (dependencyManagement) – so you add the deps WITHOUT a <version>.
+        -->
+        <!-- @exercise-1:begin – CIB Seven engine + Cockpit webapp + REST API -->
+        <!--
+        <dependency>
+            <groupId>org.cibseven.bpm.springboot</groupId>
+            <artifactId>cibseven-bpm-spring-boot-starter-webapp-4</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.cibseven.bpm.springboot</groupId>
+            <artifactId>cibseven-bpm-spring-boot-starter-rest-4</artifactId>
+        </dependency>
+        -->
+        <!-- @exercise-1:end -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!--
+          TODO Exercise 6: Uncomment the assertions for the process test (CIB Seven port of
+          camunda-bpm-assert). Version managed centrally in the root pom.xml.
+        -->
+        <!-- @exercise-6:begin – process-test assertions -->
+        <!--
+        <dependency>
+            <groupId>org.cibseven.bpm</groupId>
+            <artifactId>cibseven-bpm-assert</artifactId>
+            <scope>test</scope>
+        </dependency>
+        -->
+        <!-- @exercise-6:end -->
+        <!--
+          TODO Exercise 6 (add-on): Uncomment the runtime types the bpmn-to-code generated
+          process API refers to (and the bpmn-to-code plugin under build > plugins).
+        -->
+        <!-- @exercise-6-addon:begin – bpmn-to-code runtime -->
+        <!--
+        <dependency>
+            <groupId>io.miragon</groupId>
+            <artifactId>bpmn-to-code-runtime</artifactId>
+        </dependency>
+        -->
+        <!-- @exercise-6-addon:end -->
+        <!--
+          Engine CORE (classes only) so the provided process-test helper
+          src/test/.../process/util/ProcessEngineTestUtils.java compiles while the CIB Seven
+          starters are still commented out (before Exercise 1). Version managed centrally.
+          Important: NO test scope – from Exercise 1 the starters pull the same engine transitively
+          as compile; a direct test scope would downgrade it to test via Maven nearest-wins and
+          take the engine away from the running app. The engine STILL only starts with the starters
+          from Exercise 1 (autoconfiguration + Cockpit + REST) – this entry only puts the classes
+          on the classpath, no runtime behavior.
+        -->
+        <dependency>
+            <groupId>org.cibseven.bpm</groupId>
+            <artifactId>cibseven-engine</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+              TODO Exercise 6 (add-on): Uncomment the bpmn-to-code plugin. It generates the type-safe
+              process API constants from the BPMN models into src/main/java on every build.
+            -->
+            <!-- @exercise-6-addon:begin – bpmn-to-code plugin -->
+            <!--
+            <plugin>
+                <groupId>io.miragon</groupId>
+                <artifactId>bpmn-to-code-maven</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-process-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-bpmn-api</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <baseDir>${project.basedir}</baseDir>
+                    <filePattern>src/main/resources/bpmn/*.bpmn</filePattern>
+                    <outputFolderPath>${project.basedir}/src/main/java</outputFolderPath>
+                    <packagePath>io.miragon.training.adapter.process</packagePath>
+                    <outputLanguage>JAVA</outputLanguage>
+                    <processEngine>CAMUNDA_7</processEngine>
+                </configuration>
+            </plugin>
+            -->
+            <!-- @exercise-6-addon:end -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>io.miragon.training.TrainingApplication</mainClass>
+                </configuration>
+            </plugin>
+
+            <!--
+              "Load solution" (catch-up). Call from the repository root with:
+                ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=NN
+              NN = 01–10 (two digits); 00 resets the module to the starter state.
+
+              1. Backs up src/ and pom.xml to .load-solution-backup/<timestamp>/ (git-ignored).
+              2. Resets the module to the starter in templates/process-application-starter/
+                 (a byte copy of this module's starter state, kept in sync by CI). Starter files
+                 marked "TODO Exercise N" with N <= NN are left out: solution NN brings its own
+                 version of them, or dropped them on purpose.
+              3. Copies solution NN on top: src/main, the process tests and test resources.
+                 ArchitectureTest stays as it is.
+              4. Rebuilds this pom.xml from the starter pom and switches on the prepared blocks
+                 between the @exercise-N:begin/end comments for every exercise N <= NN.
+              5. Deletes target/ so no classes, BPMN or DMN files of other exercises stay on the classpath.
+              Loading the same NN always gives the same result, whatever was loaded before.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>load-solution</id>
+                        <phase>none</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target xmlns:if="ant:if" xmlns:unless="ant:unless">
+                                <fail unless="solution"
+                                      message="Please provide the solution number as two digits, e.g.: ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=02 (00 = back to the starter)"/>
+                                <!-- The exercises solution NN has solved, as a regex alternation -->
+                                <condition property="solvedExercises" value="0"><equals arg1="${solution}" arg2="00"/></condition>
+                                <condition property="solvedExercises" value="1"><equals arg1="${solution}" arg2="01"/></condition>
+                                <condition property="solvedExercises" value="1|2"><equals arg1="${solution}" arg2="02"/></condition>
+                                <condition property="solvedExercises" value="1|2|3"><equals arg1="${solution}" arg2="03"/></condition>
+                                <condition property="solvedExercises" value="1|2|3|4"><equals arg1="${solution}" arg2="04"/></condition>
+                                <condition property="solvedExercises" value="1|2|3|4|5"><equals arg1="${solution}" arg2="05"/></condition>
+                                <condition property="solvedExercises" value="1|2|3|4|5|6"><equals arg1="${solution}" arg2="06"/></condition>
+                                <condition property="solvedExercises" value="1|2|3|4|5|6|7"><equals arg1="${solution}" arg2="07"/></condition>
+                                <condition property="solvedExercises" value="1|2|3|4|5|6|7|8"><equals arg1="${solution}" arg2="08"/></condition>
+                                <condition property="solvedExercises" value="1|2|3|4|5|6|7|8|9"><equals arg1="${solution}" arg2="09"/></condition>
+                                <condition property="solvedExercises" value="1|2|3|4|5|6|7|8|9|10"><equals arg1="${solution}" arg2="10"/></condition>
+                                <fail unless="solvedExercises"
+                                      message="Unknown solution '${solution}' (valid values: 00-10, two digits; 00 = back to the starter)."/>
+                                <condition property="resetOnly"><equals arg1="${solution}" arg2="00"/></condition>
+                                <condition property="solutionModuleDir" value="exercise-10/process-application">
+                                    <equals arg1="${solution}" arg2="10"/>
+                                </condition>
+                                <property name="solutionModuleDir" value="exercise-${solution}"/>
+                                <property name="solutionSrc"
+                                          location="${maven.multiModuleProjectDirectory}/solutions/${solutionModuleDir}/src"/>
+                                <property name="starter"
+                                          location="${maven.multiModuleProjectDirectory}/templates/process-application-starter"/>
+                                <fail message="Solution '${solutionModuleDir}' not found. Expected path: ${solutionSrc}" unless:set="resetOnly">
+                                    <condition>
+                                        <not>
+                                            <available file="${solutionSrc}" type="dir"/>
+                                        </not>
+                                    </condition>
+                                </fail>
+                                <fail message="Starter template not found. Expected path: ${starter}">
+                                    <condition>
+                                        <not>
+                                            <available file="${starter}/pom.xml" type="file"/>
+                                        </not>
+                                    </condition>
+                                </fail>
+
+                                <echo unless:set="resetOnly" message="Loading solution ${solution} into the process-application module ..."/>
+                                <echo if:set="resetOnly" message="Resetting the process-application module to the starter ..."/>
+
+                                <!-- 1. Back up the current state -->
+                                <tstamp>
+                                    <format property="backupStamp" pattern="yyyyMMdd-HHmmss"/>
+                                </tstamp>
+                                <property name="backupDir" location="${project.basedir}/.load-solution-backup/${backupStamp}"/>
+                                <copy todir="${backupDir}">
+                                    <fileset dir="${project.basedir}" includes="src/**,pom.xml"/>
+                                </copy>
+
+                                <!-- 2. Reset to the starter, leaving out the stubs of solved exercises -->
+                                <delete dir="${project.basedir}/src/main"/>
+                                <delete dir="${project.basedir}/src/test/java/io/miragon/training/process"/>
+                                <delete dir="${project.basedir}/src/test/resources"/>
+                                <copy todir="${project.basedir}/src">
+                                    <fileset dir="${starter}/src"
+                                             includes="main/**,test/java/io/miragon/training/process/**,test/resources/**">
+                                        <not>
+                                            <containsregexp expression="TODO Exercise (?:${solvedExercises})\b"/>
+                                        </not>
+                                    </fileset>
+                                </copy>
+
+                                <!-- 3. Solution on top (overwrite: the starter files just copied are newer) -->
+                                <copy todir="${project.basedir}/src" overwrite="true" unless:set="resetOnly">
+                                    <fileset dir="${solutionSrc}"
+                                             includes="main/**,test/java/io/miragon/training/process/**,test/resources/**"/>
+                                </copy>
+
+                                <!-- 4. pom.xml = starter pom with the blocks of all solved exercises switched on -->
+                                <copy file="${starter}/pom.xml" tofile="${project.basedir}/pom.xml"
+                                      overwrite="true" encoding="UTF-8">
+                                    <filterchain>
+                                        <tokenfilter>
+                                            <filetokenizer/>
+                                            <replaceregex flags="gs"
+                                                          pattern="(&lt;!-- @exercise-(?:${solvedExercises})(?:-[a-z]+)?:begin[^\r\n]*\r?\n)[ \t]*&lt;!--[ \t]*\r?\n(.*?)[ \t]*--&gt;[ \t]*\r?\n"
+                                                          replace="\1\2"/>
+                                        </tokenfilter>
+                                    </filterchain>
+                                </copy>
+
+                                <!-- 5. No stale classes, BPMN or DMN files of other exercises on the classpath -->
+                                <delete includeemptydirs="true" failonerror="false">
+                                    <fileset dir="${project.basedir}/target" excludes="antrun/**" erroronmissingdir="false"/>
+                                </delete>
+
+                                <echo unless:set="resetOnly" message="Done. services/process-application now holds solution ${solution} (src/main, process tests, pom.xml); stubs of later exercises and ArchitectureTest are in place."/>
+                                <echo if:set="resetOnly" message="Done. services/process-application is back in the starter state."/>
+                                <echo message="Your previous state was backed up to ${backupDir}"/>
+                                <echo message="pom.xml was rebuilt: run Maven again (IntelliJ: reload the Maven project) before you start the application."/>
+                                <echo message="Went back to an earlier exercise? Stop the application and delete ~/.cibseven-training to drop deployments and process instances of later exercises."/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

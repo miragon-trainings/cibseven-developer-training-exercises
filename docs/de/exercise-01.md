@@ -49,8 +49,13 @@ Aufgabe nichts – du bringst ihn zum Laufen.
 
 Öffne `services/process-application/pom.xml` und kommentiere den Block `TODO Exercise 1` ein: die
 beiden CIB-Seven-Starter (`webapp-4` und `rest-4`). Erst damit sind Engine, Cockpit-Webapp und
-REST-API im Modul. Die Versionen kommen zentral aus der Root-`pom.xml` – trage sie **ohne**
-`<version>` ein.
+REST-API im Modul. Die Versionen kommen zentral aus der Root-`pom.xml` – deshalb steht im Block
+kein `<version>`.
+
+Der Block steht zwischen den Marker-Kommentaren `<!-- @exercise-1:begin … -->` und
+`<!-- @exercise-1:end -->`. Lösche nur die beiden Zeilen `<!--` und `-->` dazwischen und lass die
+Marker stehen: Sie sind harmlose Kommentare und markieren den Block für den Task `load-solution`
+(siehe *Referenzlösung*).
 
 ### 2. Konfiguration aktivieren
 
@@ -200,6 +205,11 @@ End Event durch.
   ```bash
   ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=01
   ```
+
+Der Task setzt `src/` und `pom.xml` des Arbeitsmoduls auf den Stand nach Aufgabe 1 – samt den
+Dependencies aus Schritt 1. Dein bisheriger Stand landet als Sicherung unter
+`services/process-application/.load-solution-backup/`. Lade danach in IntelliJ das Maven-Projekt
+neu.
 
 ## Nächster Schritt
 

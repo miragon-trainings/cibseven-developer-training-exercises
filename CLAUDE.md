@@ -14,7 +14,7 @@ cd services/process-application && ../../mvnw spring-boot:run
 # Run a specific solution
 cd solutions/exercise-01 && ../../mvnw spring-boot:run
 
-# Load a reference solution into the process-application module (catch-up; valid: 01-10, two-digit)
+# Load a reference solution into the process-application module (catch-up; valid: 00-10, two-digit; 00 = starter)
 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=02
 
 # Run all tests
@@ -84,6 +84,10 @@ Multi-module Maven project:
   package `org.cibseven.rest.client.*`). Runs on :8090. Ships dormant/compilable with `TODO Exercise 10`
   (the generator block + client wiring are commented out). Verified in CI via the `-Pexercise-10` profile.
   (Replaces the former `notification-service` / the separate `cibseven-engine-client` module.)
+- `templates/process-application-starter/` — Byte copy of the starter state of `services/process-application`
+  (`src/` + `pom.xml`), outside the reactor; the baseline `load-solution` resets to. **Contract:** must stay
+  byte-identical to the work module (CI: `diff -r`). After changing the starter, sync it:
+  `rm -rf templates/process-application-starter/src && cp -R services/process-application/src templates/process-application-starter/ && cp services/process-application/pom.xml templates/process-application-starter/`
 - `docs/` — Per-exercise instructions (`exercise-00.md … exercise-10.md`) + assets.
 - `solutions/exercise-{01-10}/` + `solutions/extra-task-1/` — Cumulative solutions, each building on the previous.
   Exercise 10 is nested into two sub-services: `solutions/exercise-10/process-application/` (the generic
@@ -93,8 +97,23 @@ Multi-module Maven project:
 - All modules (process-application + every solution) run on the same port (`8080`) and the same H2 file
   (`~/.cibseven-training/exercise.mv.db`) — one module at a time; a second instance fails at startup with
   "Database may be already in use".
-- The `load-solution` antrun task replaces `services/process-application/src/main` wholesale (Java, `application.yaml`,
-  BPMN/DMN) from a solution; `src/test` and `pom.xml` are left untouched.
+- `load-solution` (`-Dsolution=NN`, 00–10; 00 = starter) puts `services/process-application` into the "Exercise NN
+  solved" state, deterministically (same NN → same `src/` + `pom.xml`, whatever was loaded before): backs up `src/` +
+  `pom.xml` to `services/process-application/.load-solution-backup/<timestamp>/` (git-ignored); resets `src/main`,
+  `src/test/java/.../process` and `src/test/resources` to the starter template, leaving out every file containing
+  `TODO Exercise M` with M ≤ NN; copies solution NN on top (`src/main`, process tests, test resources); rebuilds
+  `pom.xml` = starter pom with the `@exercise-N` blocks for N ≤ NN uncommented; deletes `target/`. `ArchitectureTest`
+  is never touched. Afterwards: reload Maven; after going back, delete `~/.cibseven-training`. No catch-up for
+  `extra-task-1` and the `logistics-service` half of Exercise 10.
+  - **Contract:** `TODO Exercise N` in a starter file under `src/` is load-bearing — solution N and every later
+    solution must contain that file, unless it is dropped on purpose (`ConfirmMembership*` from 05 on). Conversely,
+    an unmarked starter file is always restored (a solution can only overwrite it), so a file a solution deletes or
+    renames needs a marker. New exercise numbers up to 10 need no Ant change.
+  - Prepared pom blocks: every dependency/plugin a solution pom adds must exist in the starter pom as one, or
+    `load-solution` won't bring it. Format: a `TODO Exercise N` comment for participants, then
+    `<!-- @exercise-N[-suffix]:begin – … -->`, `<!--` on its own line, the XML, `-->` on its own line,
+    `<!-- @exercise-N[-suffix]:end -->`. Existing: `@exercise-1` (CIB Seven starters), `@exercise-6`
+    (`cibseven-bpm-assert`), `@exercise-6-addon` ×2 (`bpmn-to-code-runtime`, `bpmn-to-code-maven` plugin).
 
 ## Domain
 

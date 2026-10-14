@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:modeler="http://camunda.org/schema/modeler/1.0"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.20.0"
+                  modeler:executionPlatform="Camunda Platform"
+                  modeler:executionPlatformVersion="7.24.0">
+
+  <bpmn:process id="subscribeNewsletter"
+                name="Join Inner Circle"
+                isExecutable="true"
+                camunda:historyTimeToLive="180">
+
+    <bpmn:startEvent id="startEvent_membershipWanted" name="Membership wanted">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="email" label="E-Mail" type="string"/>
+          <camunda:formField id="name" label="Name" type="string"/>
+          <camunda:formField id="age" label="Age" type="long"/>
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>flow_membershipWantedToConfirm</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:sequenceFlow id="flow_membershipWantedToConfirm"
+                       sourceRef="startEvent_membershipWanted"
+                       targetRef="manualTask_confirm"/>
+
+    <bpmn:manualTask id="manualTask_confirm" name="Confirm">
+      <bpmn:incoming>flow_membershipWantedToConfirm</bpmn:incoming>
+      <bpmn:outgoing>flow_confirmToSendWelcomeMail</bpmn:outgoing>
+    </bpmn:manualTask>
+
+    <bpmn:sequenceFlow id="flow_confirmToSendWelcomeMail"
+                       sourceRef="manualTask_confirm"
+                       targetRef="manualTask_sendWelcomeMail"/>
+
+    <bpmn:manualTask id="manualTask_sendWelcomeMail" name="Send welcome mail">
+      <bpmn:incoming>flow_confirmToSendWelcomeMail</bpmn:incoming>
+      <bpmn:outgoing>flow_sendWelcomeMailToMemberJoined</bpmn:outgoing>
+    </bpmn:manualTask>
+
+    <bpmn:sequenceFlow id="flow_sendWelcomeMailToMemberJoined"
+                       sourceRef="manualTask_sendWelcomeMail"
+                       targetRef="endEvent_memberJoined"/>
+
+    <bpmn:endEvent id="endEvent_memberJoined" name="Member joined">
+      <bpmn:incoming>flow_sendWelcomeMailToMemberJoined</bpmn:incoming>
+    </bpmn:endEvent>
+
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="subscribeNewsletter">
+      <bpmndi:BPMNShape id="startEvent_membershipWanted_di" bpmnElement="startEvent_membershipWanted">
+        <dc:Bounds x="152" y="82" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="128" y="125" width="84" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="manualTask_confirm_di" bpmnElement="manualTask_confirm">
+        <dc:Bounds x="250" y="60" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="manualTask_sendWelcomeMail_di" bpmnElement="manualTask_sendWelcomeMail">
+        <dc:Bounds x="410" y="60" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="endEvent_memberJoined_di" bpmnElement="endEvent_memberJoined">
+        <dc:Bounds x="572" y="82" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="551" y="125" width="78" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_membershipWantedToConfirm_di" bpmnElement="flow_membershipWantedToConfirm">
+        <di:waypoint x="188" y="100"/>
+        <di:waypoint x="250" y="100"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_confirmToSendWelcomeMail_di" bpmnElement="flow_confirmToSendWelcomeMail">
+        <di:waypoint x="350" y="100"/>
+        <di:waypoint x="410" y="100"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_sendWelcomeMailToMemberJoined_di" bpmnElement="flow_sendWelcomeMailToMemberJoined">
+        <di:waypoint x="510" y="100"/>
+        <di:waypoint x="572" y="100"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -41,9 +41,16 @@ There is **no new model** – you are hardening the test from Exercise 6.
 
 ## The task
 
-### 1. Add the plugin and the runtime to `pom.xml`
+### 1. Enable the plugin and the runtime in `pom.xml`
 
-The version comes centrally from the root `pom.xml`, so in the module it goes without `<version>`:
+Both are already prepared in `services/process-application/pom.xml`, each in its own
+`TODO Exercise 6 (add-on)` block between the markers `@exercise-6-addon:begin` and
+`@exercise-6-addon:end`. Uncomment both blocks – as in Exercise 1, delete only the lines `<!--`
+and `-->` between the markers and keep the markers. The version comes centrally from the root
+`pom.xml`, so in the module it goes without `<version>`.
+
+The first block, under `<dependencies>`, brings the runtime types the generated Process-API refers
+to:
 
 ```xml
 <!-- dependencies -->
@@ -52,6 +59,10 @@ The version comes centrally from the root `pom.xml`, so in the module it goes wi
     <artifactId>bpmn-to-code-runtime</artifactId>
 </dependency>
 ```
+
+The second block, under `<build>` → `<plugins>`, is the plugin itself. It reads every BPMN file
+under `src/main/resources/bpmn/` and generates the Process-API into `src/main/java`, package
+`io.miragon.training.adapter.process`:
 
 ```xml
 <!-- build > plugins -->
@@ -203,7 +214,11 @@ constants from exactly this API.
 
 ## Reference solution
 
-`../../solutions/exercise-06/`
+`../../solutions/exercise-06/` (Exercise 6 including this add-on) – or load it directly:
+
+```bash
+./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=06
+```
 
 ## Next step
 

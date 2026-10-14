@@ -93,6 +93,10 @@ directly here, grab the baseline first:
 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=09
 ```
 
+The task also brings the matching `pom.xml` along, including the dependencies from Exercises 1
+and 6 – you don't need to enable anything by hand first. Then reload the Maven project in
+IntelliJ.
+
 ### 1. Create the new department
 
 Until now `services/` contained only `process-application`. Now the logistics service joins

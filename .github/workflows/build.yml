@@ -13,6 +13,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      # load-solution resets services/process-application to templates/process-application-starter/,
+      # so the template must stay a byte copy of the module's starter state (src/ + pom.xml).
+      # The load-solution task itself is exercised in load-solution.yml.
+      - name: Check starter baseline
+        run: bash .github/scripts/check-load-solution.sh baseline
+
       - name: Set up JDK 21
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:

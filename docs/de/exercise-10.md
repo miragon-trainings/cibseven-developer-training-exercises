@@ -93,6 +93,9 @@ direkt hier ein, hol dir zuerst die Baseline:
 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=09
 ```
 
+Der Task bringt auch die passende `pom.xml` mit, samt den Dependencies aus Aufgabe 1 und 6 – du
+musst vorher nichts von Hand aktivieren. Lade danach in IntelliJ das Maven-Projekt neu.
+
 ### 1. Neue Abteilung anlegen
 
 Bis hierher gab es in `services/` nur die `process-application`. Jetzt kommt der Service der

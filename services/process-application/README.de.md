@@ -97,14 +97,21 @@ Für jede Aufgabe gibt es eine Referenzlösung unter `../../solutions/exercise-X
 Jede Lösung ist eine eigenständige, lauffähige Spring Boot Anwendung.
 
 Wenn du eine Aufgabe nicht ganz fertig bekommst, kannst du die Referenzlösung direkt in
-dieses Modul kopieren und mit ihr weiterarbeiten (gültige Werte: 1–10):
+dieses Modul laden und mit ihr weiterarbeiten (gültige Werte: 00–10, zweistellig; 00 = zurück zum
+Auslieferungszustand):
 
 ```bash
 ../../mvnw antrun:run@load-solution -Dsolution=02
 ```
 
-Der Task ersetzt `src/main` komplett (Java, `application.yaml`, BPMN/DMN); `src/test` bleibt
-unberührt. Alle Module laufen auf demselben Port (`8080`) und nutzen dieselbe eingebettete
+Der Task setzt `src/` und `pom.xml` auf den Auslieferungszustand zurück und kopiert die Lösung darüber:
+`src/main` (Java, `application.yaml`, BPMN/DMN), die Prozess-Tests und die passende `pom.xml` (etwa mit
+den CIB-Seven-Startern aus Aufgabe 1). Die Stubs der späteren Aufgaben bleiben stehen, der
+`ArchitectureTest` bleibt, wie er ist. Deine eigenen Änderungen in `src/` und `pom.xml` werden ersetzt –
+der Task sichert sie vorher in diesem Modul unter `.load-solution-backup/<Zeitstempel>/`. Lass danach
+Maven erneut laufen (IntelliJ: Maven-Projekt neu laden), denn die `pom.xml` hat sich geändert. Bist du
+zu einer früheren Aufgabe zurückgesprungen, beende die Anwendung und lösche den Ordner `~/.cibseven-training`.
+
+Alle Module laufen auf demselben Port (`8080`) und nutzen dieselbe eingebettete
 H2-Datenbankdatei, es läuft also immer nur ein Modul zur Zeit (die laufende Anwendung sperrt die
-Datei, eine zweite Instanz bricht beim Start ab). Voraussetzung ist, dass du in **Aufgabe 1** die
-CIB-Seven-Abhängigkeiten aktiviert hast (die `pom.xml` wird nicht mitkopiert).
+Datei, eine zweite Instanz bricht beim Start ab).

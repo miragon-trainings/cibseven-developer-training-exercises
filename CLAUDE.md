@@ -29,10 +29,10 @@ CIB Seven Cockpit: `http://localhost:8080/webapp/#/seven/auth/start` (admin/admi
 H2 console: `http://localhost:8080/h2-console` — JDBC URL `jdbc:h2:file:~/.cibseven-training/exercise`, user `sa`,
 empty password (the login form pre-fills `jdbc:h2:~/test`; replace it).
 
-**Database:** no Docker, nothing to install or start. The app runs the engine on an embedded, file-based H2
+**Database:** nothing to install or start. The app runs the engine on an embedded, file-based H2
 (`~/.cibseven-training/exercise.mv.db`), created on first start; the engine creates its `act_*` tables itself
-(`camunda.bpm.database.schema-update: true`) in H2's default schema, so SQL needs no schema prefix. State
-survives restarts; reset = stop the app and delete `~/.cibseven-training` (Windows: `%USERPROFILE%\.cibseven-training`).
+(`camunda.bpm.database.schema-update: true`). State survives restarts; reset = stop the app and delete
+`~/.cibseven-training` (Windows: `%USERPROFILE%\.cibseven-training`).
 The running app locks the file — external DB tools cannot open it meanwhile (use the H2 console). Process tests
 (Exercise 6+) use the `test` profile with a separate in-memory H2 (`jdbc:h2:mem:cibseven-test`).
 

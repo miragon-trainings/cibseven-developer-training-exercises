@@ -213,7 +213,7 @@ This uses the manual Start Event and sits behind the `POST /api/welcome-kits` ac
 - The host carries **no** `send-welcome-kit.bpmn`. If it ends up there, the whole point of the
   exercise is broken.
 - CIB Seven still runs embedded in the host. "Remote" is the **client's** view; a
-  true standalone engine (`cibseven/cibseven:run`) would give the same picture with the host swapped out.
+  true standalone engine (CIB Seven Run) would give the same picture with the host swapped out.
 - The logistics service runs on port `8090`, the host on `8080`.
 - The setup follows the blueprint
   [`miragon-blueprints/cibseven-remote-example`](https://github.com/miragon-blueprints/cibseven-remote-example)

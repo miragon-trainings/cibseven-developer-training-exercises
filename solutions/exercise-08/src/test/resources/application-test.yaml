@@ -26,7 +26,7 @@ camunda:
       enabled: false
 
 # The CIB Seven webapp bean validates this secret on startup even when the webapp
-# itself is disabled – so we provide the same value the local profile uses.
+# itself is disabled – so we provide the same value as the main application.yaml.
 cibseven:
   webclient:
     authentication:

@@ -39,7 +39,9 @@ Das ist der wichtigste Teil. Jede Behauptung im Text muss im Repository nachweis
 | Klassen-, Methoden- oder Feldnamen | `find solutions/exercise-NN/src -name '*.java'` |
 | Log-Ausgaben („im Log erscheint …") | `grep 'log\.' solutions/exercise-NN/src/main/java/…` |
 | Antwortformat eines REST-Endpunkts | Controller in `solutions/exercise-NN/…/adapter/inbound/rest/` |
-| Dateipfade, Modulnamen, `TODO`-Marker | direkt im Dateisystem prüfen |
+| Dateipfade, Modulnamen, `TODO`-Marker | direkt im Dateisystem prüfen – im Arbeitsmodul **und** in `templates/process-application-starter/` |
+| „Kommentiere den Block … in der `pom.xml` ein" | `grep -n -e '@exercise-' -e 'TODO Exercise' services/process-application/pom.xml` |
+| `load-solution`: gültige Werte, was der Task mitbringt | Execution `load-solution` in `services/process-application/pom.xml`; Fehlerklasse 12 |
 | Maven-Befehle | Verzeichnis plausibel? `-pl` nur aus dem Wurzelverzeichnis |
 
 Typische Fehlerklassen, auf die gezielt zu achten ist:
@@ -164,6 +166,65 @@ Typische Fehlerklassen, auf die gezielt zu achten ist:
      echten Argumenten oder Cast), ist es ein Befund – auf ein Skelett oder einen API-Zeiger
      straffen. Ausnahme: ein bewusst *einmal* vorgeführtes Beispiel einer neuen, unbekannten API
      (etwa der erste Prozess-Test in Aufgabe 5, der erste Worker in Extra-Aufgabe 1).
+12. **Lösung lässt sich nicht sauber laden** – `load-solution` setzt das Arbeitsmodul auf die
+   Starter-Kopie zurück, lässt dabei jede Datei mit `TODO Exercise M` (M ≤ NN) weg, kopiert
+   Lösung NN darüber und baut die `pom.xml` aus den `@exercise-N`-Blöcken neu. Das trägt nur,
+   solange die Regeln aus `docs/aufgaben-template.md`, Abschnitt 3, eingehalten sind. Drei
+   Prüfungen, alle aus dem Wurzelverzeichnis:
+
+   - **Starter-Kopie synchron** – `templates/process-application-starter/` ist byte-gleich zum
+     Arbeitsmodul:
+
+     ```bash
+     diff -r services/process-application/src templates/process-application-starter/src \
+       && diff services/process-application/pom.xml templates/process-application-starter/pom.xml \
+       && echo "Starter-Kopie synchron"
+     ```
+
+   - **Marker-Regel** – jede Starter-Datei mit `TODO Exercise N` liegt in Lösung N und allen
+     späteren Lösungen. Erwartet sind nur die Treffer `ConfirmMembership*` ab `exercise-05`
+     (bewusst entfernt); jeder andere Treffer ist ein Befund, denn die Datei fehlt nach dem Laden:
+
+     ```bash
+     starter=templates/process-application-starter/src
+     grep -rlE 'TODO Exercise [0-9]+' "$starter"/main "$starter"/test/java/io/miragon/training/process "$starter"/test/resources 2>/dev/null |
+     while read -r f; do
+       rel=${f#"$starter"/}
+       n=$(grep -ohE 'TODO Exercise [0-9]+' "$f" | grep -oE '[0-9]+$' | sort -n | head -1)
+       for s in $(seq -f %02g "$n" 10); do
+         sol=solutions/exercise-$s; [ "$s" = 10 ] && sol=$sol/process-application
+         [ -f "$sol/src/$rel" ] || echo "$rel (TODO Exercise $n) fehlt in $sol"
+       done
+     done
+     ```
+
+   - **pom-Blöcke vollständig** – jede Dependency und jedes Plugin einer Lösungs-`pom.xml` steht
+     auch im Arbeitsmodul, aktiv oder als `@exercise-N`-Block. Die Ausgabe muss leer sein:
+
+     ```bash
+     for s in 01 02 03 04 05 06 07 08 09 10/process-application; do
+       comm -13 <(grep -oE '<artifactId>[^<]+' services/process-application/pom.xml | sort -u) \
+                <(grep -oE '<artifactId>[^<]+' solutions/exercise-$s/pom.xml | sort -u) |
+         grep -v '>solution' | sed "s|^|exercise-$s: |"
+     done
+     ```
+
+     Von Hand dazu: Die Block-Nummer ist nicht größer als die der ersten Lösung, die den Eintrag
+     braucht; jeder Block hat `:begin` und `:end` mit derselben Kennung und davor einen
+     `TODO Exercise N`-Kommentar; `<!--` und `-->` im Block stehen je auf einer eigenen Zeile.
+
+   Wer eine Lösung tatsächlich laden will, tut das nur in einer **Kopie** des Repositorys – der
+   Task überschreibt `src/` und `pom.xml` des Arbeitsmoduls:
+
+   ```bash
+   rsync -a --exclude target --exclude .git --exclude node_modules ./ /tmp/load-check/
+   cd /tmp/load-check && ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=NN \
+     && ./mvnw -pl services/process-application verify
+   ```
+
+   Im Aufgabentext ist außerdem ein Befund, was noch das alte Verhalten beschreibt: eine
+   Vorbedingung vor dem Laden („erst Aufgabe 1 abschließen"), „ersetzt `src/main` komplett",
+   „`src/test` bleibt unberührt", „die `pom.xml` wird nicht mitkopiert" oder gültige Werte ohne `00`.
 
 ### Schritt 3 – Vier Review-Perspektiven
 
@@ -235,6 +296,7 @@ Fragen und alle Befunde außerhalb von `docs/`.
 
 ## Grenzen
 
-- Keine Änderungen an `models/`, `solutions/`, `services/`, `templates/` oder Tests.
+- Keine Änderungen an `models/`, `solutions/`, `services/`, `templates/` oder Tests – auch nicht
+  über `load-solution` im Arbeitsbaum.
 - Keine erfundenen Quellen und keine behauptete Prüfung nicht abgerufener Dokumente.
 - Bei fachlicher Unklarheit: Annahme explizit machen und als Rückfrage ausweisen, statt zu raten.

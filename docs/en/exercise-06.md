@@ -100,10 +100,13 @@ current state of an instance in the process model). The marker belongs on the *d
 call, which would otherwise roll back the reservation with it. In the modeler: select the
 element → Properties Panel → *Asynchronous Before*.
 
-### 2. Add the test dependency
+### 2. Enable the test dependency
 
-The assertions come from the CIB Seven port of `camunda-bpm-assert`. The version is
-managed centrally in the root `pom.xml`:
+The assertions come from the CIB Seven port of `camunda-bpm-assert`. The dependency is already
+prepared in `services/process-application/pom.xml`: uncomment the `TODO Exercise 6` block. As in
+Exercise 1, delete only the lines `<!--` and `-->` between the markers `@exercise-6:begin` and
+`@exercise-6:end` and keep the markers. The version is managed centrally in the root `pom.xml`, so
+the block has none:
 
 ```xml
 <dependency>
@@ -313,7 +316,14 @@ be idempotent. With external interfaces you'll meet the same pattern again in
 
 ## Reference solution
 
-`../../solutions/exercise-06/`
+`../../solutions/exercise-06/` – or load it directly:
+
+```bash
+./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=06
+```
+
+The solution already includes the [add-on](exercise-06-addon.md): its tests use the generated
+Process-API instead of ID strings.
 
 ## Next step
 

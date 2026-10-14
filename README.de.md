@@ -81,19 +81,25 @@ open http://localhost:8080/h2-console    # JDBC-URL jdbc:h2:file:~/.cibseven-tra
 
 Das `process-application`-Modul startet im Zustand von **Aufgabe 1** (Engine noch auskommentiert). Wenn du
 eine Aufgabe nicht ganz fertig bekommst, kannst du die Referenzlösung in dein `process-application`-Modul
-kopieren und mit ihr weiterarbeiten:
+laden und mit ihr weiterarbeiten:
 
 ```bash
-# solutions/exercise-02 in das process-application-Modul kopieren (gültige Werte: 01–10, zweistellig)
+# solutions/exercise-02 in das process-application-Modul laden (gültige Werte: 00–10, zweistellig; 00 = zurück zum Auslieferungszustand)
 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=02
 ```
 
-Der Task ersetzt `src/main` komplett (Java, `application.yaml`, BPMN/DMN); `src/test` bleibt
-unberührt. Alle Module – das `process-application`-Modul **und** alle Solutions – laufen auf demselben Port
+Der Task setzt `src/` und `pom.xml` auf den Auslieferungszustand zurück und kopiert die Lösung darüber:
+`src/main` (Java, `application.yaml`, BPMN/DMN), die Prozess-Tests und die passende `pom.xml` (etwa mit
+den CIB-Seven-Startern aus Aufgabe 1). Die Stubs der späteren Aufgaben bleiben stehen, der
+`ArchitectureTest` bleibt, wie er ist. Deine eigenen Änderungen in `src/` und `pom.xml` werden ersetzt –
+der Task sichert sie vorher unter `services/process-application/.load-solution-backup/<Zeitstempel>/`.
+Weil sich die `pom.xml` ändert, lass Maven danach erneut laufen (IntelliJ: Maven-Projekt neu laden).
+Bist du zu einer früheren Aufgabe zurückgesprungen, beende die Anwendung und lösche den Ordner
+`~/.cibseven-training` – sonst bleiben Deployments und Prozessinstanzen der späteren Aufgabe in der Datenbank.
+
+Alle Module – das `process-application`-Modul **und** alle Solutions – laufen auf demselben Port
 (`8080`) und nutzen dieselbe eingebettete H2-Datenbankdatei; es läuft also immer nur **ein** Modul zur Zeit
 (die laufende Anwendung sperrt die Datei, eine zweite Instanz bricht beim Start ab).
-Die in **Aufgabe 1** aktivierten CIB-Seven-Abhängigkeiten (`pom.xml`) bleiben bestehen – lade
-eine Lösung ab `exercise-2` daher erst, nachdem Aufgabe 1 abgeschlossen ist.
 
 ## Repository-Struktur
 
@@ -118,7 +124,8 @@ cibseven-developer-training-exercises/
 │   │       └── domain/               # Domain-Modell (reines Java, keine Framework-Abhängigkeiten)
 │   └── (logistics-service/)          # erst in Aufgabe 10 aus templates/ angelegt (Remote-Owner)
 ├── templates/
-│   └── exercise-10/logistics-service/ # Vorlage für den Aufgabe-10-Worker (in services/ kopieren)
+│   ├── exercise-10/logistics-service/ # Vorlage für den Aufgabe-10-Worker (in services/ kopieren)
+│   └── process-application-starter/  # Auslieferungszustand von process-application (Basis für load-solution)
 ├── solutions/                        # Kumulative Lösungen pro Aufgabe (exercise-01 … exercise-10, extra-task-1)
 │   ├── exercise-{01-10}/             # exercise-10/ ist verschachtelt: process-application/ + logistics-service/
 │   └── extra-task-1/

@@ -44,9 +44,16 @@ Es kommt **kein neues Modell** dazu – du härtest den Test aus Aufgabe 6.
 
 ## Aufgabe
 
-### 1. Plugin und Runtime in die `pom.xml` eintragen
+### 1. Plugin und Runtime in der `pom.xml` aktivieren
 
-Die Version kommt zentral aus der Root-`pom.xml`, im Modul also ohne `<version>`:
+Beides ist in `services/process-application/pom.xml` schon vorbereitet, jeweils in einem eigenen
+Block `TODO Exercise 6 (add-on)` zwischen den Markern `@exercise-6-addon:begin` und
+`@exercise-6-addon:end`. Kommentiere beide Blöcke ein – wie in Aufgabe 1 löschst du nur die
+Zeilen `<!--` und `-->` zwischen den Markern und lässt die Marker stehen. Die Version kommt
+zentral aus der Root-`pom.xml`, im Modul also ohne `<version>`.
+
+Der erste Block unter `<dependencies>` bringt die Runtime-Typen, auf die die generierte
+Process-API verweist:
 
 ```xml
 <!-- dependencies -->
@@ -55,6 +62,10 @@ Die Version kommt zentral aus der Root-`pom.xml`, im Modul also ohne `<version>`
     <artifactId>bpmn-to-code-runtime</artifactId>
 </dependency>
 ```
+
+Der zweite Block unter `<build>` → `<plugins>` ist das Plugin selbst. Es liest alle BPMN-Dateien
+unter `src/main/resources/bpmn/` und generiert die Process-API nach `src/main/java`, Package
+`io.miragon.training.adapter.process`:
 
 ```xml
 <!-- build > plugins -->
@@ -208,7 +219,11 @@ dieser API an die Service Tasks.
 
 ## Referenzlösung
 
-`../../solutions/exercise-06/`
+`../../solutions/exercise-06/` (Aufgabe 6 inklusive dieses Add-ons) – oder direkt laden:
+
+```bash
+./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=06
+```
 
 ## Nächster Schritt
 

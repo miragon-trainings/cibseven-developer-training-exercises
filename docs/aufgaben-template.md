@@ -23,7 +23,7 @@ die übrigen entfallen, wenn sie nichts beitragen.
 | 8 | **`## Erwartetes Ergebnis`** | Woran erkennst du Erfolg? Beobachtbares Verhalten + die Befehle, um es zu erzeugen |
 | 9 | **`## Selbstcheck`** | Checkliste `- [ ]` mit prüfbaren Akzeptanzkriterien |
 | 10 | `## Hinweise` | Nur wenn sie den Lernfortschritt tragen (Stolperfallen, Hintergrund, Ausblick) |
-| 11 | **`## Referenzlösung`** | Pfad zur Lösung, ggf. `load-solution`-Befehl |
+| 11 | **`## Referenzlösung`** | Pfad zur Lösung und `load-solution`-Befehl (Format unten) |
 | 12 | **`## Nächster Schritt`** | Ein Satz Anschluss + Link zur Folgeaufgabe |
 
 **Warum diese Reihenfolge?** Die Vorgabe des Auftrags („Lernziel vor Ausgangssituation")
@@ -40,6 +40,26 @@ beobachtbare Verhalten, Letzteres ist die abhakbare Abnahme.
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** Exclusive Gateway, Business Key, generiertes Task-Formular
 ```
+
+### Referenzlösung – Format
+
+Der Abschnitt nennt mindestens die Lösung und den Befehl, mit dem sie sich ins Arbeitsmodul laden lässt:
+
+````markdown
+## Referenzlösung
+
+`../../solutions/exercise-NN/` – oder direkt laden:
+
+```bash
+./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=NN
+```
+````
+
+`load-solution` setzt `src/` und `pom.xml` des Arbeitsmoduls auf den Auslieferungszustand zurück
+und kopiert Lösung NN darüber – `src/main`, die Prozess-Tests und die passende `pom.xml`; die Stubs
+späterer Aufgaben bleiben stehen (gültige Werte `00`–`10`, `00` = Auslieferungszustand). Eine Aufgabe
+nennt deshalb keine Vorbedingung wie „erst Aufgabe 1 abschließen" für das Laden einer Lösung. Damit
+das funktioniert, müssen Arbeitsmodul und Lösungen die Marker-Regeln aus Abschnitt 3 einhalten.
 
 ---
 
@@ -83,6 +103,8 @@ Prozess starten, Nachrichten oder Signale korrelieren, einen External-Task-Worke
 - **Nicht-Engine-Plumbing** darf komplett auskommentiert ausgeliefert und per Einkommentieren
   aktiviert werden: REST-Controller, JPA-/DB-Adapter, Spring-/Maven-Konfiguration, Build-Plugins,
   vorbereitende technische Verdrahtung. Das lenkt nicht vom Engine-Lernziel ab.
+- **Marker:** Stubs und auskommentierte Dateien tragen `TODO Exercise N`, auskommentierte Teile der
+  `pom.xml` stehen in einem `@exercise-N`-Block. Beides wertet `load-solution` aus (Abschnitt 3).
 - **Hinweise** nennen Service und Methode konzeptionell (der Methodenname wie
   `startProcessInstanceByKey` oder `createMessageCorrelation` ist erlaubt), geben aber **keine
   paste-fertige Aufruf- oder Cast-Zeile**. Ein **abstraktes Code-Skelett** – die Aufrufkette mit
@@ -191,6 +213,50 @@ Weitere Festlegungen:
 - **Jede Aufgabe nennt ihr Referenzmodell** unter `../models/exercise-NN/`.
 - **Ab Aufgabe 6 (Add-on)** referenziert jeder Test Element-IDs über die generierte
   Process-API, nicht über Strings.
+- **`TODO Exercise N` ist ein tragender Marker.** Starter-Dateien im Arbeitsmodul
+  (`services/process-application/src`), die Aufgabe N vorbereitet (Stub, auskommentierte Klasse,
+  Platzhalter-Test), tragen `TODO Exercise N`. `load-solution` wertet den Marker aus: Beim Laden von
+  Lösung NN lässt der Task jede Starter-Datei mit `TODO Exercise M` (M ≤ NN) weg, weil die Lösung
+  ihre eigene Fassung mitbringt. Daraus folgt:
+  - Lösung N und jede spätere Lösung enthalten diese Datei – es sei denn, sie fällt bewusst weg
+    (`ConfirmMembership*` ab Aufgabe 5).
+  - Den Marker trägt nur eine Datei, die Lösung N mitbringt. Ein beiläufiges `TODO Exercise 7` in
+    einer Datei, die Lösung 7 nicht enthält, lässt die Datei beim Laden verschwinden.
+  - Umgekehrt kommt eine Datei ohne Marker bei jedem Laden zurück; eine Lösung kann sie nur
+    überschreiben. Was eine Lösung löscht oder umbenennt, braucht deshalb einen Marker.
+- **Vorbereitete Blöcke in der `pom.xml`.** Was eine Aufgabe in der `pom.xml` des Arbeitsmoduls
+  ergänzt (Dependency, Plugin), liegt dort auskommentiert als markierter Block. `load-solution`
+  baut die `pom.xml` aus der Starter-Kopie neu und kommentiert dabei alle Blöcke `@exercise-N` mit
+  N ≤ NN ein; was nicht in einem solchen Block steht, bringt der Task nicht mit. Vor dem Block steht
+  ein `TODO Exercise N`-Kommentar für die Teilnehmenden, `<!--` und `-->` stehen je auf einer
+  eigenen Zeile:
+
+  ```xml
+  <!--
+    TODO Exercise 6: <was einzukommentieren ist und wozu>
+  -->
+  <!-- @exercise-6:begin – <Kurzbeschreibung> -->
+  <!--
+  <dependency>
+      …
+  </dependency>
+  -->
+  <!-- @exercise-6:end -->
+  ```
+
+  Gehört ein Block zu einem Add-on, bekommt die Kennung ein Suffix (`@exercise-6-addon`). Dieselbe
+  Kennung darf mehrfach vorkommen, etwa für Dependency und Plugin. Bisher gibt es `@exercise-1`
+  (CIB-Seven-Starter), `@exercise-6` (`cibseven-bpm-assert`) und `@exercise-6-addon`
+  (`bpmn-to-code-runtime`, Plugin `bpmn-to-code-maven`).
+- **Starter-Kopie.** `templates/process-application-starter/` ist eine Byte-Kopie von `src/` und
+  `pom.xml` des Arbeitsmoduls im Auslieferungszustand; auf sie setzt `load-solution` zurück. Wer das
+  Arbeitsmodul ändert, zieht die Kopie im selben Commit nach (CI vergleicht beide mit `diff -r`):
+
+  ```bash
+  rm -rf templates/process-application-starter/src \
+    && cp -R services/process-application/src templates/process-application-starter/ \
+    && cp services/process-application/pom.xml templates/process-application-starter/
+  ```
 
 ---
 
@@ -259,3 +325,6 @@ Zwei Regeln dazu:
       Korrelation, External Task) wird selbst implementiert; Hinweise nennen die API, nicht die
       fertige Aufrufzeile
 - [ ] Link auf die Folgeaufgabe gesetzt, Eintrag in der README-Tabelle vorhanden
+- [ ] Jede Starter-Datei mit `TODO Exercise N` existiert in Lösung N und allen späteren Lösungen
+      (oder fällt bewusst weg); jede `pom.xml`-Ergänzung der Lösung liegt im Arbeitsmodul als
+      `@exercise-N`-Block vor; `templates/process-application-starter/` ist nachgezogen (Abschnitt 3)

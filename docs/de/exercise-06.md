@@ -100,10 +100,13 @@ aktuellen Stand einer Instanz im Prozessmodell markiert). Der Marker gehört auf
 Reservierung sonst mit zurückrollt. Im Modeler: Element auswählen → Properties Panel →
 *Asynchronous Before*.
 
-### 2. Test-Dependency ergänzen
+### 2. Test-Dependency aktivieren
 
-Die Assertions kommen aus dem CIB-Seven-Port von `camunda-bpm-assert`. Die Version ist
-zentral in der Root-`pom.xml` gemanagt:
+Die Assertions kommen aus dem CIB-Seven-Port von `camunda-bpm-assert`. Die Dependency ist in
+`services/process-application/pom.xml` schon vorbereitet: Kommentiere den Block `TODO Exercise 6`
+ein. Wie in Aufgabe 1 löschst du nur die Zeilen `<!--` und `-->` zwischen den Markern
+`@exercise-6:begin` und `@exercise-6:end` und lässt die Marker stehen. Die Version ist zentral in
+der Root-`pom.xml` gemanagt, deshalb steht im Block keine:
 
 ```xml
 <dependency>
@@ -317,7 +320,14 @@ committen oder idempotent sein. Bei externen Schnittstellen begegnet dir dasselb
 
 ## Referenzlösung
 
-`../../solutions/exercise-06/`
+`../../solutions/exercise-06/` – oder direkt laden:
+
+```bash
+./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=06
+```
+
+Die Lösung enthält schon das [Add-on](exercise-06-addon.md): Ihre Tests nutzen die generierte
+Process-API statt ID-Strings.
 
 ## Nächster Schritt
 

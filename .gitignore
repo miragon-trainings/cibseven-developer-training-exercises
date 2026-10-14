@@ -28,3 +28,6 @@ target/
 
 # Node tooling
 node_modules/
+
+# Backups written by the load-solution task (services/process-application)
+.load-solution-backup/

@@ -95,15 +95,21 @@ The ArchUnit tests verify at test time that the architecture rules are being obs
 For every exercise there is a reference solution under `../../solutions/exercise-X/`.
 Each solution is a self-contained, runnable Spring Boot application.
 
-If you don't quite manage to finish an exercise, you can copy the reference solution directly into
-this module and continue working with it (valid values: 1–10):
+If you don't quite manage to finish an exercise, you can load the reference solution directly into
+this module and continue working with it (valid values: 00–10, two digits; 00 = back to the starter state):
 
 ```bash
 ../../mvnw antrun:run@load-solution -Dsolution=02
 ```
 
-The task replaces `src/main` completely (Java, `application.yaml`, BPMN/DMN); `src/test` stays
-untouched. All modules run on the same port (`8080`) and the same embedded H2 database file, so only
+The task resets `src/` and `pom.xml` to the starter state and copies the solution on top: `src/main`
+(Java, `application.yaml`, BPMN/DMN), the process tests and the matching `pom.xml` (e.g. with the
+CIB Seven starters from Exercise 1). The stubs of the later exercises stay in place, `ArchitectureTest`
+stays as it is. Your own changes in `src/` and `pom.xml` are replaced – the task first backs them up to
+`.load-solution-backup/<timestamp>/` in this module. Then run Maven again (IntelliJ: reload the Maven
+project), because the `pom.xml` has changed. If you went back to an earlier exercise, stop the
+application and delete the folder `~/.cibseven-training`.
+
+All modules run on the same port (`8080`) and the same embedded H2 database file, so only
 ever one module runs at a time (the running application locks the file, a second instance fails at
-startup). The prerequisite is that you enabled the CIB Seven dependencies in
-**Exercise 1** (the `pom.xml` is not copied along).
+startup).

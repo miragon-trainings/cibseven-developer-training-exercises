@@ -48,8 +48,13 @@ in this exercise – you'll bring it to life.
 
 Open `services/process-application/pom.xml` and uncomment the `TODO Exercise 1` block: the two
 CIB Seven starters (`webapp-4` and `rest-4`). Only with these are the engine, the Cockpit webapp,
-and the REST API present in the module. The versions come centrally from the root `pom.xml` – so
-add them **without** a `<version>`.
+and the REST API present in the module. The versions come centrally from the root `pom.xml` –
+that's why the block has no `<version>`.
+
+The block sits between the marker comments `<!-- @exercise-1:begin … -->` and
+`<!-- @exercise-1:end -->`. Delete only the two lines `<!--` and `-->` between them and keep the
+markers: they are harmless comments that mark the block for the `load-solution` task (see
+*Reference solution*).
 
 ### 2. Enable the configuration
 
@@ -197,6 +202,10 @@ stopping.
   ```bash
   ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=01
   ```
+
+The task sets `src/` and `pom.xml` of the working module to the state after Exercise 1 – the
+dependencies from step 1 included. Your previous state is backed up under
+`services/process-application/.load-solution-backup/`. Then reload the Maven project in IntelliJ.
 
 ## Next step
 

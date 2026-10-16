@@ -2,7 +2,7 @@
 
 > **Prerequisite:** Exercise 6 is complete – the full membership process runs.
 > **Working directory:** `services/process-application` (Part A) and `services/logistics-service` (Part B, created in this exercise)
-> **New in this exercise:** Signal End Event and Signal Start Event, External Task, a second service as the process owner, a generated engine client from the OpenAPI spec.
+> **New in this exercise:** Signal End Event and Signal Start Event, External Task, a second service as the process owner, the CIB seven Java client for `/engine-rest`.
 
 ## What this is about
 
@@ -22,7 +22,7 @@ After this exercise you can
 
 - throw a signal with a payload via a Signal End Event and start a process via a Signal Start Event,
 - design a Service Task as an External Task and fulfil it with a worker,
-- generate a typed engine client from the OpenAPI spec and drive the engine through `/engine-rest`,
+- drive the engine through `/engine-rest` with the typed CIB seven Java client,
 - deploy a model idempotently from within another service.
 
 ## Target architecture
@@ -36,10 +36,10 @@ process-application  (engine host – embedded engine + /engine-rest + Cockpit, 
   • knows nothing about logistics and carries no send-welcome-kit.bpmn
 
 logistics-service  (remote owner – own JVM, :8090)
-  • generated client (openapi-generator from cibseven-engine-rest-openapi)
-  • deploys send-welcome-kit.bpmn over REST at start-up (idempotent)
+  • CIB seven Java client (cibseven-engine-rest-client-complete-springboot-starter)
+  • deploys send-welcome-kit.bpmn over REST at start-up (idempotent, the client's auto-deployment)
   • fulfils the Service Task shipWelcomeKit as an External Task   (engine → worker)
-  • starts processes through the generated client                  (worker → engine)
+  • starts processes through the typed client                     (worker → engine)
   • owns its own tests (in-memory engine in test scope only)
 ```
 
@@ -125,25 +125,32 @@ with a Start Event:
 The None Start Event allows a start via `startProcessInstanceByKey`, for instance to resend a
 kit.
 
-### 4. Generate the APIs
+### 4. Generate the Process API
 
-Activate the two generator blocks in the logistics service's `pom.xml`:
-
-- **Process API** (`bpmn-to-code`): produces the constant `ServiceTasks.SHIP_WELCOME_KIT`.
-- **Engine client** (`openapi-generator`): produces a typed `/engine-rest` client. Set
-  `generatorName` = `java` and `library` = `restclient`.
+Activate the `bpmn-to-code` block in the logistics service's `pom.xml`. It produces the constant
+`ServiceTasks.SHIP_WELCOME_KIT`.
 
 ```bash
 ./mvnw -pl services/logistics-service generate-sources
 ```
 
-Afterwards `org.cibseven.rest.client.api` / `.model` sit under `target/…` and
-`SendWelcomeKitProcessApi` under `src`.
+Afterwards `SendWelcomeKitProcessApi` sits under `src`.
 
-### 5. Deploy the model
+### 5. Understand the client and the deployment
 
-Implement `EngineDeploymentAdapter`: at start-up it ships `send-welcome-kit.bpmn` into the engine
-over REST. A restart must not create a second deployment.
+The logistics service uses the
+[CIB seven Java client](https://github.com/cibseven-community-hub/cibseven-rest-client-java)
+(`cibseven-engine-rest-client-complete-springboot-starter`). It is already in the `pom.xml` and brings
+three things:
+
+- the typed `/engine-rest` client: `ProcessDefinitionApi` & co. as ready-made beans
+  (`org.cibseven.community.rest.client.*`),
+- the External Task Client for the worker,
+- the auto-deployment: at start-up it ships the BPMN files from `cibseven.auto-deploy.bpmn-resources`
+  into the engine. A restart creates no second deployment.
+
+Look at the configuration in `application.yaml`. The engine has to be running before the service
+starts, otherwise the start-up fails at the deployment.
 
 ### 6. Write the worker
 
@@ -153,8 +160,8 @@ reads the `name` variable, ships the kit through the use case, and completes the
 
 ### 7. Drive the engine through the client
 
-Provide the `ProcessDefinitionApi` bean in `EngineClientConfig` and start the process via
-`startProcessInstanceByKey` in `RemoteWelcomeKitProcessAdapter`. This sits behind
+Inject the `ProcessDefinitionApi` into `RemoteWelcomeKitProcessAdapter` and start the process via
+`startProcessInstanceByKey`. Wrap the client's checked `ApiException` into an unchecked exception. This sits behind
 `POST /api/welcome-kits`.
 
 ## Constraints
@@ -168,7 +175,7 @@ Provide the `ProcessDefinitionApi` bean in `EngineClientConfig` and start the pr
 ## Expected result
 
 The logistics service's tests run without the engine host: worker unit test, process test on the
-in-memory engine, and adapter tests against an HTTP stub.
+in-memory engine, and an adapter test against a mocked `ProcessDefinitionApi`.
 
 ```bash
 ./mvnw -pl solutions/exercise-07/logistics-service test

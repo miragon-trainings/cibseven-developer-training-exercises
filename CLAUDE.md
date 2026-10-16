@@ -80,11 +80,12 @@ Multi-module Maven project:
 - `templates/exercise-07/logistics-service/` — Aufgabe 7 starter for the remote-owner service, kept OUT of
   `services/` (and the default reactor) so `services/` stays clean for exercises 0–6. In Aufgabe 7 the
   participant copies it into `services/logistics-service` and adds the `<module>` line. It OWNS a small
-  `sendWelcomeKit` process (Signal-Start → external task `shipWelcomeKit` → End), deploys its own BPMN into
-  the engine at start-up, fulfils the task via the external-task client, and drives the engine via a typed
-  client it **generates itself** (`openapi-generator-maven-plugin`, spec `cibseven-engine-rest-openapi`,
-  package `org.cibseven.rest.client.*`). Runs on :8090. Ships dormant/compilable with `TODO Exercise 7`
-  (the generator block + client wiring are commented out). Verified in CI via the `-Pexercise-07` profile.
+  `sendWelcomeKit` process (Signal-Start → external task `shipWelcomeKit` → End). Engine access comes from the
+  CIB seven community REST client (`org.cibseven.community.rest-client:cibseven-engine-rest-client-complete-springboot-starter`,
+  package `org.cibseven.community.rest.client.*`): typed `ProcessDefinitionApi` beans, the external-task client,
+  and auto-deployment of its own BPMN at start-up (`cibseven.auto-deploy.*`; engine must be up first).
+  Runs on :8090. Ships dormant/compilable with `TODO Exercise 7` (bpmn-to-code block commented out, worker +
+  process adapter stubbed). Verified in CI via the `-Pexercise-07` profile.
   (Replaces the former `notification-service` / the separate `cibseven-engine-client` module.)
 - `templates/process-application-starter/` — Byte copy of the starter state of `services/process-application`
   (`src/` + `pom.xml`), outside the reactor; the baseline `load-solution` resets to. **Contract:** must stay
@@ -92,9 +93,12 @@ Multi-module Maven project:
   `rm -rf templates/process-application-starter/src && cp -R services/process-application/src templates/process-application-starter/ && cp services/process-application/pom.xml templates/process-application-starter/`
 - `docs/` — Per-exercise instructions (`exercise-00.md … exercise-07.md`, `exercise-04-addon.md`, `extra-task-1.md`) + assets.
 - `solutions/exercise-{01-07}/` + `solutions/extra-task-1/` — Cumulative solutions, each building on the previous.
+  Extra Task 1 is nested like Exercise 7: `process-application/` (process-engine-api via the CIB seven embedded
+  adapter) + `logistics-service/` (process-engine-api via the CIB seven remote adapter; deploys its model itself
+  through the `DeploymentApi`, since the worker library's auto-deployment doesn't trigger with the remote adapter).
   Exercise 7 is nested into two sub-services: `solutions/exercise-07/process-application/` (the generic
   engine host, which additively broadcasts `Signal_MemberActivated`) + `solutions/exercise-07/logistics-service/`
-  (the remote owner of the `sendWelcomeKit` process; generates its own typed engine client in-module).
+  (the remote owner of the `sendWelcomeKit` process; uses the CIB seven community REST client).
 - `models/` — Reference BPMN/DMN models
 - All modules (process-application + every solution) run on the same port (`8080`) and the same H2 file
   (`~/.cibseven-training/exercise.mv.db`) — one module at a time; a second instance fails at startup with

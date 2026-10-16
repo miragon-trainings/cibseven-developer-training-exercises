@@ -24,14 +24,15 @@ Aufgaben 0–8 aufgeräumt.
    - **`send-welcome-kit.bpmn`** – enthält bewusst nur ein leeres Modell mit einem Start-Event.
      Modelliere den `sendWelcomeKit`-Prozess selbst (Prozess-ID, Signal- + manuelles Start-Event,
      External Service Task mit Topic, End-Event).
-   - **`pom.xml`** – die beiden auskommentierten Generator-Blöcke (bpmn-to-code + OpenAPI-Client)
-     einkommentieren und die `TODO`-Werte setzen → erzeugt Process-API + typisierten `/engine-rest`-Client.
-   - **`EngineClientConfig`** – die `ProcessDefinitionApi`-Bean bereitstellen.
-   - **`EngineDeploymentAdapter`** – das eigene Modell beim Start deployen.
+   - **`pom.xml`** – den auskommentierten bpmn-to-code-Block einkommentieren → erzeugt die Process-API.
    - **`ShipWelcomeKitWorker`** – den External-Task erfüllen (die Klasse ist absichtlich leer).
-   - **`RemoteWelcomeKitProcessAdapter`** – den Prozess über den Client starten.
+   - **`RemoteWelcomeKitProcessAdapter`** – den Prozess über die typisierte `ProcessDefinitionApi` starten.
+
+   Typisierter `/engine-rest`-Client, External-Task-Client und das Deployment des eigenen Modells kommen
+   fertig aus dem [CIB seven Community REST Client](https://github.com/cibseven-community-hub/cibseven-rest-client-java)
+   (`cibseven-engine-rest-client-complete-springboot-starter`, konfiguriert in `application.yaml`).
 
 Referenzlösung: [`solutions/exercise-07/logistics-service`](../../../solutions/exercise-07/logistics-service).
 
-> Tipp: Die Vorlage kompiliert schon im Ausgangszustand (der Client-Teil ist auskommentiert). Zum Prüfen
+> Tipp: Die Vorlage kompiliert schon im Ausgangszustand (der bpmn-to-code-Teil ist auskommentiert). Zum Prüfen
 > der Vorlage ohne Kopieren: `./mvnw -Pexercise-07 -pl templates/exercise-07/logistics-service compile`.

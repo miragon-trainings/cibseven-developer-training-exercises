@@ -4,12 +4,25 @@
 server:
   port: 8090
 
-# CIB Seven External Task Client: connect remotely to the engine's REST API and fulfil our topic.
-# The same base-url is reused for the model deployment and the generated typed client (see EngineClientConfig).
-camunda:
+spring:
+  application:
+    name: logistics-service
+
+# CIB seven community REST client: the typed /engine-rest client (ProcessDefinitionApi & co.) talks to
+# the shared engine. At start-up the starter also deploys our own BPMN (src/main/resources/bpmn) there —
+# so the engine has to be running before this service starts.
+cibseven:
   bpm:
     client:
       base-url: http://localhost:8080/engine-rest
+  auto-deploy:
+    bpmn-resources: classpath*:bpmn/*.bpmn
+
+# CIB Seven External Task Client: connect remotely to the same engine and fulfil our topic.
+camunda:
+  bpm:
+    client:
+      base-url: ${cibseven.bpm.client.base-url}
       lock-duration: 20000
 
 logging:

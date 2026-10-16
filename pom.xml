@@ -34,7 +34,7 @@
         <cib7.version>2.2.0</cib7.version>
         <archunit.version>1.5.1</archunit.version>
         <bpmn-to-code.version>6.2.0</bpmn-to-code.version>
-        <openapi-generator.version>7.26.0</openapi-generator.version>
+        <cibseven-rest-client.version>2.2.0</cibseven-rest-client.version>
     </properties>
 
     <!--
@@ -55,11 +55,12 @@
                 <artifactId>cibseven-bpm-spring-boot-starter-rest-4</artifactId>
                 <version>${cib7.version}</version>
             </dependency>
-            <!-- External Task Client (remote worker connecting to the engine REST API, ab Aufgabe 7) -->
+            <!-- CIB seven community REST client: typed /engine-rest client + external task client +
+                 auto-deployment (remote service connecting to the engine REST API, from Exercise 7) -->
             <dependency>
-                <groupId>org.cibseven.bpm.springboot</groupId>
-                <artifactId>cibseven-bpm-spring-boot-starter-external-task-client</artifactId>
-                <version>${cib7.version}</version>
+                <groupId>org.cibseven.community.rest-client</groupId>
+                <artifactId>cibseven-engine-rest-client-complete-springboot-starter</artifactId>
+                <version>${cibseven-rest-client.version}</version>
             </dependency>
             <!-- Architecture tests -->
             <dependency>

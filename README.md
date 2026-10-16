@@ -37,17 +37,14 @@ Detailed exercise descriptions can be found in [`docs/`](docs/).
 |---|---|---|
 | [0](docs/en/exercise-00.md) | Business-level BPMN modeling | Model the core Inner Circle membership flow purely at the business level, using only the shapes from Chapter 1 — the starting point for the whole training |
 | [1](docs/en/exercise-01.md) | Getting the engine running | Run the given start-form / Manual-Task model end-to-end, get to know the Cockpit and the engine's `act_*` tables |
-| [2](docs/en/exercise-02.md) | The first wait state | Turn the "Confirm" Manual Task into a User Task and give it a self-made Generated Form |
-| [3](docs/en/exercise-03.md) | Automate a step | Turn the "Send welcome mail" Manual Task into a Service Task backed by a JavaDelegate (Cockpit-started) |
-| [4](docs/en/exercise-04.md) | The application takes over | Message start event, REST register + confirm endpoints, message correlation, persistence |
-| [5](docs/en/exercise-05.md) | Capacity check with a gateway | Exclusive gateway, business key, task form |
-| [6](docs/en/exercise-06.md) | Process tests | Transaction boundaries, process unit test with an in-memory engine, mocked use cases, without a running application |
-| [6 · Add-on](docs/en/exercise-06-addon.md) | bpmn-to-code | Element IDs as generated constants instead of hand-typed strings, compile-safe path navigation with `PathWalk` |
-| [7](docs/en/exercise-07.md) | Subprocess, boundary events & parallelism | Subprocess, timer and message boundary events, parallel gateway, Teams integration |
-| [8](docs/en/exercise-08.md) | Compensation (SAGA) | Compensation boundary event, compensating end event, compensation handler |
-| [9](docs/en/exercise-09.md) | Call activity & DMN | Call activity, DMN decision table, business rule task |
-| [10](docs/en/exercise-10.md) | Remote engine as shared infrastructure | One department owns its **own** small process (`sendWelcomeKit`) in its remote service: model, worker, deployment, and tests live there; triggered via signal broadcast; the engine driven through a generated OpenAPI client |
-| [Extra 1](docs/en/extra-task-1.md) | Process engine API | Rebuild Exercise 10 to be engine-neutral: worker instead of JavaDelegate, swapping adapters instead of engine lock-in |
+| [2](docs/en/exercise-02.md) | User Task and Service Task | Turn "Confirm" into a User Task with a self-made Generated Form and "Send welcome mail" into a Service Task with a JavaDelegate (started from the Cockpit) |
+| [3](docs/en/exercise-03.md) | The application takes over | Message start event, business key, REST endpoints for register + confirm, correlation, persistence, capacity check with an exclusive gateway |
+| [4](docs/en/exercise-04.md) | Process tests | Transaction boundaries, process unit test with an in-memory engine and mocked use cases, without a running application |
+| [4 · Add-on](docs/en/exercise-04-addon.md) | bpmn-to-code | Element IDs as generated constants instead of hand-typed strings, compile-safe path navigation with `PathWalk` |
+| [5](docs/en/exercise-05.md) | Subprocess, boundary events & parallelism | Subprocess, timer and message boundary events, parallel gateway, Teams integration |
+| [6](docs/en/exercise-06.md) | Compensation, call activity & DMN | Compensation boundary event, compensating end event, call activity, DMN decision table, business rule task |
+| [7](docs/en/exercise-07.md) | Remote engine as shared infrastructure | A department owns its **own** small process (`sendWelcomeKit`) in its remote service: model, worker, deployment and tests live there; triggered by a signal broadcast; the engine is driven through a generated OpenAPI client |
+| [Extra 1](docs/en/extra-task-1.md) | Process Engine API | Rebuild Exercise 7 engine-neutrally: workers instead of JavaDelegates, swapping adapters instead of engine lock-in |
 
 > The structure, language, and quality criteria of the exercises are captured in
 > [`docs/aufgaben-template.md`](docs/aufgaben-template.md) (German). New or changed
@@ -81,7 +78,7 @@ can't fully finish an exercise, you can load the reference solution into your `p
 and continue working with it:
 
 ```bash
-# Load solutions/exercise-02 into the process-application module (valid values: 00–10, two digits; 00 = back to the starter state)
+# Load solutions/exercise-02 into the process-application module (valid values: 00–07, two digits; 00 = back to the starter state)
 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=02
 ```
 
@@ -119,12 +116,12 @@ cibseven-developer-training-exercises/
 │   │       │   │   └── outbound/     # Repository and process port interfaces
 │   │       │   └── service/          # Use-case implementations
 │   │       └── domain/               # Domain model (pure Java, no framework dependencies)
-│   └── (logistics-service/)          # created from templates/ only in Exercise 10 (remote owner)
+│   └── (logistics-service/)          # created from templates/ only in Exercise 7 (remote owner)
 ├── templates/
-│   ├── exercise-10/logistics-service/ # Template for the Exercise 10 worker (copied into services/)
+│   ├── exercise-07/logistics-service/ # Template for the Exercise 7 worker (copied into services/)
 │   └── process-application-starter/  # Starter state of process-application (baseline for load-solution)
-├── solutions/                        # Cumulative solutions per exercise (exercise-01 … exercise-10, extra-task-1)
-│   ├── exercise-{01-10}/             # exercise-10/ is nested: process-application/ + logistics-service/
+├── solutions/                        # Cumulative solutions per exercise (exercise-01 … exercise-07, extra-task-1)
+│   ├── exercise-{01-07}/             # exercise-07/ is nested: process-application/ + logistics-service/
 │   └── extra-task-1/
 ├── models/                           # Reference BPMN/DMN models
 └── pom.xml

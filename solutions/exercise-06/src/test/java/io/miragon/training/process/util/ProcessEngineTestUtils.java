@@ -51,6 +51,22 @@ public final class ProcessEngineTestUtils {
     }
 
     /**
+     * Fetches and completes the next external task of the given topic, standing in for the remote
+     * worker (e.g. the notification-service). Needed because external tasks are wait states: the
+     * in-memory engine parks the token until a worker completes them.
+     */
+    public static void completeExternalTask(ProcessEngine processEngine, String topic) {
+        var externalTaskService = processEngine.getExternalTaskService();
+        var tasks = externalTaskService.fetchAndLock(1, "test-worker")
+                .topic(topic, 10_000L)
+                .execute();
+        if (tasks.isEmpty()) {
+            throw new IllegalStateException("No external task found for topic '" + topic + "'");
+        }
+        externalTaskService.complete(tasks.get(0).getId(), "test-worker");
+    }
+
+    /**
      * Fires the timer job of the given boundary/catch event directly, regardless of its due date.
      * Verifies the timer path is wired correctly without waiting real time.
      */

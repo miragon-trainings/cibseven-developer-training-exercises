@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    # Embedded H2 database, stored as a file in your home directory – nothing to install or start.
+    # The engine state survives a restart. To reset: stop the application, delete ~/.cibseven-training.
+    url: jdbc:h2:file:~/.cibseven-training/exercise
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create
+  h2:
+    console:
+      # SQL console in the browser: http://localhost:8080/h2-console (same JDBC URL, user sa, no password)
+      enabled: true
+
+camunda:
+  bpm:
+    admin-user:
+      id: admin
+      password: admin
+    database:
+      type: h2
+      schema-update: true
+
+cibseven:
+  webclient:
+    services:
+      basePath: services/v1
+    engineRest:
+      url: http://localhost:8080
+    authentication:
+      jwtSecret: M9nU3ORo3s+gK23D9mO5I2h+EIqnosCFDCJi+2bKoulKqZkeQT8pGYg5RhuORlf/fWhLu5meC/SPZCv9NNuj6SK/vE5Sid04UQGrnyh04EpBdiAosAO91xezjgmbSeALUtneibseGpS0tNE4RvLIl+gXiAKqNXyO
+
+# In-Engine "Notify community": announce new members in a Microsoft Teams channel via a Power
+# Automate "Workflows" webhook.
+notification:
+  teams:
+    # Supply the real webhook URL via the TEAMS_WEBHOOK_URL env var — do NOT commit the secret.
+    webhook-url: ${TEAMS_WEBHOOK_URL:https://CHANGE-ME}

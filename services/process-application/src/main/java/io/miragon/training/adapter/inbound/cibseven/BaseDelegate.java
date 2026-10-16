@@ -1,6 +1,6 @@
 package io.miragon.training.adapter.inbound.cibseven;
 
-// TODO Exercise 3: Uncomment this class (remove the /* and */ lines).
+// TODO Exercise 2: Uncomment this class (remove the /* and */ lines).
 //  It needs the CIB Seven engine that you switch on in Exercise 1.
 /*
 import org.cibseven.bpm.engine.delegate.DelegateExecution;

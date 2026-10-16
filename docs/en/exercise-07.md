@@ -1,284 +1,320 @@
-# Exercise 7 – Subprocess, Boundary Events and Parallelism
+# Exercise 10 – The Engine as Shared Infrastructure
 
-> **Prerequisite:** Exercise 6 including the add-on is complete – the process tests run against the generated Process API.
-> **Working directory:** `services/process-application`
-> **New in this exercise:** embedded subprocess, Timer Boundary Events (interrupting and non-interrupting), Message Boundary Event, Parallel Gateway, an outbound adapter to Microsoft Teams.
+> **Prerequisite:** Exercise 9 is complete – the full membership process runs, including the `notifyCommunity` branch off the Parallel Gateway from Exercise 7.
+> **Working directory:** `services/process-application` (Part A) and `services/logistics-service` (Part B, created in this exercise)
+> **New in this exercise:** Signal End Event and Signal Start Event, External Task, a second service as the process owner, a generated engine client from the OpenAPI spec.
 
 ## What this is about
 
-Miravelo notices a pattern: many applicants never confirm their membership – and in doing so
-block spots that others would love to have. This turns into three requirements:
+The engine has established itself across the company. More and more departments want to use it –
+but nobody wants to run an engine of **their own**.
 
-1. Send a reminder mail **every day** as long as nobody confirms.
-2. Automatically cancel the membership after **three and a half days** without confirmation.
-3. Applicants can **withdraw** their application themselves.
+So we demonstrate that the engine is a reusable infrastructure component: the
+membership process throws a **signal** on activation.
 
-And whoever makes it all the way to activation should be celebrated: in parallel with the
-welcome mail, a notification goes out to the community's **Microsoft Teams channel**. The two
-steps don't depend on each other – a case for a **Parallel Gateway**.
+> **Concept: signal and broadcast.** A signal is a **broadcast** – unlike a
+> message (which you've known since [Exercise 4](exercise-04.md)), it isn't addressed to a
+> specific process instance but to everyone listening for it. The thrower doesn't know its
+> receivers and doesn't wait for a reply: 1 sender, n receivers.
+
+The **logistics department** runs its own service with its own `sendWelcomeKit` process.
+This service **owns the model**, **deploys it itself** into the
+shared engine, is started off the broadcast via a **Signal Start Event**, and ships
+a welcome kit.
+
+**The key point isn't the mechanism, it's ownership.** External Task
+merely means: the engine parks a task, a worker picks it up over REST and reports back.
+That says nothing about **who owns the process**. Here it belongs entirely to the
+logistics service – model, worker, deployment, and tests all live with it. The shared engine
+just runs it.
 
 ## Learning goals
 
 After this exercise you can
 
-- model an embedded subprocess and justify which activities it groups together,
-- use a non-interrupting Timer Boundary Event for recurring reminders,
-- use an interrupting Timer Boundary Event as a timeout,
-- trigger a Message Boundary Event from the outside via correlation,
-- span two independent branches with Parallel Gateways and merge them again,
-- place transaction boundaries correctly at boundary events and parallel branches,
-- secure the new paths in the process test.
+- turn an End Event into a Signal End Event and throw a signal with a payload,
+- make a process react to a broadcast via a Signal Start Event,
+- design a Service Task as an External Task and fulfil it with a worker,
+- generate a typed engine client from the official OpenAPI spec and drive the engine
+  through `/engine-rest` with it,
+- deploy a model idempotently from within another service,
+- separate the question "who owns the process?" from the External Task mechanism.
+
+## Target architecture
+
+From this exercise on, **two** applications run: the previous engine host and a second
+service that belongs to another department. There's still exactly one engine:
+
+```
+process-application  (generic engine host — embedded engine + /engine-rest + Cockpit, :8080)
+  • owns the membership process; the in-engine "Notify community" (Teams) branch stays
+  • new (additive): the terminal End Event "Membership activated" throws Signal_MemberActivated {name}
+  • knows nothing about logistics and carries no send-welcome-kit.bpmn
+
+logistics-service  (remote owner — own JVM, :8090)
+  • generated, typed client (openapi-generator from cibseven-engine-rest-openapi)
+  • deploys send-welcome-kit.bpmn into the engine over REST at start-up (idempotent)
+  • fulfils the Service Task shipWelcomeKit as an External Task   (direction 1: engine → worker)
+  • drives the engine through the generated client                 (direction 2: worker → engine)
+  • owns its own tests (in-memory engine in test scope only)
+```
 
 ## Target model
 
-![BPMN model of the exercise](../assets/exercise-07.svg)
+Two process models that know each other only through a signal – the host has no idea
+logistics exists, and logistics doesn't know the membership process:
 
-Reference model: `../../models/exercise-07/membership.bpmn`
+Membership process (`subscribeNewsletter`, engine host) – the terminal End Event "Membership
+activated" throws `Signal_MemberActivated`:
+
+![BPMN membership process](../assets/exercise-10-main.svg)
+
+Logistics process (`sendWelcomeKit`, modelled and deployed in the logistics-service) – a signal
+start plus a manual start, then the External Task `shipWelcomeKit`:
+
+![BPMN send-welcome-kit](../assets/exercise-10-sub.svg)
+
+Reference models: `../../models/exercise-10/membership.bpmn`,
+`../../models/exercise-10/send-welcome-kit.bpmn`
+
+The Parallel Gateway from Exercise 7 stays unchanged – only the terminal End Event
+"Membership activated" becomes a Signal End Event. It ends the process **and** throws the
+signal; no new branch appears.
 
 ## The task
 
-### 1. Create the subprocess
+### 0. Establish the baseline
 
-You build and configure the entire model in this exercise in the **Miragon BPMN Modeler**
-(select the element → Properties Panel), not in the XML.
+Exercise 10 builds on the finished membership process. If you've worked through exercises 1–9,
+`services/process-application` is already in the right state. If you're jumping in
+directly here, grab the baseline first:
 
-Group the confirmation mail and the confirmation into an embedded subprocess
-`subProcess_confirmMembership` ("Confirm membership"). An embedded subprocess
-has its own start and its own end and here contains four elements:
+```bash
+./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=09
+```
 
-| Element | Type | ID | Name |
+The task also brings the matching `pom.xml` along, including the dependencies from Exercises 1
+and 6 – you don't need to enable anything by hand first. Then reload the Maven project in
+IntelliJ.
+
+### 1. Create the new department
+
+Until now `services/` contained only `process-application`. Now the logistics service joins
+it:
+
+```bash
+cp -R templates/exercise-10/logistics-service services/logistics-service
+```
+
+Register the module in the root `pom.xml` under `<modules>`:
+
+```xml
+<module>services/logistics-service</module>
+```
+
+From now on `./mvnw` builds the new service too. It already compiles in its initial state – the
+client part is still commented out.
+
+### Part A – Engine host
+
+### 2. Turn the End Event into a signal thrower
+
+In the host exactly one change is needed. Turn the terminal End Event
+`endEvent_membershipActivated` (after the join) into a **Signal End Event**. `Send Welcome
+Mail` and `Notify community` stay unchanged, and **no** new element is added.
+
+You make all changes in the **Miragon BPMN Modeler**, not in the XML: select the End Event →
+convert it to a **Signal End Event** → create/select the signal `Signal_MemberActivated` →
+set `asyncBefore`. The End Event passes the payload (`name`) along via an **In Mapping**
+(`camunda:in`). In the XML this produces:
+
+```xml
+<bpmn:endEvent id="endEvent_membershipActivated" name="Membership activated" camunda:asyncBefore="true">
+  <bpmn:signalEventDefinition signalRef="Signal_MemberActivated">
+    <bpmn:extensionElements>
+      <camunda:in source="name" target="name" />
+    </bpmn:extensionElements>
+  </bpmn:signalEventDefinition>
+</bpmn:endEvent>
+```
+
+Creating the signal in the modeler produces the definitions-level declaration automatically:
+
+```xml
+<bpmn:signal id="Signal_MemberActivated" name="Signal_MemberActivated" />
+```
+
+No `RuntimeService`, no delegate – the engine throws the signal natively. The host merely
+calls "new member activated" into the room; who reacts to it is none of its business.
+
+### Part B – Logistics service
+
+This is where the real work sits. The order is deliberate: first model the process,
+then generate the APIs, then write the code. Work through the
+`TODO Exercise 10` spots one after another.
+
+### 3. Model the process
+
+**File:** `src/main/resources/bpmn/send-welcome-kit.bpmn` – it deliberately contains only an
+empty model with a Start Event. Model the process yourself; this is your
+final check on whether what you've learned has stuck.
+
+You set all the attributes in the table in the **Miragon BPMN Modeler** (select the element →
+Properties Panel), not in the XML.
+
+| Element | Type | ID | Configuration |
 |---|---|---|---|
-| Start | None Start Event | `startEvent_confirmationRequired` | – |
-| Confirmation mail | Service Task | `serviceTask_sendConfirmationMail` | Send confirmation mail |
-| Confirmation | User Task | `userTask_confirmMembership` | Confirm membership |
-| End | None End Event | `endEvent_membershipConfirmed` | Membership confirmed |
+| Process | – | `sendWelcomeKit` | `isExecutable="true"`, `historyTimeToLive` set |
+| Production start | Signal Start Event | `startEvent_memberActivated` | Signal `Signal_MemberActivated`, `asyncBefore="true"` |
+| Manual start | None Start Event | `startEvent_manualStart` | for testing and resending |
+| Merge | Exclusive Gateway | `gateway_start` | merges both starts |
+| Shipping | Service Task | `serviceTask_shipWelcomeKit` | Implementation **External**, topic `shipWelcomeKit` |
+| End | End Event | `endEvent_welcomeKitShipped` | – |
 
-The subprocess is the element to which you attach the boundary events in the next step.
-That's exactly why you need it: an interrupting boundary event always cancels the activity
-it is attached to – and what should be cancelled is the **entire** confirmation, not just a
-single task.
+**Why two Start Events?** The Signal Start Event is the production trigger. The empty
+Start Event allows a start via `startProcessInstanceByKey` over the REST API – for instance to
+resend a kit or in case the signal doesn't get through some time.
 
-### 2. Attach boundary events
+### 4. Generate the APIs
 
-All three attach to `subProcess_confirmMembership`:
+Activate the two commented-out generator blocks in `pom.xml`:
 
-| Element | Type | ID | Name | Configuration |
-|---|---|---|---|---|
-| Reminder | Timer, **non**-interrupting | `event_resendEveryDay` | Every day | **Cycle** `R/P1D` (repeats daily) |
-| Timeout | Timer, interrupting | `event_abortAfter3HalfDays` | After 3½ days | **Duration** `P3DT12H` (3½ days) |
-| Withdrawal | Message, interrupting | `event_confirmationRejected` | Confirmation rejected | Message: `Message_ConfirmationRejected` |
+- **Process API** (`bpmn-to-code`) – produces the constant
+  `ServiceTasks.SHIP_WELCOME_KIT` from your External Task.
+- **Engine client** (`openapi-generator`) – produces a typed `/engine-rest` client from
+  CIB Seven's official OpenAPI spec instead of hand-written REST calls.
+  Set the two `TODO` values: `generatorName` = `java`, `library` = `restclient`.
 
-Mind the difference: the reminder needs a **Cycle** (`R/…`) so that it repeats. A duration
-would only fire once.
-
-### 3. Model the new tasks and end events
-
-Every boundary event needs a path that ends somewhere. The reminder gets its own short
-branch, the two cancellation paths share one:
-
-| Element | Type | ID | Name | Configuration |
-|---|---|---|---|---|
-| Reminder mail | Service Task | `serviceTask_reSendConfirmationMail` | Re-Send confirmation mail | `#{reSendConfirmationMailDelegate}` |
-| Release spot | Service Task | `serviceTask_revokeClaim` | Revoke claim | `#{revokeClaimDelegate}` |
-| End reminder | End Event | `endEvent_mailSentAgain` | Mail sent again | end of the reminder branch |
-| End cancellation | End Event | `endEvent_membershipDeclined` | Membership declined | after `Revoke claim` |
-| End activation | End Event | `endEvent_membershipActivated` | Membership activated | after the join |
-
-Both interrupting boundary events (`event_abortAfter3HalfDays` and
-`event_confirmationRejected`) lead to `serviceTask_revokeClaim` and from there to
-`endEvent_membershipDeclined`.
-
-### 4. Add the Parallel Gateway
-
-Between the end of the subprocess and the activation end event come two Parallel
-Gateways:
-
-| Element | Type | ID | Branches |
-|---|---|---|---|
-| Fork | Parallel Gateway | `gateway_notifyFork` | → `serviceTask_sendWelcomeMail`, → `serviceTask_notifyCommunity` |
-| Join | Parallel Gateway | `gateway_notifyJoin` | ← both branches, → `endEvent_membershipActivated` |
-
-The new Service Task `serviceTask_notifyCommunity` ("Notify community") binds the
-delegate `#{notifyCommunityDelegate}`. Because the join waits for **both** branches, the
-membership only counts as activated once mail **and** notification are done.
-
-### 5. Add transaction boundaries
-
-Following the same principle as in [Exercise 6](exercise-06.md):
-
-| Marker | Element | Why |
-|---|---|---|
-| `asyncAfter` | `event_resendEveryDay` | the reminder runs in its own transaction and repeats without touching the waiting subprocess |
-| `asyncAfter` | `event_abortAfter3HalfDays` | a clean boundary **before** the cancellation (and, from Exercise 8 on, before the compensation) |
-| `asyncAfter` | `event_confirmationRejected` | likewise for the user-side withdrawal |
-| `asyncBefore` | `serviceTask_reSendConfirmationMail` | external effect – like all mail tasks |
-| `asyncBefore` | `serviceTask_sendWelcomeMail` | its own commit per parallel branch |
-| `asyncBefore` | `serviceTask_notifyCommunity` | its own commit per parallel branch |
-
-**Why a separate boundary per branch?** Without markers, `sendWelcomeMail` and
-`notifyCommunity` sit in **one** transaction. If the Teams call fails, the engine rolls
-back the job and retries it – the welcome mail would already be out and would go out
-**again** to the same address.
-
-### 6. Add use cases and delegates
-
-- **`ReSendConfirmationMailUseCase` / `ReSendConfirmationMailService`** – logs the
-  re-sending of the confirmation mail.
-- **`RevokeClaimUseCase` / `RevokeClaimService`** – logs the release and frees up the
-  capacity spot again.
-- **`ReSendConfirmationMailDelegate` / `RevokeClaimDelegate`** – analogous to the existing
-  delegates.
-
-### 7. Trigger the withdrawal via REST
-
-The Message Boundary Event is triggered from the outside. Add the endpoint
-
-```
-POST /api/memberships/{membershipId}/reject
+```bash
+./mvnw -pl services/logistics-service generate-sources
 ```
 
-and correlate in the `MembershipProcessAdapter` with
-`runtimeService.createMessageCorrelation(...)`: message name from the model, filtered on
-the process variable `membershipId`.
+Afterwards `org.cibseven.rest.client.api` / `.model` sit under `target/…` and
+`SendWelcomeKitProcessApi` under `src`.
 
-### 8. Wire up the community notification
+### 5. Deploy the model
 
-The notification runs entirely inside the engine – an ordinary delegate:
+**Class:** `EngineDeploymentAdapter` – ships its own
+`send-welcome-kit.bpmn` into the engine over REST at start-up. **Idempotent**: a restart must
+not create a second deployment.
 
-- `adapter/inbound/cibseven/NotifyCommunityDelegate` – reads `membershipId`, calls the use case.
-- `application/port/inbound/NotifyCommunityUseCase` + `application/service/NotifyCommunityService` –
-  loads the membership, builds a `Notification` (title and text) and hands it to the out-port.
-- `application/port/outbound/NotificationPublisherOutPort` +
-  `adapter/outbound/teams/MicrosoftTeamsMessagePublisher` – posts the notification as an
-  **Adaptive Card** into a Teams channel (webhook from Power Automate *Workflows*).
-- `domain/Notification` – a record with `title` and `text`.
+### 6. Write the worker
 
-Building the Adaptive Card and the REST call are infrastructure: take them from the
-reference solution. The `RestClient` is provided by `adapter/config/RestClientConfig`. The
-target URL lives in the `application.yaml`:
+**Class:** `ShipWelcomeKitWorker` – deliberately empty. Make it a bean (`@Component`),
+subscribe to the topic
+(`@ExternalTaskSubscription(topicName = ServiceTasks.SHIP_WELCOME_KIT)`),
+have it extend `BaseExternalTaskWorker`, read the `name` variable, ship the kit
+through the use case, and complete the task.
 
-```yaml
-notification:
-  teams:
-    # Real URL via the environment variable TEAMS_WEBHOOK_URL – no secret in the repository.
-    webhook-url: ${TEAMS_WEBHOOK_URL:https://CHANGE-ME}
-```
+### 7. Drive the engine through the client
 
-### 9. Extend the process test
-
-So far your test covers the happy path and the rejection due to missing capacity. After the
-next `generate-sources` the happy path from the add-on no longer compiles: behind the gateway
-there is now the subprocess, behind the user task the fork. Navigate it anew:
-
-```java
-var happyPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
-        .then(next -> next.serviceTaskClaimMembership())
-        .then(next -> next.gatewayHasEmptySpots())
-        .onto(next -> next.subProcessConfirmMembership())
-        .inside(FlowNodes.subProcessConfirmMembership(), start -> PathWalk.from(start.startEventConfirmationRequired())
-                .then(next -> next.serviceTaskSendConfirmationMail())
-                .then(next -> next.userTaskConfirmMembership())
-                .end(next -> next.endEventMembershipConfirmed()))
-        .then(next -> next.gatewayNotifyFork())
-        .then(next -> next.serviceTaskSendWelcomeMail())
-        .then(next -> next.gatewayNotifyJoin())
-        .end(next -> next.endEventMembershipActivated());
-```
-
-- **Subprocess:** `onto(...)` steps onto the subprocess without adding it to the path.
-  `inside(...)` walks its interior and then resumes on the subprocess – so the step to the
-  fork is checked again.
-- **Parallel gateway:** an ordered path only makes sense within **one** sequential branch.
-  The path follows the welcome-mail branch; check the parallel branch unordered with
-  `hasPassed(FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID)`.
-
-Then add three tests:
-
-- **Timeout (interrupting):** Wait at the user task, fire the timer with the helper
-  `fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID)` and execute the
-  open jobs. The token leaves the subprocess early through the boundary event –
-  `interruptedBy(...)` names the subprocess the event is attached to:
-
-  ```java
-  var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
-          .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
-          .then(next -> next.serviceTaskRevokeClaim())
-          .end(next -> next.endEventMembershipDeclined());
-  ```
-
-  Check the path with `hasPassedInOrder(abortPath.getIds())` and mock
-  `RevokeClaimUseCase` for this.
-- **Withdrawal via message:** Instead of the timer, call `membershipProcess.rejectMembership(id)`
-  – same outcome, the path runs via `eventConfirmationRejected()`.
-- **Reminder (non-interrupting):**
-  `fireTimer(..., FlowNodes.EventResendEveryDay.ELEMENT_ID)`, then check that
-  `reSendConfirmationMailUseCase` was called a **second** time and the process is
-  still waiting at the user task. Mock `ReSendConfirmationMailUseCase`.
-
-You'll find the `fireTimer` helper (executes a timer job regardless of its due date) in
-`ProcessEngineTestUtils`.
+**Classes:** `EngineClientConfig` and `RemoteWelcomeKitProcessAdapter` – provide the
+`ProcessDefinitionApi` bean and start the process via `startProcessInstanceByKey`.
+This uses the manual Start Event and sits behind the `POST /api/welcome-kits` action.
 
 ## Constraints
 
-- The timers in the reference model carry the **business** values (`R/P1D` and `P3DT12H`). If
-  you want to observe the behavior manually, temporarily set them to `R/PT1M` and
-  `PT3M` – you don't need this in the process test, where you trigger the timers directly.
-- The element IDs of the boundary events follow the grown convention `timer_` and
-  `event_` instead of `boundaryEvent_` – that's how it stands in the reference model, and
-  that's how it stays.
-- New element IDs automatically appear as `FlowNodes.*` constants after the next `generate-sources`,
-  new sequence flows as successors in the respective `Next`.
-- In the test, also mock `NotifyCommunityUseCase` so that no real Teams call goes out.
-- Never commit a real webhook URL – it comes from `TEAMS_WEBHOOK_URL`.
+- The host carries **no** `send-welcome-kit.bpmn`. If it ends up there, the whole point of the
+  exercise is broken.
+- CIB Seven still runs embedded in the host. "Remote" is the **client's** view; a
+  true standalone engine (CIB Seven Run) would give the same picture with the host swapped out.
+- The logistics service runs on port `8090`, the host on `8080`.
+- The setup follows the blueprint
+  [`miragon-blueprints/cibseven-remote-example`](https://github.com/miragon-blueprints/cibseven-remote-example)
+  (Kotlin/Gradle there, Java/Maven here).
 
 ## Expected result
 
-Create a membership and note the returned ID – you'll use it right away to trigger the
-withdrawal:
+### Automated, no running engine
+
+The logistics service tests every seam itself – worker unit test, process test on the
+in-memory engine (Signal Start → External Task as wait state → complete), deployment and
+remote-adapter test against an HTTP stub (`MockRestServiceServer`):
 
 ```bash
-MEMBERSHIP_ID=$(curl -s -X POST http://localhost:8080/api/memberships \
-  -H "Content-Type: application/json" \
-  -d '{"email": "eve@miravelo.com", "name": "Eve", "age": 26}')
-
-# With shortened timers: after a minute the reminder mail appears in the log,
-# the user task keeps waiting unchanged
-
-curl -X POST http://localhost:8080/api/memberships/$MEMBERSHIP_ID/reject
-# → Revoke claim runs, the instance ends at "Membership declined"
+./mvnw -pl solutions/exercise-10/logistics-service test
+./mvnw -pl solutions/exercise-10/process-application test -Dtest=MembershipProcessTest
 ```
 
-Without a withdrawal, the process cancels itself once the timeout timer elapses. If, on the
-other hand, the user task is confirmed, both parallel branches run and the instance ends at
-`Membership activated`.
+### End-to-end with both services
+
+For the full run you need three terminals: one each for the two applications, which run at
+the same time, and one for the `curl` calls. Work through the steps in order:
+
+```bash
+# 1. Start the engine host (:8080)
+cd solutions/exercise-10/process-application && ../../../mvnw spring-boot:run
+
+# 2. Logistics service (:8090) in a second terminal – it deploys its model at start-up
+cd solutions/exercise-10/logistics-service && ../../../mvnw spring-boot:run
+
+# 3. Proof that the remote service deployed the model:
+curl http://localhost:8080/engine-rest/deployment
+
+# 4. Create a member, complete the confirm task in Cockpit (http://localhost:8080/webapp/#/seven/auth/start,
+#    admin/admin) → the signal fires → a sendWelcomeKit instance runs
+curl -X POST http://localhost:8080/api/memberships \
+  -H "Content-Type: application/json" \
+  -d '{"email":"jane@example.com","name":"Jane","age":30}'
+
+# 5. Resend the welcome kit (drives the engine through the generated client):
+curl -X POST http://localhost:8090/api/welcome-kits \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Jane"}'
+```
+
+**The decisive proof:** Stop the logistics service and activate a member. In
+Cockpit a `sendWelcomeKit` instance waits at the External Task. Start the logistics service –
+it picks up the task and ships the kit.
 
 ## Self-check
 
-- [ ] The subprocess contains a start event, both tasks and an end event
-- [ ] All three boundary events attach to the subprocess, and the interruption semantics are correct
-- [ ] Both interrupting paths lead through `Revoke claim` to `Membership declined`
-- [ ] Fork and join are Parallel Gateways, both branches carry `asyncBefore`
-- [ ] `POST /api/memberships/{id}/reject` cancels a waiting instance
-- [ ] The three new process tests are green
+- [ ] `send-welcome-kit.bpmn` lives **only** in the logistics service
+- [ ] It appears in the engine's deployments **only** after the logistics service has been
+      started (`GET /engine-rest/deployment` or Cockpit)
+- [ ] Restarting the logistics service creates **no** second deployment
+- [ ] An activated member triggers `Signal_MemberActivated`, a `sendWelcomeKit` instance
+      runs, the worker ships the kit
+- [ ] Membership activation doesn't wait on logistics
+- [ ] The logistics service's tests are green **without** the engine host running
 
 ## Hints
 
-The fact that the Teams integration sits right in the middle of the process application is
-deliberately not yet ideal. In [Exercise 10](exercise-10.md) you'll see the counter-model: a
-dedicated service that owns its process – including the isolation of its secrets. For now the
-delegate is enough.
+**Signal broadcast is synchronous in the thrower.** In CIB Seven and Camunda 7, a signal is
+delivered **in the thrower's transaction**. Without a marker, the Signal End Event would
+create the `sendWelcomeKit` instance and run it synchronously up to the External Task – all in
+the membership's activation transaction. An error there (process not yet deployed, a race
+at start) would roll the activation back with it. That's why there are **two** boundaries:
+`asyncBefore` on the Signal End Event `endEvent_membershipActivated` and `asyncBefore` on the
+Signal Start Event `startEvent_memberActivated` in the logistics process. Only then does
+"activation doesn't wait on logistics" hold **before** the External Task too.
+
+**Transaction boundary at the External Task (tying back to Exercise 6):** The External Task is
+the commit boundary between engine and worker. The engine commits as soon as it creates the
+task and waits as a wait state. The worker picks it up via `fetchAndLock`, works in **its
+own** transaction, and only then reports back `complete` or `handleFailure`. A
+failed `shipWelcomeKit` rolls back **nothing** in the engine; whether and how often to retry
+is a worker decision. This is the deliberate counterpart to the
+`asyncBefore` pattern: there *the model* sets the boundary, here the mechanism brings it
+along – and error handling moves to the owner.
+
+**For trainers:** A signal means a 1:N broadcast. As an extension, a **second** department
+(say analytics with `recordSignup`) can listen for the **same** signal – another
+remote service that owns and deploys its own process. That's exactly what demonstrates "one
+engine, many departments" live.
 
 ## Reference solution
 
-`../../solutions/exercise-07/` – or load it directly:
-
-```bash
-./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=07
-```
+- Engine host: `../../solutions/exercise-10/process-application/`
+- Logistics service: `../../solutions/exercise-10/logistics-service/` (also contains the
+  generated engine client – there is no separate client module)
+- To run only the finished result in the working module:
+  `./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=10`
 
 ## Next step
 
-`revokeClaim` currently hangs as an explicit task on every cancellation path. In Exercise 8
-you'll leave that to the engine.
+🎉 **Done!** You've built a process that a dedicated remote service owns and
+deploys – experiencing the engine as reusable infrastructure along the way. Want more?
+The extra task reworks the process to be engine-neutral.
 
-➡️ [Next: Exercise 8](exercise-08.md)
+➡️ [Next: Extra Task 1](extra-task-1.md)

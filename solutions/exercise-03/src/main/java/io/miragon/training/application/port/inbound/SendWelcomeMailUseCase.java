@@ -1,6 +1,8 @@
 package io.miragon.training.application.port.inbound;
 
+import io.miragon.training.domain.MembershipId;
+
 public interface SendWelcomeMailUseCase {
 
-    void sendWelcomeMail(String email);
+    void sendWelcomeMail(MembershipId membershipId);
 }

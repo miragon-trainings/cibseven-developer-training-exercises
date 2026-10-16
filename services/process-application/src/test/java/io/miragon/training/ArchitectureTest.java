@@ -24,7 +24,7 @@ public class ArchitectureTest {
             .layer("Application").definedBy("..application.service..")
             .layer("InAdapters").definedBy("..adapter.inbound..")
             .layer("OutAdapters").definedBy("..adapter.outbound..")
-            // bpmn-to-code generated Process-API constants (from Exercise 6). Empty in Exercise 1-5
+            // bpmn-to-code generated Process-API constants (from Exercise 4). Empty in Exercise 1-3
             // → harmless thanks to withOptionalLayers(true).
             .layer("ProcessApi").definedBy("..adapter.process..")
             .whereLayer("Domain").mayOnlyBeAccessedByLayers("InPorts", "OutPorts", "Application", "InAdapters", "OutAdapters")

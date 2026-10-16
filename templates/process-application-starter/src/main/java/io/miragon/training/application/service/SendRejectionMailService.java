@@ -1,0 +1,31 @@
+package io.miragon.training.application.service;
+
+// TODO Exercise 3: Uncomment this class (remove the /* and */ lines).
+/*
+import io.miragon.training.application.port.inbound.SendRejectionMailUseCase;
+import io.miragon.training.application.port.outbound.MembershipRepository;
+import io.miragon.training.domain.MembershipId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class SendRejectionMailService implements SendRejectionMailUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(SendRejectionMailService.class);
+
+    private final MembershipRepository repository;
+
+    public SendRejectionMailService(MembershipRepository repository) {
+        this.repository = repository;
+    }
+
+    @Override
+    public void sendRejectionMail(MembershipId membershipId) {
+        var membership = repository.find(membershipId);
+        log.info("Sending rejection mail to {} (membershipId={})", membership.email().value(), membershipId.value());
+    }
+}
+*/

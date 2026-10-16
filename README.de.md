@@ -39,17 +39,14 @@ Detaillierte Aufgabenbeschreibungen befinden sich in [`docs/`](docs/).
 |---|---|---|
 | [0](docs/de/exercise-00.md) | Fachliche BPMN-Modellierung | Den Kernablauf der Inner-Circle-Membership rein fachlich und nur mit den Grundformen aus Kapitel 1 modellieren – der Ausgangspunkt für das ganze Training |
 | [1](docs/de/exercise-01.md) | Engine zum Laufen bringen | Das vorgegebene Start-Formular-/Manual-Task-Modell durchlaufen lassen, Cockpit und `act_*`-Tabellen der Engine kennenlernen |
-| [2](docs/de/exercise-02.md) | Der erste Wartepunkt | Aus dem Manual Task „Confirm" einen User Task machen und ihm eine selbst erstellte Generated Form geben |
-| [3](docs/de/exercise-03.md) | Einen Schritt automatisieren | Aus dem Manual Task „Send welcome mail" einen Service Task mit JavaDelegate machen (Start über Cockpit) |
-| [4](docs/de/exercise-04.md) | Die Anwendung übernimmt | Message Start Event, REST-Endpunkte für Register + Confirm, Nachrichten-Korrelation, Persistenz |
-| [5](docs/de/exercise-05.md) | Kapazitätsprüfung mit Gateway | Exclusive Gateway, Business Key, Task-Formular |
-| [6](docs/de/exercise-06.md) | Prozess-Tests | Transaktionsgrenzen, Prozess-Unit-Test mit In-Memory-Engine, gemockten Use Cases, ohne laufende Anwendung |
-| [6 · Add-on](docs/de/exercise-06-addon.md) | bpmn-to-code | Element-IDs als generierte Konstanten statt handgetippter Strings, Pfade compile-sicher mit `PathWalk` navigieren |
-| [7](docs/de/exercise-07.md) | Subprozess, Boundary Events & Parallelität | Subprozess, Timer- und Message-Boundary-Events, Parallel Gateway, Teams-Anbindung |
-| [8](docs/de/exercise-08.md) | Kompensation (SAGA) | Compensation Boundary Event, Compensating End Event, Kompensations-Handler |
-| [9](docs/de/exercise-09.md) | Call Activity & DMN | Call Activity, DMN-Entscheidungstabelle, Business Rule Task |
-| [10](docs/de/exercise-10.md) | Remote Engine als geteilte Infrastruktur | Eine Abteilung besitzt einen **eigenen** kleinen Prozess (`sendWelcomeKit`) in ihrem Remote-Service: Modell, Worker, Deployment und Tests liegen dort; getriggert per Signal-Broadcast; die Engine über einen generierten OpenAPI-Client getrieben |
-| [Extra 1](docs/de/extra-task-1.md) | Process-Engine-API | Aufgabe 10 engine-neutral umbauen: Worker statt JavaDelegate, Adapter-Tausch statt Engine-Lock-in |
+| [2](docs/de/exercise-02.md) | User Task und Service Task | „Confirm" zum User Task mit selbst erstellter Generated Form machen, „Send welcome mail" zum Service Task mit JavaDelegate (Start über Cockpit) |
+| [3](docs/de/exercise-03.md) | Die Anwendung übernimmt | Message Start Event, Business Key, REST-Endpunkte für Register + Confirm, Korrelation, Persistenz, Kapazitätsprüfung mit Exclusive Gateway |
+| [4](docs/de/exercise-04.md) | Prozess-Tests | Transaktionsgrenzen, Prozess-Unit-Test mit In-Memory-Engine, gemockten Use Cases, ohne laufende Anwendung |
+| [4 · Add-on](docs/de/exercise-04-addon.md) | bpmn-to-code | Element-IDs als generierte Konstanten statt handgetippter Strings, Pfade compile-sicher mit `PathWalk` navigieren |
+| [5](docs/de/exercise-05.md) | Subprozess, Boundary Events & Parallelität | Subprozess, Timer- und Message-Boundary-Events, Parallel Gateway, Teams-Anbindung |
+| [6](docs/de/exercise-06.md) | Kompensation, Call Activity & DMN | Compensation Boundary Event, Compensating End Event, Call Activity, DMN-Entscheidungstabelle, Business Rule Task |
+| [7](docs/de/exercise-07.md) | Remote Engine als geteilte Infrastruktur | Eine Abteilung besitzt einen **eigenen** kleinen Prozess (`sendWelcomeKit`) in ihrem Remote-Service: Modell, Worker, Deployment und Tests liegen dort; getriggert per Signal-Broadcast; die Engine über einen generierten OpenAPI-Client getrieben |
+| [Extra 1](docs/de/extra-task-1.md) | Process-Engine-API | Aufgabe 7 engine-neutral umbauen: Worker statt JavaDelegate, Adapter-Tausch statt Engine-Lock-in |
 
 > Aufbau, Sprache und Qualitätskriterien der Aufgaben sind in
 > [`docs/aufgaben-template.md`](docs/aufgaben-template.md) festgehalten. Neue oder geänderte
@@ -84,7 +81,7 @@ eine Aufgabe nicht ganz fertig bekommst, kannst du die Referenzlösung in dein `
 laden und mit ihr weiterarbeiten:
 
 ```bash
-# solutions/exercise-02 in das process-application-Modul laden (gültige Werte: 00–10, zweistellig; 00 = zurück zum Auslieferungszustand)
+# solutions/exercise-02 in das process-application-Modul laden (gültige Werte: 00–07, zweistellig; 00 = zurück zum Auslieferungszustand)
 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=02
 ```
 
@@ -122,12 +119,12 @@ cibseven-developer-training-exercises/
 │   │       │   │   └── outbound/     # Repository- und Prozess-Port-Interfaces
 │   │       │   └── service/          # Use-Case-Implementierungen
 │   │       └── domain/               # Domain-Modell (reines Java, keine Framework-Abhängigkeiten)
-│   └── (logistics-service/)          # erst in Aufgabe 10 aus templates/ angelegt (Remote-Owner)
+│   └── (logistics-service/)          # erst in Aufgabe 7 aus templates/ angelegt (Remote-Owner)
 ├── templates/
-│   ├── exercise-10/logistics-service/ # Vorlage für den Aufgabe-10-Worker (in services/ kopieren)
+│   ├── exercise-07/logistics-service/ # Vorlage für den Aufgabe-7-Worker (in services/ kopieren)
 │   └── process-application-starter/  # Auslieferungszustand von process-application (Basis für load-solution)
-├── solutions/                        # Kumulative Lösungen pro Aufgabe (exercise-01 … exercise-10, extra-task-1)
-│   ├── exercise-{01-10}/             # exercise-10/ ist verschachtelt: process-application/ + logistics-service/
+├── solutions/                        # Kumulative Lösungen pro Aufgabe (exercise-01 … exercise-07, extra-task-1)
+│   ├── exercise-{01-07}/             # exercise-07/ ist verschachtelt: process-application/ + logistics-service/
 │   └── extra-task-1/
 ├── models/                           # Referenz-BPMN-/DMN-Modelle
 └── pom.xml

@@ -48,10 +48,49 @@
             <groupId>org.cibseven.bpm.springboot</groupId>
             <artifactId>cibseven-bpm-spring-boot-starter-rest-4</artifactId>
         </dependency>
+
+        <!-- Process tests -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.cibseven.bpm</groupId>
+            <artifactId>cibseven-bpm-assert</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Runtime types referenced by the bpmn-to-code generated process API -->
+        <dependency>
+            <groupId>io.miragon</groupId>
+            <artifactId>bpmn-to-code-runtime</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- bpmn-to-code: generates the type-safe process API constants from the BPMN models -->
+            <plugin>
+                <groupId>io.miragon</groupId>
+                <artifactId>bpmn-to-code-maven</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-process-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-bpmn-api</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <baseDir>${project.basedir}</baseDir>
+                    <filePattern>src/main/resources/bpmn/*.bpmn</filePattern>
+                    <outputFolderPath>${project.basedir}/src/main/java</outputFolderPath>
+                    <packagePath>io.miragon.training.adapter.process</packagePath>
+                    <outputLanguage>JAVA</outputLanguage>
+                    <processEngine>CAMUNDA_7</processEngine>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

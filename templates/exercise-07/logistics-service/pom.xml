@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.miragon</groupId>
+        <artifactId>cibseven-developer-training-exercises</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <!-- Correct once the module lives at services/logistics-service (its home after you copy it in
+             Exercise 7): ../../pom.xml is the repo root. While it still sits under templates/ (only the CI
+             check builds it there), CI installs the root pom first so the parent resolves from the repo. -->
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>logistics-service</artifactId>
+    <name>logistics-service</name>
+
+    <!--
+      Exercise 7 – skeleton of the logistics service (remote owner of the sendWelcomeKit process).
+
+      Fill in the TODO Exercise 7 spots:
+        1. Generate the typed /engine-rest client   -> the commented-out plugin block below.
+        2. Wire up the client beans                  -> EngineClientConfig.
+        3. Deploy the model yourself                 -> EngineDeploymentAdapter.
+        4. Implement the external-task worker        -> ShipWelcomeKitWorker.
+        5. Start the engine via the client           -> RemoteWelcomeKitProcessAdapter.
+
+      Reference solution: solutions/exercise-07/logistics-service.
+    -->
+
+    <properties>
+        <!-- Package the generated /engine-rest client lands in (used once you enable the generator). -->
+        <cibseven-client.package>org.cibseven.rest.client</cibseven-client.package>
+    </properties>
+
+    <dependencies>
+        <!-- spring-web: RestClient (deployment + generated client) + the small REST controller.
+             A lightweight HTTP server runs on :8090 (does not collide with the engine on :8080). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- CIB Seven External Task Client (Direction 1: Engine -> Worker) -->
+        <dependency>
+            <groupId>org.cibseven.bpm.springboot</groupId>
+            <artifactId>cibseven-bpm-spring-boot-starter-external-task-client</artifactId>
+        </dependency>
+        <!-- The generated client is self-contained on Jackson 2 (Spring Boot 4 uses Jackson 3),
+             hence the Jackson 2 artifacts + jakarta.annotation explicitly (BOM-managed versions). -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
+        <!-- Runtime types of the bpmn-to-code generated Process-API -->
+        <dependency>
+            <groupId>io.miragon</groupId>
+            <artifactId>bpmn-to-code-runtime</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- ============================================================================
+                 TODO Exercise 7 (step 1): Generate the typed /engine-rest client.
+
+                 Instead of writing REST calls by hand (error-prone: URIs, the typed
+                 variable format {"value": …, "type": …}), we generate a ready-made, typed
+                 client from CIB seven's OFFICIAL OpenAPI spec. The spec ships as
+                 openapi.json in the artifact org.cibseven.bpm:cibseven-engine-rest-openapi (pinned
+                 to ${cib7.version} -> client and engine never drift apart).
+
+                 Flow: (1) unpack openapi.json from the artifact, (2) run the OpenAPI generator.
+                 The generated classes land under target/generated-sources and are compiled along
+                 automatically (org.cibseven.rest.client.api.* / .model.*).
+
+                 How to enable it:
+                   1. Uncomment this block.
+                   2. Set the two values marked with TODO (see docs/en/exercise-07.md or slide 7.5).
+                   3. `./mvnw -pl services/logistics-service generate-sources` -> the client appears.
+                   4. Then wire up EngineClientConfig + RemoteWelcomeKitProcessAdapter.
+                 ============================================================================ -->
+            <!--
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>extract-openapi-spec</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.cibseven.bpm</groupId>
+                                    <artifactId>cibseven-engine-rest-openapi</artifactId>
+                                    <version>${cib7.version}</version>
+                                    <type>jar</type>
+                                    <includes>openapi.json</includes>
+                                    <outputDirectory>${project.build.directory}/openapi</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-cibseven-client</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.build.directory}/openapi/openapi.json</inputSpec>
+                            <!- - TODO Exercise 7: choose the Java generator (value: java) - ->
+                            <generatorName>TODO-GENERATOR-NAME</generatorName>
+                            <!- - TODO Exercise 7: choose the client library that builds on Spring's RestClient (value: restclient) - ->
+                            <library>TODO-CLIENT-LIBRARY</library>
+                            <apiPackage>${cibseven-client.package}.api</apiPackage>
+                            <modelPackage>${cibseven-client.package}.model</modelPackage>
+                            <invokerPackage>${cibseven-client.package}.invoker</invokerPackage>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <validateSpec>false</validateSpec>
+                            <configOptions>
+                                <serializationLibrary>jackson</serializationLibrary>
+                                <useJakartaEe>true</useJakartaEe>
+                                <openApiNullable>false</openApiNullable>
+                                <dateLibrary>java8</dateLibrary>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            -->
+
+            <!-- bpmn-to-code: type-safe Process-API from the OWNED BPMN model (already active). -->
+            <!-- ============================================================================
+                 TODO Exercise 7 (step 2): Generate the type-safe Process-API.
+
+                 From your BPMN model, bpmn-to-code produces constants for element IDs, topics, etc.
+                 It generates a topic constant (ServiceTasks.SHIP_WELCOME_KIT)
+                 but ONLY once you have modelled the process (incl. an external service task with a topic) –
+                 that is why this block is commented out. Order:
+                   1. Model the sendWelcomeKit process in send-welcome-kit.bpmn (see docs/en/exercise-07.md).
+                   2. Uncomment this block.
+                   3. `./mvnw -pl services/logistics-service generate-sources`
+                      -> SendWelcomeKitProcessApi appears; the worker can subscribe to the topic constant.
+                 ============================================================================ -->
+            <!--
+            <plugin>
+                <groupId>io.miragon</groupId>
+                <artifactId>bpmn-to-code-maven</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-process-api</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-bpmn-api</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <baseDir>${project.basedir}</baseDir>
+                    <filePattern>src/main/resources/bpmn/*.bpmn</filePattern>
+                    <outputFolderPath>${project.basedir}/src/main/java</outputFolderPath>
+                    <packagePath>io.miragon.training.adapter.process</packagePath>
+                    <outputLanguage>JAVA</outputLanguage>
+                    <processEngine>CAMUNDA_7</processEngine>
+                </configuration>
+            </plugin>
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>io.miragon.training.TrainingWorkerApplication</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

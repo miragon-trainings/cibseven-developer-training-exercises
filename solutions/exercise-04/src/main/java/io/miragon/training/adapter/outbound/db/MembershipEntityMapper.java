@@ -2,9 +2,9 @@ package io.miragon.training.adapter.outbound.db;
 
 import io.miragon.training.domain.Age;
 import io.miragon.training.domain.Email;
-import io.miragon.training.domain.Name;
 import io.miragon.training.domain.Membership;
 import io.miragon.training.domain.MembershipId;
+import io.miragon.training.domain.Name;
 import org.springframework.stereotype.Component;
 
 @Component

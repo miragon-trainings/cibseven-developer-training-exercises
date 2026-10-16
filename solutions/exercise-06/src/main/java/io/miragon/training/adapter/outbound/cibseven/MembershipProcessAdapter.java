@@ -46,4 +46,11 @@ public class MembershipProcessAdapter implements MembershipProcess {
         }
         taskService.complete(task.getId());
     }
+
+    @Override
+    public void rejectMembership(MembershipId membershipId) {
+        runtimeService.createMessageCorrelation(Messages.CONFIRMATION_REJECTED.getValue())
+                .processInstanceVariableEquals("membershipId", membershipId.value().toString())
+                .correlate();
+    }
 }

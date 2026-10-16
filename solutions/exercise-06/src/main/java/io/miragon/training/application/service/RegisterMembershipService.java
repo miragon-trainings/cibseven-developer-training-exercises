@@ -30,7 +30,11 @@ public class RegisterMembershipService implements RegisterMembershipUseCase {
     @Override
     public MembershipId register(Command command) {
         log.info("Registering membership for {}", command.email());
-        var membership = new Membership(new Email(command.email()), new Name(command.name()), new Age(command.age()));
+        var membership = new Membership(
+                new Email(command.email()),
+                new Name(command.name()),
+                new Age(command.age())
+        );
         repository.save(membership);
         process.startProcess(membership);
         return membership.id();

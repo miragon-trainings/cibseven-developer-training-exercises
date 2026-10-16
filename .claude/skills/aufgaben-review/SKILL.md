@@ -124,7 +124,7 @@ Typische Fehlerklassen, auf die gezielt zu achten ist:
             "Business Key" "Job Executor" "Boundary Event" "Kompensation" "Call Activity" \
             "External Task" "Broadcast" "Korrelation"; do
      echo "## $t"
-     grep -l "$t" docs/de/exercise-0*.md docs/de/exercise-05-addon.md docs/de/extra-task-1.md | sort | head -1
+     grep -l "$t" docs/de/exercise-0*.md docs/de/extra-task-1.md | sort | head -1
    done
    ```
 
@@ -165,7 +165,7 @@ Typische Fehlerklassen, auf die gezielt zu achten ist:
      es die Form der API zeigt. Steht dort eine vollständige, zusammengesetzte Aufrufzeile (mit
      echten Argumenten oder Cast), ist es ein Befund – auf ein Skelett oder einen API-Zeiger
      straffen. Ausnahme: ein bewusst *einmal* vorgeführtes Beispiel einer neuen, unbekannten API
-     (etwa der erste Prozess-Test in Aufgabe 5, der erste Worker in Extra-Aufgabe 1).
+     (etwa der erste Prozess-Test in Aufgabe 4, der erste Worker in Extra-Aufgabe 1).
 12. **Lösung lässt sich nicht sauber laden** – `load-solution` setzt das Arbeitsmodul auf die
    Starter-Kopie zurück, lässt dabei jede Datei mit `TODO Exercise M` (M ≤ NN) weg, kopiert
    Lösung NN darüber und baut die `pom.xml` aus den `@exercise-N`-Blöcken neu. Das trägt nur,
@@ -182,8 +182,7 @@ Typische Fehlerklassen, auf die gezielt zu achten ist:
      ```
 
    - **Marker-Regel** – jede Starter-Datei mit `TODO Exercise N` liegt in Lösung N und allen
-     späteren Lösungen. Erwartet sind nur die Treffer `ConfirmMembership*` ab `exercise-05`
-     (bewusst entfernt); jeder andere Treffer ist ein Befund, denn die Datei fehlt nach dem Laden:
+     späteren Lösungen. Jeder Treffer ist ein Befund, denn die Datei fehlt nach dem Laden:
 
      ```bash
      starter=templates/process-application-starter/src
@@ -191,8 +190,8 @@ Typische Fehlerklassen, auf die gezielt zu achten ist:
      while read -r f; do
        rel=${f#"$starter"/}
        n=$(grep -ohE 'TODO Exercise [0-9]+' "$f" | grep -oE '[0-9]+$' | sort -n | head -1)
-       for s in $(seq -f %02g "$n" 10); do
-         sol=solutions/exercise-$s; [ "$s" = 10 ] && sol=$sol/process-application
+       for s in $(seq -f %02g "$n" 7); do
+         sol=solutions/exercise-$s; [ "$s" = 07 ] && sol=$sol/process-application
          [ -f "$sol/src/$rel" ] || echo "$rel (TODO Exercise $n) fehlt in $sol"
        done
      done
@@ -202,7 +201,7 @@ Typische Fehlerklassen, auf die gezielt zu achten ist:
      auch im Arbeitsmodul, aktiv oder als `@exercise-N`-Block. Die Ausgabe muss leer sein:
 
      ```bash
-     for s in 01 02 03 04 05 06 07 08 09 10/process-application; do
+     for s in 01 02 03 04 05 06 07/process-application; do
        comm -13 <(grep -oE '<artifactId>[^<]+' services/process-application/pom.xml | sort -u) \
                 <(grep -oE '<artifactId>[^<]+' solutions/exercise-$s/pom.xml | sort -u) |
          grep -v '>solution' | sed "s|^|exercise-$s: |"

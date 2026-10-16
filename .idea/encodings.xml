@@ -2,24 +2,14 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/services/process-application/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/services/notification-service/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/services/notification-service/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/services/process-application/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/solutions/exercise-01/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/solutions/exercise-10/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/solutions/exercise-02/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/solutions/exercise-03/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/solutions/exercise-04/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/solutions/exercise-05/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/solutions/exercise-09/process-application/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/solutions/exercise-07/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/solutions/exercise-08/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/solutions/exercise-06/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/solutions/exercise-07/process-application/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/solutions/exercise-07/logistics-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/solutions/extra-task-1/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/solutions/exercise-09/notification-service/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/solutions/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/solutions/src/main/resources" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
   </component>
 </project>

@@ -1,210 +1,284 @@
-# Exercise 5 – Capacity Check with a Gateway
+# Exercise 7 – Subprocess, Boundary Events and Parallelism
 
-> **Prerequisite:** Exercise 4 is complete – double opt-in is working, and the process starts via a message.
+> **Prerequisite:** Exercise 6 including the add-on is complete – the process tests run against the generated Process API.
 > **Working directory:** `services/process-application`
-> **New in this exercise:** Exclusive Gateway, alternative process outcome, business key, generated Task form.
+> **New in this exercise:** embedded subprocess, Timer Boundary Events (interrupting and non-interrupting), Message Boundary Event, Parallel Gateway, an outbound adapter to Microsoft Teams.
 
 ## What this is about
 
-**Strategy meeting, Friday afternoon. Someone brought exclusive matcha lattes.**
+Miravelo notices a pattern: many applicants never confirm their membership – and in doing so
+block spots that others would love to have. This turns into three requirements:
 
-The **Miravelo Inner Circle** gets its hard limit: a thousand spots. No more.
+1. Send a reminder mail **every day** as long as nobody confirms.
+2. Automatically cancel the membership after **three and a half days** without confirmation.
+3. Applicants can **withdraw** their application themselves.
 
-Why a thousand? Because scarcity creates value. Because FOMO is a business model. Because
-someone read a book about luxury brands.
-
-> *"We're not exclusive because we're good. We're exclusive because the counter in the
-> database is set to 1000."*
-> — Most honest comment in sprint planning
-
-From a process perspective, this is a **gateway**: got a spot? Carry on. No spot?
-Rejection mail. And because every registration is a business object with its own ID,
-each process instance gets a **business key** – no more "which of the 40 running
-instances was Carol again?".
+And whoever makes it all the way to activation should be celebrated: in parallel with the
+welcome mail, a notification goes out to the community's **Microsoft Teams channel**. The two
+steps don't depend on each other – a case for a **Parallel Gateway**.
 
 ## Learning goals
 
 After this exercise you can
 
-- model an Exclusive Gateway, set its conditions, and choose a default flow,
-- implement an alternative process outcome (rejection),
-- pass a decision from Java code to the gateway as a process variable,
-- assign a business key to a process instance,
-- give a User Task a generated Task form for an approval step.
+- model an embedded subprocess and justify which activities it groups together,
+- use a non-interrupting Timer Boundary Event for recurring reminders,
+- use an interrupting Timer Boundary Event as a timeout,
+- trigger a Message Boundary Event from the outside via correlation,
+- span two independent branches with Parallel Gateways and merge them again,
+- place transaction boundaries correctly at boundary events and parallel branches,
+- secure the new paths in the process test.
 
 ## Target model
 
-![BPMN model of the exercise](../assets/exercise-05.svg)
+![BPMN model of the exercise](../assets/exercise-07.svg)
 
-Reference model: `../../models/exercise-05/membership.bpmn`
+Reference model: `../../models/exercise-07/membership.bpmn`
 
 ## The task
 
-### 1. Extend the model
+### 1. Create the subprocess
 
-Before the confirmation mail is sent, a **Service Task** for the reservation and an
-**Exclusive Gateway** are added, splitting the sequence flow into two paths. That's
-four new elements in total.
+You build and configure the entire model in this exercise in the **Miragon BPMN Modeler**
+(select the element → Properties Panel), not in the XML.
 
-You create the elements, delegate expressions and the gateway condition in the **Miragon BPMN
-Modeler** (select the element → Properties Panel), not in the XML.
+Group the confirmation mail and the confirmation into an embedded subprocess
+`subProcess_confirmMembership` ("Confirm membership"). An embedded subprocess
+has its own start and its own end and here contains four elements:
 
-**New elements:**
+| Element | Type | ID | Name |
+|---|---|---|---|
+| Start | None Start Event | `startEvent_confirmationRequired` | – |
+| Confirmation mail | Service Task | `serviceTask_sendConfirmationMail` | Send confirmation mail |
+| Confirmation | User Task | `userTask_confirmMembership` | Confirm membership |
+| End | None End Event | `endEvent_membershipConfirmed` | Membership confirmed |
+
+The subprocess is the element to which you attach the boundary events in the next step.
+That's exactly why you need it: an interrupting boundary event always cancels the activity
+it is attached to – and what should be cancelled is the **entire** confirmation, not just a
+single task.
+
+### 2. Attach boundary events
+
+All three attach to `subProcess_confirmMembership`:
 
 | Element | Type | ID | Name | Configuration |
 |---|---|---|---|---|
-| Reserve spot | Service Task | `serviceTask_claimMembership` | Claim membership | Delegate Expression: `#{claimMembershipDelegate}` |
-| Capacity decision | Exclusive Gateway | `gateway_hasEmptySpots` | Free seat available? | Default flow: yes path |
-| Rejection mail | Service Task | `serviceTask_sendRejectionMail` | Send rejection mail | Delegate Expression: `#{sendRejectionMailDelegate}` |
-| Rejection | End Event | `endEvent_membershipRejected` | Membership rejected | – |
+| Reminder | Timer, **non**-interrupting | `event_resendEveryDay` | Every day | **Cycle** `R/P1D` (repeats daily) |
+| Timeout | Timer, interrupting | `event_abortAfter3HalfDays` | After 3½ days | **Duration** `P3DT12H` (3½ days) |
+| Withdrawal | Message, interrupting | `event_confirmationRejected` | Confirmation rejected | Message: `Message_ConfirmationRejected` |
 
-**Condition on the no path:** `${!hasEmptySpots}`. The yes path is the default flow and
-needs no condition.
+Mind the difference: the reminder needs a **Cycle** (`R/…`) so that it repeats. A duration
+would only fire once.
 
-### 2. Add use cases and services
+### 3. Model the new tasks and end events
 
-Following the pattern from Exercise 4:
+Every boundary event needs a path that ends somewhere. The reminder gets its own short
+branch, the two cancellation paths share one:
 
-- **`ClaimMembershipUseCase` / `ClaimMembershipService`** – checks capacity and returns
-  `true` if a spot was still free. A simple in-memory counter is enough (maximum 1000
-  spots); you don't need a database for this.
-- **`SendRejectionMailUseCase` / `SendRejectionMailService`** – loads the membership and
-  logs the rejection with the email address.
+| Element | Type | ID | Name | Configuration |
+|---|---|---|---|---|
+| Reminder mail | Service Task | `serviceTask_reSendConfirmationMail` | Re-Send confirmation mail | `#{reSendConfirmationMailDelegate}` |
+| Release spot | Service Task | `serviceTask_revokeClaim` | Revoke claim | `#{revokeClaimDelegate}` |
+| End reminder | End Event | `endEvent_mailSentAgain` | Mail sent again | end of the reminder branch |
+| End cancellation | End Event | `endEvent_membershipDeclined` | Membership declined | after `Revoke claim` |
+| End activation | End Event | `endEvent_membershipActivated` | Membership activated | after the join |
 
-> The capacity is deliberately kept simple. The reference solution uses an
-> `AtomicInteger` together with a constant `MAX_SPOTS` right inside `ClaimMembershipService`.
-> If you prefer it cleaner, model a domain object `MembershipCapacity` instead, with
-> `maxSpots`, `claimedSpots`, `hasEmptySpots()` and `claim()` – functionally the two are equivalent.
+Both interrupting boundary events (`event_abortAfter3HalfDays` and
+`event_confirmationRejected`) lead to `serviceTask_revokeClaim` and from there to
+`endEvent_membershipDeclined`.
 
-### 3. Add delegates
+### 4. Add the Parallel Gateway
 
-- **`ClaimMembershipDelegate`** – reads `membershipId`, calls the use case, and writes
-  its result as the process variable `hasEmptySpots` onto the `DelegateExecution`.
-- **`SendRejectionMailDelegate`** – reads `membershipId` and calls the use case.
+Between the end of the subprocess and the activation end event come two Parallel
+Gateways:
 
-> Setting the process variable belongs in the **delegate**, not in the service: the
-> service doesn't know the engine and only returns a `boolean`. This exact separation is
-> checked by the `ArchitectureTest`.
+| Element | Type | ID | Branches |
+|---|---|---|---|
+| Fork | Parallel Gateway | `gateway_notifyFork` | → `serviceTask_sendWelcomeMail`, → `serviceTask_notifyCommunity` |
+| Join | Parallel Gateway | `gateway_notifyJoin` | ← both branches, → `endEvent_membershipActivated` |
 
-### 4. Set the business key
+The new Service Task `serviceTask_notifyCommunity` ("Notify community") binds the
+delegate `#{notifyCommunityDelegate}`. Because the join waits for **both** branches, the
+membership only counts as activated once mail **and** notification are done.
 
-When the process starts, set the `membershipId` as the business key. The correlation builder
-in `MembershipProcessAdapter` (which you switched to `createMessageCorrelation(...)` in
-Exercise 4) offers `processInstanceBusinessKey(...)` for this. Hook the call with the
-`membershipId` into the existing chain – you fill in the concrete arguments yourself:
+### 5. Add transaction boundaries
+
+Following the same principle as in [Exercise 6](exercise-06.md):
+
+| Marker | Element | Why |
+|---|---|---|
+| `asyncAfter` | `event_resendEveryDay` | the reminder runs in its own transaction and repeats without touching the waiting subprocess |
+| `asyncAfter` | `event_abortAfter3HalfDays` | a clean boundary **before** the cancellation (and, from Exercise 8 on, before the compensation) |
+| `asyncAfter` | `event_confirmationRejected` | likewise for the user-side withdrawal |
+| `asyncBefore` | `serviceTask_reSendConfirmationMail` | external effect – like all mail tasks |
+| `asyncBefore` | `serviceTask_sendWelcomeMail` | its own commit per parallel branch |
+| `asyncBefore` | `serviceTask_notifyCommunity` | its own commit per parallel branch |
+
+**Why a separate boundary per branch?** Without markers, `sendWelcomeMail` and
+`notifyCommunity` sit in **one** transaction. If the Teams call fails, the engine rolls
+back the job and retries it – the welcome mail would already be out and would go out
+**again** to the same address.
+
+### 6. Add use cases and delegates
+
+- **`ReSendConfirmationMailUseCase` / `ReSendConfirmationMailService`** – logs the
+  re-sending of the confirmation mail.
+- **`RevokeClaimUseCase` / `RevokeClaimService`** – logs the release and frees up the
+  capacity spot again.
+- **`ReSendConfirmationMailDelegate` / `RevokeClaimDelegate`** – analogous to the existing
+  delegates.
+
+### 7. Trigger the withdrawal via REST
+
+The Message Boundary Event is triggered from the outside. Add the endpoint
+
+```
+POST /api/memberships/{membershipId}/reject
+```
+
+and correlate in the `MembershipProcessAdapter` with
+`runtimeService.createMessageCorrelation(...)`: message name from the model, filtered on
+the process variable `membershipId`.
+
+### 8. Wire up the community notification
+
+The notification runs entirely inside the engine – an ordinary delegate:
+
+- `adapter/inbound/cibseven/NotifyCommunityDelegate` – reads `membershipId`, calls the use case.
+- `application/port/inbound/NotifyCommunityUseCase` + `application/service/NotifyCommunityService` –
+  loads the membership, builds a `Notification` (title and text) and hands it to the out-port.
+- `application/port/outbound/NotificationPublisherOutPort` +
+  `adapter/outbound/teams/MicrosoftTeamsMessagePublisher` – posts the notification as an
+  **Adaptive Card** into a Teams channel (webhook from Power Automate *Workflows*).
+- `domain/Notification` – a record with `title` and `text`.
+
+Building the Adaptive Card and the REST call are infrastructure: take them from the
+reference solution. The `RestClient` is provided by `adapter/config/RestClientConfig`. The
+target URL lives in the `application.yaml`:
+
+```yaml
+notification:
+  teams:
+    # Real URL via the environment variable TEAMS_WEBHOOK_URL – no secret in the repository.
+    webhook-url: ${TEAMS_WEBHOOK_URL:https://CHANGE-ME}
+```
+
+### 9. Extend the process test
+
+So far your test covers the happy path and the rejection due to missing capacity. After the
+next `generate-sources` the happy path from the add-on no longer compiles: behind the gateway
+there is now the subprocess, behind the user task the fork. Navigate it anew:
 
 ```java
-runtimeService.createMessageCorrelation(/* message name */)
-        .processInstanceBusinessKey(/* membershipId */)
-        .setVariables(/* ... */)
-        .correlateStartMessage();
+var happyPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
+        .then(next -> next.serviceTaskClaimMembership())
+        .then(next -> next.gatewayHasEmptySpots())
+        .onto(next -> next.subProcessConfirmMembership())
+        .inside(FlowNodes.subProcessConfirmMembership(), start -> PathWalk.from(start.startEventConfirmationRequired())
+                .then(next -> next.serviceTaskSendConfirmationMail())
+                .then(next -> next.userTaskConfirmMembership())
+                .end(next -> next.endEventMembershipConfirmed()))
+        .then(next -> next.gatewayNotifyFork())
+        .then(next -> next.serviceTaskSendWelcomeMail())
+        .then(next -> next.gatewayNotifyJoin())
+        .end(next -> next.endEventMembershipActivated());
 ```
 
-The business key links the process instance to the business object: in the Cockpit, each
-instance can be uniquely mapped to a registration and searched for specifically.
+- **Subprocess:** `onto(...)` steps onto the subprocess without adding it to the path.
+  `inside(...)` walks its interior and then resumes on the subprocess – so the step to the
+  fork is checked again.
+- **Parallel gateway:** an ordered path only makes sense within **one** sequential branch.
+  The path follows the welcome-mail branch; check the parallel branch unordered with
+  `hasPassed(FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID)`.
 
-### 5. Task form for the approval
+Then add three tests:
 
-The User Task `userTask_confirmMembership` has no form yet – whoever opens it in the tasklist
-sees not a single process variable and can only complete it blindly. Give it a
-**generated Task form** (*Generated Task Form*, a built-in feature of Camunda 7 – no
-extra file, no HTML), so that the approving person can see the registration data:
+- **Timeout (interrupting):** Wait at the user task, fire the timer with the helper
+  `fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID)` and execute the
+  open jobs. The token leaves the subprocess early through the boundary event –
+  `interruptedBy(...)` names the subprocess the event is attached to:
 
-| Field ID | Label | Type | Purpose |
-|---|---|---|---|
-| `name` | Name | string | context, pre-filled from the process variable |
-| `email` | E-Mail | string | context, pre-filled |
-| `age` | Age | long | context, pre-filled |
-| `confirmed` | Confirm membership | boolean | the actual approval (checkbox) |
+  ```java
+  var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
+          .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+          .then(next -> next.serviceTaskRevokeClaim())
+          .end(next -> next.endEventMembershipDeclined());
+  ```
 
-`name`, `email` and `age` carry the same IDs as the process variables and are therefore
-pre-filled automatically. `confirmed` is new and is stored as a boolean process variable on
-completion.
+  Check the path with `hasPassedInOrder(abortPath.getIds())` and mock
+  `RevokeClaimUseCase` for this.
+- **Withdrawal via message:** Instead of the timer, call `membershipProcess.rejectMembership(id)`
+  – same outcome, the path runs via `eventConfirmationRejected()`.
+- **Reminder (non-interrupting):**
+  `fireTimer(..., FlowNodes.EventResendEveryDay.ELEMENT_ID)`, then check that
+  `reSendConfirmationMailUseCase` was called a **second** time and the process is
+  still waiting at the user task. Mock `ReSendConfirmationMailUseCase`.
 
-> **Note: Why still a Generated Form here?** You know Generated Forms from Exercises 1 and 2 –
-> as a simple way in. For an internal approval step like this one they are perfectly enough and
-> therefore stay here. The actual process has long been driven by business REST endpoints (start
-> in Exercise 4, rejection in Exercise 7); a production-like approval UI would be a frontend of
-> its own – in the training we deliberately stick with the Generated Form.
-
-In the modeler: select the User Task → Properties Panel → **Forms** section → add form
-fields. In the XML this produces an `extensionElements` block with `camunda:formData` right
-inside the User Task:
-
-```xml
-<bpmn:userTask id="userTask_confirmMembership" name="Confirm membership">
-  <bpmn:extensionElements>
-    <camunda:formData>
-      <camunda:formField id="name" label="Name" type="string" />
-      <camunda:formField id="email" label="E-Mail" type="string" />
-      <camunda:formField id="age" label="Age" type="long" />
-      <camunda:formField id="confirmed" label="Confirm membership" type="boolean" />
-    </camunda:formData>
-  </bpmn:extensionElements>
-</bpmn:userTask>
-```
+You'll find the `fireTimer` helper (executes a timer job regardless of its due date) in
+`ProcessEngineTestUtils`.
 
 ## Constraints
 
-- The process key stays `subscribeNewsletter` and the message name `Message_SubscriptionRequested`
-  – historical names that stay stable even as the process keeps growing at the business level
-  (mentioned once in [Exercise 4](exercise-04.md)).
-- The field type must match the type of the process variable, otherwise pre-filling won't
-  take effect (`age` is `long`, not `string`).
-- `confirmed` does not control any process flow in this exercise yet – it is only captured.
-- The capacity lives in memory and is back at zero after a restart. That's intentional for
-  the training.
-- You can take element IDs and variable names from the reference model at any time.
+- The timers in the reference model carry the **business** values (`R/P1D` and `P3DT12H`). If
+  you want to observe the behavior manually, temporarily set them to `R/PT1M` and
+  `PT3M` – you don't need this in the process test, where you trigger the timers directly.
+- The element IDs of the boundary events follow the grown convention `timer_` and
+  `event_` instead of `boundaryEvent_` – that's how it stands in the reference model, and
+  that's how it stays.
+- New element IDs automatically appear as `FlowNodes.*` constants after the next `generate-sources`,
+  new sequence flows as successors in the respective `Next`.
+- In the test, also mock `NotifyCommunityUseCase` so that no real Teams call goes out.
+- Never commit a real webhook URL – it comes from `TEAMS_WEBHOOK_URL`.
 
 ## Expected result
 
-The process now has two outcomes – check both. First the path that almost everyone takes:
-
-**A free spot is available:**
-
-```bash
-curl -X POST http://localhost:8080/api/memberships \
-  -H "Content-Type: application/json" \
-  -d '{"email": "carol@miravelo.com", "name": "Carol", "age": 27}'
-```
-
-The process reserves a spot, takes the yes path, and waits at the User Task
-`Confirm membership`. Open it in the tasklist (`http://localhost:8080/webapp/#/seven/auth/start`,
-admin/admin): name, email, and age are pre-filled. Tick the box for *Confirm
-membership* and complete the task – the instance runs through `Send Welcome Mail` to
-`Membership confirmed`, and `confirmed` is `true` in the history.
-
-**No spot left free:** Temporarily set the maximum number of spots to `0` (in the
-reference solution the constant `MAX_SPOTS` in `ClaimMembershipService`), restart the
-application, and send:
+Create a membership and note the returned ID – you'll use it right away to trigger the
+withdrawal:
 
 ```bash
-curl -X POST http://localhost:8080/api/memberships \
+MEMBERSHIP_ID=$(curl -s -X POST http://localhost:8080/api/memberships \
   -H "Content-Type: application/json" \
-  -d '{"email": "dave@miravelo.com", "name": "Dave", "age": 30}'
+  -d '{"email": "eve@miravelo.com", "name": "Eve", "age": 26}')
+
+# With shortened timers: after a minute the reminder mail appears in the log,
+# the user task keeps waiting unchanged
+
+curl -X POST http://localhost:8080/api/memberships/$MEMBERSHIP_ID/reject
+# → Revoke claim runs, the instance ends at "Membership declined"
 ```
 
-Expected log: `Sending rejection mail to dave@miravelo.com`. The instance ends at
-`Membership rejected`, without ever waiting at a User Task.
+Without a withdrawal, the process cancels itself once the timeout timer elapses. If, on the
+other hand, the user task is confirmed, both parallel branches run and the instance ends at
+`Membership activated`.
 
 ## Self-check
 
-- [ ] The gateway has a default flow and exactly one condition (`${!hasEmptySpots}`)
-- [ ] The yes path ends at `Membership confirmed`, the no path at `Membership rejected`
-- [ ] In the Cockpit the instance carries the `membershipId` as its business key
-- [ ] The Task form shows the pre-filled fields plus the `confirmed` checkbox
+- [ ] The subprocess contains a start event, both tasks and an end event
+- [ ] All three boundary events attach to the subprocess, and the interruption semantics are correct
+- [ ] Both interrupting paths lead through `Revoke claim` to `Membership declined`
+- [ ] Fork and join are Parallel Gateways, both branches carry `asyncBefore`
+- [ ] `POST /api/memberships/{id}/reject` cancels a waiting instance
+- [ ] The three new process tests are green
+
+## Hints
+
+The fact that the Teams integration sits right in the middle of the process application is
+deliberately not yet ideal. In [Exercise 10](exercise-10.md) you'll see the counter-model: a
+dedicated service that owns its process – including the isolation of its secrets. For now the
+delegate is enough.
 
 ## Reference solution
 
-`../../solutions/exercise-05/` – or load it directly:
+`../../solutions/exercise-07/` – or load it directly:
 
 ```bash
-./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=05
+./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=07
 ```
 
 ## Next step
 
-The process now has two outcomes – and nobody automatically checks that it takes the right
-one. In Exercise 6 you secure it with a process test.
+`revokeClaim` currently hangs as an explicit task on every cancellation path. In Exercise 8
+you'll leave that to the engine.
 
-➡️ [Next: Exercise 6](exercise-06.md)
+➡️ [Next: Exercise 8](exercise-08.md)

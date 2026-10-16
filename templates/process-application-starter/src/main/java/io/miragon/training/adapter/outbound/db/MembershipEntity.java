@@ -1,6 +1,6 @@
 package io.miragon.training.adapter.outbound.db;
 
-// TODO Exercise 4: Uncomment this class (remove the /* and */ lines).
+// TODO Exercise 3: Uncomment this class (remove the /* and */ lines).
 /*
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

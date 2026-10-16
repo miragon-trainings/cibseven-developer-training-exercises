@@ -15,14 +15,14 @@ die übrigen entfallen, wenn sie nichts beitragen.
 |---|---|---|
 | 1 | **`# Aufgabe N – Titel`** | Kurz, aktiv, ohne Doppelpunkt-Kaskaden |
 | 2 | **Info-Kasten** (Blockquote direkt unter dem Titel) | `Voraussetzung` · `Arbeitsverzeichnis` · `Neu in dieser Aufgabe` |
-| 3 | **`## Darum geht es`** | Ausgangssituation: fachlicher Anlass in 3–6 Sätzen, gerne mit Pointe |
-| 4 | **`## Lernziele`** | „Nach dieser Aufgabe kannst du …" – 3–6 Bullets, jeder mit einem Verb |
-| 5 | **`## Ziel-Modell`** | Grafik (`../assets/exercise-NN.svg`) und/oder ASCII-Ablauf; bei reinen Code-Aufgaben ein Hinweis, dass kein Modell dazukommt |
+| 3 | **`## Darum geht es`** | Ausgangssituation: fachlicher Anlass in 2–4 Sätzen, höchstens ein Zitat |
+| 4 | **`## Lernziele`** | „Nach dieser Aufgabe kannst du …" – 3–4 Bullets, jeder mit einem Verb |
+| 5 | **`## Ziel-Modell`** | Grafik (`../assets/exercise-NN.svg`) und Referenzpfad, ohne die Story zu wiederholen; bei reinen Code-Aufgaben ein Satz, dass kein Modell dazukommt |
 | 6 | **`## Aufgabe`** | Nummerierte Arbeitsschritte, jeder Schritt beginnt mit einem Imperativ |
-| 7 | **`## Randbedingungen`** | Vorgaben, Konventionen, Annahmen, bewusste Auslassungen |
+| 7 | **`## Randbedingungen`** | Vorgaben, Konventionen, Annahmen – nur, was nicht schon in einem Schritt steht |
 | 8 | **`## Erwartetes Ergebnis`** | Woran erkennst du Erfolg? Beobachtbares Verhalten + die Befehle, um es zu erzeugen |
-| 9 | **`## Selbstcheck`** | Checkliste `- [ ]` mit prüfbaren Akzeptanzkriterien |
-| 10 | `## Hinweise` | Nur wenn sie den Lernfortschritt tragen (Stolperfallen, Hintergrund, Ausblick) |
+| 9 | **`## Selbstcheck`** | Checkliste `- [ ]` mit höchstens 6 prüfbaren Akzeptanzkriterien |
+| 10 | `## Hinweise` | Höchstens zwei kurze Punkte, nur wenn sie den Lernfortschritt tragen (Stolperfallen, Hintergrund) |
 | 11 | **`## Referenzlösung`** | Pfad zur Lösung und `load-solution`-Befehl (Format unten) |
 | 12 | **`## Nächster Schritt`** | Ein Satz Anschluss + Link zur Folgeaufgabe |
 
@@ -36,9 +36,9 @@ beobachtbare Verhalten, Letzteres ist die abhakbare Abnahme.
 ### Info-Kasten – Format
 
 ```markdown
-> **Voraussetzung:** Aufgabe 3 ist abgeschlossen.
+> **Voraussetzung:** Aufgabe 2 ist abgeschlossen.
 > **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** Exclusive Gateway, Business Key, generiertes Task-Formular
+> **Neu in dieser Aufgabe:** Message Start Event, Business Key, Exclusive Gateway
 ```
 
 ### Referenzlösung – Format
@@ -57,7 +57,7 @@ Der Abschnitt nennt mindestens die Lösung und den Befehl, mit dem sie sich ins 
 
 `load-solution` setzt `src/` und `pom.xml` des Arbeitsmoduls auf den Auslieferungszustand zurück
 und kopiert Lösung NN darüber – `src/main`, die Prozess-Tests und die passende `pom.xml`; die Stubs
-späterer Aufgaben bleiben stehen (gültige Werte `00`–`10`, `00` = Auslieferungszustand). Eine Aufgabe
+späterer Aufgaben bleiben stehen (gültige Werte `00`–`07`, `00` = Auslieferungszustand). Eine Aufgabe
 nennt deshalb keine Vorbedingung wie „erst Aufgabe 1 abschließen" für das Laden einer Lösung. Damit
 das funktioniert, müssen Arbeitsmodul und Lösungen die Marker-Regeln aus Abschnitt 3 einhalten.
 
@@ -114,7 +114,7 @@ Prozess starten, Nachrichten oder Signale korrelieren, einen External-Task-Worke
   Message-, Signal- und Topic-Namen, IDs) gehören weiterhin in Tabellen oder Backticks – das ist
   Datenvorgabe, kein Lösungsweg. Ein vollständig ausgeschriebenes Beispiel mit echten Argumenten
   ist nur dort in Ordnung, wo eine unbekannte API *einmal* vorgeführt und danach selbst
-  wiederholt wird (etwa der erste Prozess-Test in Aufgabe 6 oder der erste Worker in Extra-Aufgabe 1).
+  wiederholt wird (etwa der erste Prozess-Test in Aufgabe 4 oder der erste Worker in Extra-Aufgabe 1).
 
 ### Terminologie
 
@@ -177,6 +177,11 @@ Weitere Festlegungen:
 | wörtlich übersetzte Wendungen („behauptet in Code", „den Prozess treiben", „Layer") | klingt nach Übersetzung, nicht nach Fachsprache | „steht als Assertion im Test", „die Jobs ausführen", „Schicht" |
 | Nominalstil („die Durchführung der Modellierung") | schwerfällig | „modelliere" |
 | Denglisch-Verben („den Task completen", „das Modell deployen" im Fließtext) | unsauber | „den Task abschließen", „das Modell deployen" ist als Fachterm ok – aber konsistent |
+| Meta-Sätze („der Aufgabentext nennt dir die API, nicht die fertige Zeile", „die Reihenfolge ist bewusst gewählt") | kosten Lesezeit, ohne etwas zu sagen | weglassen |
+| Kontrollfrage mit Antwort in Klammern | ist keine Frage, sondern ein versteckter Absatz | Aussage direkt hinschreiben oder streichen |
+| Dieselbe Aussage in Darum geht es, Schritt, Randbedingung und Hinweis | Teilnehmende lesen sie viermal | einmal, an der Stelle, an der sie gebraucht wird |
+| „im Modeler, nicht im XML" in jeder Aufgabe | gilt ab Aufgabe 2 immer | nur in Aufgabe 2 |
+| Trainer-Notizen | gehören nicht in die Teilnehmer-Doku | in die Trainer-Unterlagen |
 
 ### Codeblöcke und Pfade
 
@@ -190,8 +195,8 @@ Weitere Festlegungen:
 
 ### Umfang
 
-- Eine Aufgabe passt auf 2–4 Bildschirmseiten. Wird es länger, gehört Theorie in einen
-  Hinweis-Block oder in ein Add-on (siehe `exercise-06-addon.md`).
+- Eine Aufgabe passt auf 2–3 Bildschirmseiten, als Richtwert höchstens etwa 1 200 Wörter. Wird es
+  länger, gehört Theorie ins Trainingskapitel oder in ein Add-on (siehe `exercise-04-addon.md`).
 - Maximal drei Verschachtelungsebenen (`###`).
 - Tabellen für Element-Spezifikationen, Fließtext für Begründungen, Codeblöcke für
   alles, was wörtlich übernommen wird.
@@ -203,7 +208,8 @@ Weitere Festlegungen:
 - **Domäne:** durchgehend *Membership* / Miravelo Inner Circle – ab Aufgabe 0. Der
   Prozess-Key bleibt aus historischen Gründen `subscribeNewsletter`, die BPMN-Datei heißt
   `membership.bpmn`, der Start-Message-Name `Message_SubscriptionRequested`. Diese
-  technischen Altnamen werden in Aufgabe 2 einmal erwähnt und danach nicht mehr kommentiert.
+  technischen Altnamen werden bei ihrer Einführung einmal erwähnt (Prozess-Key in Aufgabe 2,
+  Message-Name in Aufgabe 3) und danach nicht mehr kommentiert.
 - **Personen in Beispielen:** alphabetisch fortlaufend (Alice, Bob, Carol, Dave, Eve,
   Grace, Hanna, Jane) – jede Aufgabe nimmt die nächsten Namen.
 - **Element-ID-Konvention:** `startEvent_`, `endEvent_`, `userTask_`, `serviceTask_`,
@@ -211,17 +217,16 @@ Weitere Festlegungen:
   Timer- und Message-Boundaries im Bestandsmodell heißen abweichend `timer_` bzw.
   `event_` – das ist gewachsen und bleibt so, damit Doku und Modell übereinstimmen.
 - **Jede Aufgabe nennt ihr Referenzmodell** unter `../models/exercise-NN/`.
-- **Ab Aufgabe 6 (Add-on)** referenziert jeder Test Element-IDs über die generierte
+- **Ab Aufgabe 4 (Add-on)** referenziert jeder Test Element-IDs über die generierte
   Process-API, nicht über Strings.
 - **`TODO Exercise N` ist ein tragender Marker.** Starter-Dateien im Arbeitsmodul
   (`services/process-application/src`), die Aufgabe N vorbereitet (Stub, auskommentierte Klasse,
   Platzhalter-Test), tragen `TODO Exercise N`. `load-solution` wertet den Marker aus: Beim Laden von
   Lösung NN lässt der Task jede Starter-Datei mit `TODO Exercise M` (M ≤ NN) weg, weil die Lösung
   ihre eigene Fassung mitbringt. Daraus folgt:
-  - Lösung N und jede spätere Lösung enthalten diese Datei – es sei denn, sie fällt bewusst weg
-    (`ConfirmMembership*` ab Aufgabe 5).
-  - Den Marker trägt nur eine Datei, die Lösung N mitbringt. Ein beiläufiges `TODO Exercise 7` in
-    einer Datei, die Lösung 7 nicht enthält, lässt die Datei beim Laden verschwinden.
+  - Lösung N und jede spätere Lösung enthalten diese Datei – es sei denn, sie fällt bewusst weg.
+  - Den Marker trägt nur eine Datei, die Lösung N mitbringt. Ein beiläufiges `TODO Exercise 5` in
+    einer Datei, die Lösung 5 nicht enthält, lässt die Datei beim Laden verschwinden.
   - Umgekehrt kommt eine Datei ohne Marker bei jedem Laden zurück; eine Lösung kann sie nur
     überschreiben. Was eine Lösung löscht oder umbenennt, braucht deshalb einen Marker.
 - **Vorbereitete Blöcke in der `pom.xml`.** Was eine Aufgabe in der `pom.xml` des Arbeitsmoduls
@@ -233,20 +238,20 @@ Weitere Festlegungen:
 
   ```xml
   <!--
-    TODO Exercise 6: <was einzukommentieren ist und wozu>
+    TODO Exercise 4: <was einzukommentieren ist und wozu>
   -->
-  <!-- @exercise-6:begin – <Kurzbeschreibung> -->
+  <!-- @exercise-4:begin – <Kurzbeschreibung> -->
   <!--
   <dependency>
       …
   </dependency>
   -->
-  <!-- @exercise-6:end -->
+  <!-- @exercise-4:end -->
   ```
 
-  Gehört ein Block zu einem Add-on, bekommt die Kennung ein Suffix (`@exercise-6-addon`). Dieselbe
+  Gehört ein Block zu einem Add-on, bekommt die Kennung ein Suffix (`@exercise-4-addon`). Dieselbe
   Kennung darf mehrfach vorkommen, etwa für Dependency und Plugin. Bisher gibt es `@exercise-1`
-  (CIB-Seven-Starter), `@exercise-6` (`cibseven-bpm-assert`) und `@exercise-6-addon`
+  (CIB-Seven-Starter), `@exercise-4` (`cibseven-bpm-assert`) und `@exercise-4-addon`
   (`bpmn-to-code-runtime`, Plugin `bpmn-to-code-maven`).
 - **Starter-Kopie.** `templates/process-application-starter/` ist eine Byte-Kopie von `src/` und
   `pom.xml` des Arbeitsmoduls im Auslieferungszustand; auf sie setzt `load-solution` zurück. Wer das
@@ -275,23 +280,20 @@ Parallel Gateway – samt den Modellierungsregeln aus Kapitel 1. Ihre
 **technische/Ausführungs-Semantik** (Flow-Bedingungen, Default-Flow, Fork/Join zur Laufzeit)
 wird erst in den unten genannten Aufgaben eingeführt; der fachliche Vorgriff in Aufgabe 0 gilt
 nicht als doppelte Einführung. Eingebetteter Subprozess, Boundary Events und Kompensation kommen
-in Aufgabe 0 bewusst **nicht** vor – sie werden erst in Aufgabe 7 bzw. 8 eingeführt.
+in Aufgabe 0 bewusst **nicht** vor – sie werden erst in Aufgabe 5 bzw. 6 eingeführt.
 
 | Aufgabe | Wird hier eingeführt |
 |---|---|
 | 0 | fachliche Modellierung; Anwendung der BPMN-Grundformen aus Kapitel 1 – Start/End Event, User Task, Service Task, Sequenzfluss, Exclusive/Parallel Gateway (rein fachlich); Modellierungsregeln (Verb + Objekt, Gateway als Frage, Happy Path gerade, Split und Join vom selben Typ) |
 | 1 | Engine, Deployment, Cockpit, Tasklist, Prozessdefinition, **Prozessinstanz**, Prozessvariable, **Start-Formular** (Generated Form am Start Event, vorhanden), **Manual Task** (Durchlauf ohne Code), **Embedded-Datenbank** (H2 als Datei), H2-Konsole, `act_*`-Tabellen (`re` / `ru` / `hi`) |
-| 2 | Prozess-Key, Element-ID, `isExecutable`, `historyTimeToLive`, **User Task**, **Wait State**, **Generated Form selbst erstellen** (am User Task) |
-| 3 | Manual Task → **Service Task**, **JavaDelegate**, **Delegate Expression**, hexagonale Architektur (Delegate → Use Case → Service), Prozessvariable im Delegate lesen |
-| 4 | Message Start Event, Nachricht, **Korrelation** (`createMessageCorrelation` / `correlateStartMessage`), **`RuntimeService`** (Prozessstart aus Java), **REST-Endpunkt**, **Persistenz** (Repository), Task-Completion per REST (Confirm-Endpunkt), `membershipId` als Prozessreferenz |
-| 5 | Exclusive Gateway (Default-Flow, Flow-Bedingung), Business Key, generiertes Task-Formular (Freigabe) |
-| 6 | **Transaktionsgrenze**, **asynchrone Continuation** (`asyncBefore` / `asyncAfter`), Commit und Rollback, **Token**, Idempotenz, Prozess-Test, In-Memory-Engine (H2), **Job Executor**, Mock (`@MockitoBean`), Assertion (`BpmnAwareTests`) |
-| 6 · Add-on | generierte Process-API, `bpmn-to-code` |
-| 7 | eingebetteter Subprozess, Boundary Event (unterbrechend / nicht unterbrechend), Timer als Duration und als Cycle, Message Boundary Event, Parallel Gateway (Fork / Join) |
-| 8 | Kompensation, Compensation Boundary Event, Kompensations-Handler (`isForCompensation`), Association, Compensating End Event, SAGA-Muster |
-| 9 | Call Activity, Called Element, In-/Out-Mapping, DMN, Entscheidungstabelle, Business Rule Task, `mapDecisionResult` |
-| 10 | **Signal** und **Broadcast**, Signal-Start-Event, Signal-End-Event, External Task, Worker, `fetchAndLock`, Deployment per REST, OpenAPI-Client |
-| Extra 1 | Process-Engine-API, `@ProcessEngineWorker`, Topic, `EngineCommandExecutor`, ArchUnit-Guardrail |
+| 2 | Prozess-Key, Element-ID, `isExecutable`, `historyTimeToLive`, **User Task**, **Wait State**, **Generated Form selbst erstellen** (am User Task), Manual Task → **Service Task**, **JavaDelegate**, **Delegate Expression**, hexagonale Architektur (Delegate → Use Case → Service), Prozessvariable im Delegate lesen |
+| 3 | Message Start Event, Nachricht, **Korrelation** (`createMessageCorrelation` / `correlateStartMessage`), **`RuntimeService`** (Prozessstart aus Java), **Business Key**, **REST-Endpunkt**, **Persistenz** (Repository), Task-Completion per REST (`TaskService`, Confirm-Endpunkt), `membershipId` als Prozessreferenz, Exclusive Gateway (Default-Flow, Flow-Bedingung) |
+| 4 | **Transaktionsgrenze**, **asynchrone Continuation** (`asyncBefore` / `asyncAfter`), Commit und Rollback, **Token**, Idempotenz, Prozess-Test, In-Memory-Engine (H2), **Job Executor**, Mock (`@MockitoBean`), Assertion (`BpmnAwareTests`) |
+| 4 · Add-on | generierte Process-API, `bpmn-to-code` |
+| 5 | eingebetteter Subprozess, Boundary Event (unterbrechend / nicht unterbrechend), Timer als Duration und als Cycle, Message Boundary Event, Parallel Gateway (Fork / Join) |
+| 6 | Kompensation, Compensation Boundary Event, Kompensations-Handler (`isForCompensation`), Association, Compensating End Event, SAGA-Muster, Call Activity, Called Element, In-/Out-Mapping, DMN, Entscheidungstabelle, Business Rule Task, `mapDecisionResult` |
+| 7 | **Signal** und **Broadcast**, Signal-Start-Event, Signal-End-Event, External Task, Worker, `fetchAndLock`, Deployment per REST, OpenAPI-Client |
+| Extra 1 | Process-Engine-API, `@ProcessEngineWorker`, Topic, User-Task-Subscription, `EngineCommandExecutor`, ArchUnit-Guardrail |
 
 Zwei Regeln dazu:
 
@@ -299,7 +301,7 @@ Zwei Regeln dazu:
   steht kein Begriff, der erst später eingeführt wird. Erlaubt sind Vorgriffe dagegen in
   *Nächster Schritt*, in Hinweis-Kästen, in Ausblicken und in Referenztabellen (etwa der
   ID-Präfix-Konvention in Aufgabe 2) – dort ist erkennbar, dass der Begriff noch kommt. Wer
-  vorgreift, markiert es: „(ab Aufgabe 10)".
+  vorgreift, markiert es: „(ab Aufgabe 7)".
 - **Nicht doppelt einführen.** Taucht ein Begriff später wieder auf, wird auf die
   einführende Aufgabe verlinkt statt neu erklärt.
 

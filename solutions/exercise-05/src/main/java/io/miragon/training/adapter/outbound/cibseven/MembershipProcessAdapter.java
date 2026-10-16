@@ -2,7 +2,9 @@ package io.miragon.training.adapter.outbound.cibseven;
 
 import io.miragon.training.application.port.outbound.MembershipProcess;
 import io.miragon.training.domain.Membership;
+import io.miragon.training.domain.MembershipId;
 import org.cibseven.bpm.engine.RuntimeService;
+import org.cibseven.bpm.engine.TaskService;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -11,9 +13,11 @@ import java.util.Map;
 public class MembershipProcessAdapter implements MembershipProcess {
 
     private final RuntimeService runtimeService;
+    private final TaskService taskService;
 
-    public MembershipProcessAdapter(RuntimeService runtimeService) {
+    public MembershipProcessAdapter(RuntimeService runtimeService, TaskService taskService) {
         this.runtimeService = runtimeService;
+        this.taskService = taskService;
     }
 
     @Override
@@ -27,5 +31,17 @@ public class MembershipProcessAdapter implements MembershipProcess {
                         "age", membership.age().value()
                 ))
                 .correlateStartMessage();
+    }
+
+    @Override
+    public void confirm(MembershipId membershipId) {
+        var task = taskService.createTaskQuery()
+                .taskDefinitionKey("userTask_confirmMembership")
+                .processInstanceBusinessKey(membershipId.value().toString())
+                .singleResult();
+        if (task == null) {
+            throw new IllegalStateException("No open confirmation task for membership " + membershipId.value());
+        }
+        taskService.complete(task.getId());
     }
 }

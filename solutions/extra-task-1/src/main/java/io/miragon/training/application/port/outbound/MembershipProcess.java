@@ -7,5 +7,7 @@ public interface MembershipProcess {
 
     void startProcess(Membership membership);
 
+    void confirm(MembershipId membershipId);
+
     void rejectMembership(MembershipId membershipId);
 }

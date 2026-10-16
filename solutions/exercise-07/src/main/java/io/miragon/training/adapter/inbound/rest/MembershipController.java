@@ -1,5 +1,6 @@
 package io.miragon.training.adapter.inbound.rest;
 
+import io.miragon.training.application.port.inbound.ConfirmMembershipUseCase;
 import io.miragon.training.application.port.inbound.RegisterMembershipUseCase;
 import io.miragon.training.application.port.inbound.RejectMembershipUseCase;
 import io.miragon.training.domain.MembershipId;
@@ -17,10 +18,16 @@ import java.util.UUID;
 public class MembershipController {
 
     private final RegisterMembershipUseCase registerMembership;
+    private final ConfirmMembershipUseCase confirmMembership;
     private final RejectMembershipUseCase rejectMembership;
 
-    public MembershipController(RegisterMembershipUseCase registerMembership, RejectMembershipUseCase rejectMembership) {
+    public MembershipController(
+            RegisterMembershipUseCase registerMembership,
+            ConfirmMembershipUseCase confirmMembership,
+            RejectMembershipUseCase rejectMembership
+    ) {
         this.registerMembership = registerMembership;
+        this.confirmMembership = confirmMembership;
         this.rejectMembership = rejectMembership;
     }
 
@@ -29,6 +36,12 @@ public class MembershipController {
         var membershipId = registerMembership.register(
                 new RegisterMembershipUseCase.Command(form.email(), form.name(), form.age()));
         return ResponseEntity.ok(membershipId.value().toString());
+    }
+
+    @PostMapping("/{membershipId}/confirm")
+    public ResponseEntity<Void> confirm(@PathVariable UUID membershipId) {
+        confirmMembership.confirm(new MembershipId(membershipId));
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{membershipId}/reject")

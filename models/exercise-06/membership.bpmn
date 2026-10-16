@@ -8,14 +8,6 @@
     <bpmn:sequenceFlow id="flow_submitRegistrationToClaimMembership" sourceRef="startEvent_submitRegistration" targetRef="serviceTask_claimMembership" />
     <bpmn:sequenceFlow id="flow_confirmMembershipToSendWelcomeMail" sourceRef="userTask_confirmMembership" targetRef="serviceTask_sendWelcomeMail" />
     <bpmn:userTask id="userTask_confirmMembership" name="Confirm membership" camunda:asyncAfter="true">
-      <bpmn:extensionElements>
-        <camunda:formData>
-          <camunda:formField id="name" label="Name" type="string" />
-          <camunda:formField id="email" label="E-Mail" type="string" />
-          <camunda:formField id="age" label="Age" type="long" />
-          <camunda:formField id="confirmed" label="Confirm membership" type="boolean" />
-        </camunda:formData>
-      </bpmn:extensionElements>
       <bpmn:incoming>flow_sendConfirmationMailToConfirmMembership</bpmn:incoming>
       <bpmn:outgoing>flow_confirmMembershipToSendWelcomeMail</bpmn:outgoing>
     </bpmn:userTask>

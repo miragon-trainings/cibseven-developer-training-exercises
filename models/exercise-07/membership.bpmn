@@ -19,14 +19,6 @@
         <bpmn:outgoing>flow_sendConfirmationMailToConfirmMembership</bpmn:outgoing>
       </bpmn:serviceTask>
       <bpmn:userTask id="userTask_confirmMembership" name="Confirm membership" camunda:asyncAfter="true">
-        <bpmn:extensionElements>
-          <camunda:formData>
-            <camunda:formField id="name" label="Name" type="string" />
-            <camunda:formField id="email" label="E-Mail" type="string" />
-            <camunda:formField id="age" label="Age" type="long" />
-            <camunda:formField id="confirmed" label="Confirm membership" type="boolean" />
-          </camunda:formData>
-        </bpmn:extensionElements>
         <bpmn:incoming>flow_sendConfirmationMailToConfirmMembership</bpmn:incoming>
         <bpmn:outgoing>flow_confirmMembershipToMembershipConfirmed</bpmn:outgoing>
       </bpmn:userTask>

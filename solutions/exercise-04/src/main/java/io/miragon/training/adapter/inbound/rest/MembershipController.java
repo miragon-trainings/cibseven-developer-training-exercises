@@ -19,7 +19,10 @@ public class MembershipController {
     private final RegisterMembershipUseCase registerMembership;
     private final ConfirmMembershipUseCase confirmMembership;
 
-    public MembershipController(RegisterMembershipUseCase registerMembership, ConfirmMembershipUseCase confirmMembership) {
+    public MembershipController(
+            RegisterMembershipUseCase registerMembership,
+            ConfirmMembershipUseCase confirmMembership
+    ) {
         this.registerMembership = registerMembership;
         this.confirmMembership = confirmMembership;
     }
@@ -27,8 +30,7 @@ public class MembershipController {
     @PostMapping
     public ResponseEntity<String> register(@RequestBody MembershipForm form) {
         var membershipId = registerMembership.register(
-                new RegisterMembershipUseCase.Command(form.email(), form.name(), form.age())
-        );
+                new RegisterMembershipUseCase.Command(form.email(), form.name(), form.age()));
         return ResponseEntity.ok(membershipId.value().toString());
     }
 

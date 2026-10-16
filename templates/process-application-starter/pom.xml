@@ -68,10 +68,10 @@
             <scope>test</scope>
         </dependency>
         <!--
-          TODO Exercise 6: Uncomment the assertions for the process test (CIB Seven port of
+          TODO Exercise 4: Uncomment the assertions for the process test (CIB Seven port of
           camunda-bpm-assert). Version managed centrally in the root pom.xml.
         -->
-        <!-- @exercise-6:begin – process-test assertions -->
+        <!-- @exercise-4:begin – process-test assertions -->
         <!--
         <dependency>
             <groupId>org.cibseven.bpm</groupId>
@@ -79,19 +79,19 @@
             <scope>test</scope>
         </dependency>
         -->
-        <!-- @exercise-6:end -->
+        <!-- @exercise-4:end -->
         <!--
-          TODO Exercise 6 (add-on): Uncomment the runtime types the bpmn-to-code generated
+          TODO Exercise 4 (add-on): Uncomment the runtime types the bpmn-to-code generated
           process API refers to (and the bpmn-to-code plugin under build > plugins).
         -->
-        <!-- @exercise-6-addon:begin – bpmn-to-code runtime -->
+        <!-- @exercise-4-addon:begin – bpmn-to-code runtime -->
         <!--
         <dependency>
             <groupId>io.miragon</groupId>
             <artifactId>bpmn-to-code-runtime</artifactId>
         </dependency>
         -->
-        <!-- @exercise-6-addon:end -->
+        <!-- @exercise-4-addon:end -->
         <!--
           Engine CORE (classes only) so the provided process-test helper
           src/test/.../process/util/ProcessEngineTestUtils.java compiles while the CIB Seven
@@ -111,10 +111,10 @@
     <build>
         <plugins>
             <!--
-              TODO Exercise 6 (add-on): Uncomment the bpmn-to-code plugin. It generates the type-safe
+              TODO Exercise 4 (add-on): Uncomment the bpmn-to-code plugin. It generates the type-safe
               process API constants from the BPMN models into src/main/java on every build.
             -->
-            <!-- @exercise-6-addon:begin – bpmn-to-code plugin -->
+            <!-- @exercise-4-addon:begin – bpmn-to-code plugin -->
             <!--
             <plugin>
                 <groupId>io.miragon</groupId>
@@ -138,7 +138,7 @@
                 </configuration>
             </plugin>
             -->
-            <!-- @exercise-6-addon:end -->
+            <!-- @exercise-4-addon:end -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -150,7 +150,7 @@
             <!--
               "Load solution" (catch-up). Call from the repository root with:
                 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=NN
-              NN = 01–10 (two digits); 00 resets the module to the starter state.
+              NN = 01–07 (two digits); 00 resets the module to the starter state.
 
               1. Backs up src/ and pom.xml to .load-solution-backup/<timestamp>/ (git-ignored).
               2. Resets the module to the starter in templates/process-application-starter/
@@ -187,14 +187,11 @@
                                 <condition property="solvedExercises" value="1|2|3|4|5"><equals arg1="${solution}" arg2="05"/></condition>
                                 <condition property="solvedExercises" value="1|2|3|4|5|6"><equals arg1="${solution}" arg2="06"/></condition>
                                 <condition property="solvedExercises" value="1|2|3|4|5|6|7"><equals arg1="${solution}" arg2="07"/></condition>
-                                <condition property="solvedExercises" value="1|2|3|4|5|6|7|8"><equals arg1="${solution}" arg2="08"/></condition>
-                                <condition property="solvedExercises" value="1|2|3|4|5|6|7|8|9"><equals arg1="${solution}" arg2="09"/></condition>
-                                <condition property="solvedExercises" value="1|2|3|4|5|6|7|8|9|10"><equals arg1="${solution}" arg2="10"/></condition>
                                 <fail unless="solvedExercises"
-                                      message="Unknown solution '${solution}' (valid values: 00-10, two digits; 00 = back to the starter)."/>
+                                      message="Unknown solution '${solution}' (valid values: 00-07, two digits; 00 = back to the starter)."/>
                                 <condition property="resetOnly"><equals arg1="${solution}" arg2="00"/></condition>
-                                <condition property="solutionModuleDir" value="exercise-10/process-application">
-                                    <equals arg1="${solution}" arg2="10"/>
+                                <condition property="solutionModuleDir" value="exercise-07/process-application">
+                                    <equals arg1="${solution}" arg2="07"/>
                                 </condition>
                                 <property name="solutionModuleDir" value="exercise-${solution}"/>
                                 <property name="solutionSrc"

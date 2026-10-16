@@ -20,9 +20,9 @@
 
     <!--
       Nur der Hauptservice, an dem Teilnehmende von Anfang an arbeiten, plus die Referenzlösungen.
-      Der Aufgabe-10-Worker (logistics-service) taucht bewusst NICHT hier auf – er wird erst in Aufgabe 10
-      aus templates/exercise-10/ heraus angelegt. So bleibt services/ für die Aufgaben 0–9 aufgeräumt.
-      (Zum Bauen/Prüfen der Vorlage: Profil -Pexercise-10, siehe unten.)
+      Der Aufgabe-7-Worker (logistics-service) taucht bewusst NICHT hier auf – er wird erst in Aufgabe 7
+      aus templates/exercise-07/ heraus angelegt. So bleibt services/ für die Aufgaben 0–6 aufgeräumt.
+      (Zum Bauen/Prüfen der Vorlage: Profil -Pexercise-07, siehe unten.)
     -->
     <modules>
         <module>services/process-application</module>
@@ -55,7 +55,7 @@
                 <artifactId>cibseven-bpm-spring-boot-starter-rest-4</artifactId>
                 <version>${cib7.version}</version>
             </dependency>
-            <!-- External Task Client (remote worker connecting to the engine REST API, ab Aufgabe 10) -->
+            <!-- External Task Client (remote worker connecting to the engine REST API, ab Aufgabe 7) -->
             <dependency>
                 <groupId>org.cibseven.bpm.springboot</groupId>
                 <artifactId>cibseven-bpm-spring-boot-starter-external-task-client</artifactId>
@@ -74,7 +74,7 @@
                 <version>${cib7.version}</version>
                 <scope>test</scope>
             </dependency>
-            <!-- Engine core — a worker without an engine starter (Aufgabe 10) brings it explicitly
+            <!-- Engine core — a worker without an engine starter (Aufgabe 7) brings it explicitly
                  to spin up a standalone in-memory engine for its own process tests -->
             <dependency>
                 <groupId>org.cibseven.bpm</groupId>
@@ -107,7 +107,7 @@
                     </configuration>
                 </plugin>
                 <!-- bpmn-to-code: generates the type-safe process API constants from the BPMN models.
-                     Declared here so child modules (ab Aufgabe 5) can reference it without version. -->
+                     Declared here so child modules (ab Aufgabe 4 · Add-on) can reference it without version. -->
                 <plugin>
                     <groupId>io.miragon</groupId>
                     <artifactId>bpmn-to-code-maven</artifactId>
@@ -119,15 +119,15 @@
 
     <profiles>
         <!--
-          Aufgabe 10 baut auf einem zweiten Service (dem logistics-service) auf, der erst dort angelegt
-          wird. Die Vorlage liegt unter templates/exercise-10/ und ist NICHT Teil des Standard-Builds.
+          Aufgabe 7 baut auf einem zweiten Service (dem logistics-service) auf, der erst dort angelegt
+          wird. Die Vorlage liegt unter templates/exercise-07/ und ist NICHT Teil des Standard-Builds.
           Mit diesem Profil lässt sich die Vorlage bauen/prüfen (CI nutzt es genau dafür):
-              ./mvnw -Pexercise-10 verify
+              ./mvnw -Pexercise-07 verify
         -->
         <profile>
-            <id>exercise-10</id>
+            <id>exercise-07</id>
             <modules>
-                <module>templates/exercise-10/logistics-service</module>
+                <module>templates/exercise-07/logistics-service</module>
             </modules>
         </profile>
     </profiles>

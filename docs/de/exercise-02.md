@@ -1,18 +1,15 @@
-# Aufgabe 2 – Den ersten User Task einbauen
+# Aufgabe 2 – User Task und Service Task
 
 > **Voraussetzung:** Aufgabe 1 ist abgeschlossen – die Engine startet und deployt `membership.bpmn`.
 > **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** technische Modellierung (Element-ID, Prozess-Key, `isExecutable`, `historyTimeToLive`), User Task, Wait State, Generated Form selbst erstellen.
+> **Neu in dieser Aufgabe:** Prozess-Key, Element-ID, User Task, Wait State, Generated Form am User Task, Service Task, JavaDelegate, Delegate Expression.
 
 ## Darum geht es
 
-Der Prozess aus Aufgabe 1 läuft von vorne bis hinten durch – auch der Schritt „Confirm". Fachlich
-ist das falsch: Die Bestätigung soll auf einen **Menschen** warten, nicht durchrauschen.
-
-Genau dafür gibt es den **User Task**: einen Schritt, an dem die Prozessinstanz stehen bleibt, bis
-jemand sie abschließt. In dieser Aufgabe machst du aus dem Platzhalter „Confirm" einen echten User
-Task – und gibst ihm ein **Formular**, das du selbst erstellst. Der zweite Platzhalter („Send
-welcome mail") bleibt vorerst ein Manual Task.
+Der Prozess aus Aufgabe 1 läuft durch, ohne dass jemand etwas tut: „Confirm" wartet auf niemanden,
+„Send welcome mail" verschickt nichts. Du machst aus dem einen Platzhalter einen **User Task**, an
+dem die Instanz auf einen Menschen wartet, und aus dem anderen einen **Service Task**, den dein
+Java-Code ausführt.
 
 > *„Ein Task, der nicht wartet, ist kein Task – der ist Durchgangsverkehr."*
 
@@ -20,11 +17,10 @@ welcome mail") bleibt vorerst ein Manual Task.
 
 Nach dieser Aufgabe kannst du
 
-- ein fachliches BPMN technisch grundieren (Element-ID, Prozess-Key, `isExecutable`, `historyTimeToLive`),
-- einen Manual Task in einen **User Task** umwandeln,
-- erklären, was ein **Wait State** ist und ihn in den Runtime-Tabellen (`act_ru_execution`, `act_ru_task`) wiederfinden,
-- eine **Generated Form** im Modeler selbst erstellen und mit dem User Task verknüpfen,
-- den User Task über die Tasklist abschließen.
+- einen Manual Task in einen **User Task** mit selbst erstellter Generated Form umwandeln,
+- einen **Wait State** in den Runtime-Tabellen (`act_ru_execution`, `act_ru_task`) wiederfinden,
+- einen Service Task über eine **Delegate Expression** an einen **JavaDelegate** binden,
+- die Schichten einer Ausführung benennen: Delegate → Use Case → Service.
 
 ## Ziel-Modell
 
@@ -32,45 +28,61 @@ Nach dieser Aufgabe kannst du
 
 Referenzmodell: `../../models/exercise-02/membership.bpmn`
 
-Gegenüber Aufgabe 1 ändert sich genau ein Element: aus dem Manual Task „Confirm" wird der User
-Task `userTask_confirmMembership` mit einem Formular. „Send welcome mail" bleibt ein Manual Task.
-
 ## Aufgabe
 
-### 1. Modell technisch grundieren
+### 1. Delegate-Schicht einkommentieren
 
-Öffne `src/main/resources/bpmn/membership.bpmn` im Miragon BPMN Modeler und stelle sicher, dass die
-Prozess-Eigenschaften stimmen – ab jetzt sind sie verbindlich:
+Kommentiere die Klassen mit `TODO Exercise 2` ein:
 
-**Prozess-Eigenschaften:** Prozess-Key `subscribeNewsletter` · `Executable` aktiviert ·
-`History Time To Live` = `180`
+- `application/port/inbound/SendWelcomeMailUseCase.java`
+- `application/service/SendWelcomeMailService.java`
+- `adapter/inbound/cibseven/BaseDelegate.java`
+- `adapter/inbound/cibseven/SendWelcomeMailDelegate.java`
+
+Use Case, Service und `BaseDelegate` sind danach fertig. Der Delegate trägt weiterhin ein `TODO`,
+die Engine-Anbindung schreibst du in Schritt 4 selbst.
 
 ### 2. „Confirm" in einen User Task umwandeln
 
-Ändere den Typ des Elements von **Manual Task** auf **User Task** und vergib ID und Namen:
+Öffne `src/main/resources/bpmn/membership.bpmn` im Miragon BPMN Modeler. Alle Änderungen machst du
+dort im Properties Panel, nicht im XML. Wirf zuerst einen Blick auf die Prozess-Eigenschaften: Der
+**Prozess-Key** `subscribeNewsletter` ist der Name, unter dem die Engine den Prozess kennt (ein
+historischer Name, er bleibt so). `Executable` ist aktiv, `History Time To Live` steht auf `180`.
 
-| Element | Typ | ID | Name |
+Ändere den Typ von „Confirm" auf **User Task** und lege unter **Forms** eine Generated Form an:
+
+| Element | Typ | Element-ID | Name |
 |---|---|---|---|
 | Bestätigung | User Task | `userTask_confirmMembership` | Confirm membership |
-
-Weil ein User Task ein **Wait State** ist, hält die Instanz hier künftig an, bis jemand den Task
-abschließt.
-
-### 3. Die Generated Form selbst erstellen
-
-Der User Task soll der bestätigenden Person die Daten zeigen und die Bestätigung aufnehmen. Wähl
-im Modeler den User Task aus und lege im Properties Panel unter **Forms** eine Generated Form mit
-diesen Feldern an:
 
 | Feld-ID | Label | Typ |
 |---|---|---|
 | `email` | E-Mail | string |
 | `confirmed` | Confirm membership | boolean |
 
-`email` wird aus der gleichnamigen Prozessvariable (aus dem Start-Formular) vorbefüllt. `confirmed`
-ist neu und wird beim Abschließen als Prozessvariable gespeichert.
+`email` wird aus der gleichnamigen Prozessvariable des Start-Formulars vorbefüllt. `confirmed` wird
+beim Abschließen als neue Prozessvariable gespeichert.
 
-### 4. Deployen und testen
+### 3. „Send welcome mail" in einen Service Task umwandeln
+
+Ändere den Typ von „Send welcome mail" auf **Service Task** und binde ihn an den Delegate:
+
+| Element | Typ | Element-ID | Name | Delegate Expression |
+|---|---|---|---|---|
+| Willkommens-Mail | Service Task | `serviceTask_sendWelcomeMail` | Send Welcome Mail | `#{sendWelcomeMailDelegate}` |
+
+Die Delegate Expression nennt die Spring-Bean, die die Engine aufruft, wenn die Instanz diesen Task
+erreicht.
+
+### 4. `SendWelcomeMailDelegate` implementieren
+
+Ersetze das `TODO` in `executeTask(execution)` in
+`adapter/inbound/cibseven/SendWelcomeMailDelegate.java`:
+
+- Lies die Prozessvariable `email` aus der `DelegateExecution`.
+- Rufe damit `useCase.sendWelcomeMail(...)` auf.
+
+### 5. Den Wait State ansehen
 
 Starte die Anwendung neu, damit das geänderte Modell deployt wird:
 
@@ -78,64 +90,58 @@ Starte die Anwendung neu, damit das geänderte Modell deployt wird:
 cd services/process-application && ../../mvnw spring-boot:run
 ```
 
-Starte über die Tasklist (`Start process` → `Join Inner Circle`) eine Instanz und fülle das
-Start-Formular aus. Diesmal läuft sie **nicht** durch: Sie bleibt am User Task `Confirm membership`
-stehen.
-
-### 5. Die Laufzeitdaten ansehen
-
-Während CIB Seven läuft und die Instanz am User Task steht, öffne die H2-Konsole unter
-[http://localhost:8080/h2-console](http://localhost:8080/h2-console) und melde dich wie in
-Aufgabe 1 an: JDBC-URL `jdbc:h2:file:~/.cibseven-training/exercise` (statt der vorbelegten
-`jdbc:h2:~/test`), Benutzer `sa`, Passwort leer. Führe dann diese zwei Abfragen gegen die
-Runtime-Tabellen aus:
+Starte in der Tasklist (`Start process` → `Join Inner Circle`) eine Instanz und fülle das
+Start-Formular aus. Die Instanz bleibt jetzt am User Task stehen. Öffne die H2-Konsole mit denselben
+Zugangsdaten wie in Aufgabe 1 und frage die Runtime-Tabellen ab:
 
 ```sql
 SELECT id_, proc_def_id_ FROM act_ru_execution;
 SELECT id_, name_ FROM act_ru_task;
 ```
 
-Was zeigen sie? `act_ru_execution` enthält eine Zeile für deine **noch laufende** Instanz – ihr
-`proc_def_id_` verweist auf die deployte Definition `subscribeNewsletter`. `act_ru_task` enthält
-eine Zeile für den offenen Task, mit `name_` = `Confirm membership`. Das ist der Wait State,
-sichtbar gemacht: In Aufgabe 1 waren beide Tabellen am Ende leer, weil die Instanz durchlief; jetzt
-hält sie an, und ihr Zustand bleibt in `act_ru_*` geparkt, bis jemand den Task abschließt. Schließe
-ihn über die Tasklist ab und führe beide Abfragen erneut aus – die Zeilen sind weg.
+Beide liefern eine Zeile: die wartende Instanz und den offenen Task `Confirm membership`.
+
+> **Begriff: Wait State.** Eine Stelle, an der die Prozessinstanz anhält und auf ein Ereignis von
+> außen wartet, hier auf den Abschluss des User Tasks. Die Engine speichert den Zustand in den
+> `act_ru_*`-Tabellen und gibt den Thread frei, deshalb übersteht eine wartende Instanz auch einen
+> Neustart. Ein Manual Task ist kein Wait State.
+
+### 6. Den User Task abschließen
+
+Öffne `Confirm membership` in der Tasklist: `email` ist vorbefüllt. Setze den Haken bei `confirmed`
+und schließe den Task ab.
 
 ## Randbedingungen
 
-- **Element-ID-Konvention** – ab jetzt verbindlich: `startEvent_`, `endEvent_`, `userTask_`,
+- **Element-ID-Konvention**, ab jetzt verbindlich: `startEvent_`, `endEvent_`, `userTask_`,
   `serviceTask_`, `manualTask_`, `gateway_`, `subProcess_`, `boundaryEvent_`.
-- Es wird weiterhin **kein Java** geschrieben: Start und Abschluss laufen über das Cockpit.
-- Der Feldtyp muss zum Typ der Prozessvariable passen, sonst greift die Vorbefüllung nicht.
+- Der Delegate ist ein Adapter: Er liest Prozessvariablen und ruft einen Use Case auf. Fachlogik
+  gehört in den Service.
+- Gestartet und bestätigt wird weiterhin über das Cockpit.
 
 ## Erwartetes Ergebnis
 
-Nach dem Start über das Start-Formular wartet die Instanz am User Task – in `act_ru_task` steht eine
-Zeile, im Cockpit unter **Tasklist** erscheint `Confirm membership`. Öffne den Task: `email` ist
-vorbefüllt. Setze den Haken bei `confirmed` und schließe ab – die Instanz läuft über den (noch
-manuellen) „Send welcome mail" bis `Member joined` durch.
+Nach dem Abschließen des User Tasks läuft der Service Task, und im Log erscheint:
 
-> **Begriff: Wait State.** Eine Stelle, an der die Prozessinstanz **stehen bleibt und auf ein
-> Ereignis von außen wartet** – hier der User Task, der auf seinen Abschluss wartet. Die Engine
-> schreibt den Zustand in die `act_ru_*`-Tabellen und gibt den Thread frei; deshalb übersteht eine
-> wartende Instanz einen Neustart. Ein Manual Task ist **kein** Wait State.
+```
+Sending welcome mail to alice@miravelo.com
+```
+
+Die Instanz endet an `Member joined`, die beiden Abfragen aus Schritt 5 liefern keine Zeile mehr.
 
 ## Selbstcheck
 
-- [ ] `userTask_confirmMembership` ist ein User Task (kein Manual Task mehr)
-- [ ] Er trägt eine selbst erstellte Generated Form mit `email` und `confirmed`
-- [ ] Eine gestartete Instanz wartet am User Task (`act_ru_task` enthält eine Zeile)
-- [ ] Die beiden Runtime-Abfragen liefern während des Wartens je eine Zeile, nach dem Abschließen keine mehr
-- [ ] Nach dem Abschließen über die Tasklist endet die Instanz an `Member joined`
-- [ ] Der Prozess-Key ist `subscribeNewsletter`, `Executable` ist aktiv, `historyTimeToLive` = 180
+- [ ] `userTask_confirmMembership` ist ein User Task mit einer Generated Form (`email`, `confirmed`)
+- [ ] Eine gestartete Instanz wartet am User Task, `act_ru_task` enthält eine Zeile
+- [ ] `serviceTask_sendWelcomeMail` nutzt `#{sendWelcomeMailDelegate}`
+- [ ] Der Delegate liest `email` aus der `DelegateExecution` und ruft den Use Case auf
+- [ ] Nach dem Abschließen steht die Log-Zeile im Log, und die Instanz endet an `Member joined`
 
 ## Hinweise
 
-Das Start-Formular (aus Aufgabe 1) und die Form am User Task sind beide **Generated Forms** –
-derselbe einfache Mechanismus, einmal am Start Event, einmal am User Task. Das ist der bequeme
-Einstieg für Formulare. Ab Aufgabe 4 wandert die fachliche Interaktion aus der Tasklist heraus in
-eigene REST-Endpunkte.
+Warum die Trennung von Delegate und Service? Der Delegate kennt die Engine (`DelegateExecution`,
+Prozessvariablen), der Service nur die Fachlichkeit. So bleibt die Fachlogik ohne Engine testbar,
+das nutzt du in [Aufgabe 4](exercise-04.md) beim Prozess-Test.
 
 ## Referenzlösung
 
@@ -147,7 +153,7 @@ eigene REST-Endpunkte.
 
 ## Nächster Schritt
 
-In Aufgabe 3 wird aus dem zweiten Platzhalter „Send welcome mail" ein echter **Service Task** –
-und du lernst den **JavaDelegate** kennen, der ihn ausführt.
+In Aufgabe 3 übernimmt die Anwendung: Registrierung und Bestätigung per REST, Start über eine
+Nachricht und eine Kapazitätsprüfung mit Gateway.
 
 ➡️ [Weiter zu Aufgabe 3](exercise-03.md)

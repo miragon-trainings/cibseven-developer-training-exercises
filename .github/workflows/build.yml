@@ -40,11 +40,11 @@ jobs:
       - name: Build
         run: ./mvnw clean verify
 
-      # The Aufgabe-10 worker template lives under templates/ and is not part of the default reactor
-      # (so services/ stays clean for exercises 0–9). Compile it here so the starter never rots. Its pom
+      # The Aufgabe-7 worker template lives under templates/ and is not part of the default reactor
+      # (so services/ stays clean for exercises 0–6). Compile it here so the starter never rots. Its pom
       # targets its final home (services/logistics-service), so we install the root pom first to resolve
       # the parent from the repo while it still sits under templates/.
-      - name: Verify exercise-10 starter template
+      - name: Verify exercise-07 starter template
         run: |
           ./mvnw -N -q install
-          ./mvnw -Pexercise-10 -pl templates/exercise-10/logistics-service clean compile
+          ./mvnw -Pexercise-07 -pl templates/exercise-07/logistics-service clean compile

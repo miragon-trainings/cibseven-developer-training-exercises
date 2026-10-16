@@ -10,6 +10,12 @@ import java.util.List;
 public final class ServiceTasks {
   public static final String CLAIM_MEMBERSHIP_DELEGATE = "#{claimMembershipDelegate}";
 
+  public static final String NOTIFY_COMMUNITY_DELEGATE = "#{notifyCommunityDelegate}";
+
+  public static final String RE_SEND_CONFIRMATION_MAIL_DELEGATE = "#{reSendConfirmationMailDelegate}";
+
+  public static final String REVOKE_CLAIM_DELEGATE = "#{revokeClaimDelegate}";
+
   public static final String SEND_CONFIRMATION_MAIL_DELEGATE = "#{sendConfirmationMailDelegate}";
 
   public static final String SEND_REJECTION_MAIL_DELEGATE = "#{sendRejectionMailDelegate}";
@@ -22,6 +28,9 @@ public final class ServiceTasks {
   public static List<String> all() {
     return List.of(
         CLAIM_MEMBERSHIP_DELEGATE,
+        NOTIFY_COMMUNITY_DELEGATE,
+        RE_SEND_CONFIRMATION_MAIL_DELEGATE,
+        REVOKE_CLAIM_DELEGATE,
         SEND_CONFIRMATION_MAIL_DELEGATE,
         SEND_REJECTION_MAIL_DELEGATE,
         SEND_WELCOME_MAIL_DELEGATE);

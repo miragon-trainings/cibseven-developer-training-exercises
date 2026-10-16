@@ -24,7 +24,8 @@ public class MembershipEntity {
     @Column(name = "age", nullable = false)
     private int age;
 
-    protected MembershipEntity() {}
+    protected MembershipEntity() {
+    }
 
     public MembershipEntity(UUID id, String email, String name, int age) {
         this.id = id;
@@ -34,7 +35,10 @@ public class MembershipEntity {
     }
 
     public UUID getId() { return id; }
+
     public String getEmail() { return email; }
+
     public String getName() { return name; }
+
     public int getAge() { return age; }
 }

@@ -14,8 +14,8 @@ import org.cibseven.bpm.engine.runtime.ProcessInstance;
  * picks up the job. These helpers instead push the process forward from the test thread –
  * the timing stays fully under control and the test fast and reproducible.
  *
- * <p>This class is <b>provided</b> in Exercise 6 – you use it to write your tests, you don't have
- * to build it yourself. See {@code docs/en/exercise-06.md}.
+ * <p>This class is <b>provided</b> in Exercise 4 – you use it to write your tests, you don't have
+ * to build it yourself. See {@code docs/en/exercise-04.md}.
  */
 public final class ProcessEngineTestUtils {
 
@@ -35,7 +35,7 @@ public final class ProcessEngineTestUtils {
     /**
      * Like {@link #continueToNextWaitState(ProcessEngine)}, but drives only the jobs of a single
      * instance. Useful once an activity throws a signal that starts a second, independent instance
-     * which should <em>not</em> be driven along by this call (from Exercise 8).
+     * which should <em>not</em> be driven along by this call (from Exercise 6).
      */
     public static void continueToNextWaitState(ProcessEngine processEngine, String processInstanceId) {
         ManagementService managementService = processEngine.getManagementService();
@@ -54,7 +54,7 @@ public final class ProcessEngineTestUtils {
 
     /**
      * Fires the timer job of the given boundary/catch event directly, independent of its due date.
-     * Checks the timer wiring without waiting for real time (from Exercise 7).
+     * Checks the timer wiring without waiting for real time (from Exercise 5).
      */
     public static void fireTimer(ProcessEngine processEngine, String timerActivityId) {
         Job timer = processEngine.getManagementService().createJobQuery()

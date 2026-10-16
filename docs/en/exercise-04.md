@@ -1,183 +1,225 @@
-# Exercise 4 – The application takes over
+# Exercise 4 – Securing the process with tests
 
-> **Prerequisite:** Exercise 3 is complete – the Service Task runs through a JavaDelegate, and the process is still started by hand in the Cockpit.
+> **Prerequisite:** Exercise 3 is complete – the gateway, the capacity check, and both process outcomes are working.
 > **Working directory:** `services/process-application`
-> **New in this exercise:** Message Start Event, message correlation, `RuntimeService`, REST endpoint, persistence, confirmation via REST (`TaskService`).
+> **New in this exercise:** transaction boundaries (`asyncBefore`/`asyncAfter`), in-memory engine with H2, the job executor turned off, `@MockitoBean`, assertions with `BpmnAwareTests`.
 
 ## What this is about
 
-Rose has launched the new **Backroad AL**, and Miravelo is selling it exclusively in the Store.
-Social media goes wild, and overnight 500 registrations pour in.
+In the Cockpit demo the process worked once. Whether it still works next week, when someone
+reroutes a sequence flow or flips a condition, nobody knows. A **process test** starts the real
+process in an in-memory engine, lets the real delegates run, and replaces only the business logic
+behind them with mocks. Which path the instance has to take is then an assertion in the test and
+gets checked on every build. Before that, you make the process resilient with transaction
+boundaries.
 
-> *"500 sign-ups. That's either viral or a bot attack."*
-> — CTO, on the second coffee
-
-Two things become suddenly clear. First: nobody starts 500 process instances by hand in the
-Cockpit – **the application** has to start the process as soon as a registration comes in via
-REST. Second: are these real people? The answer is a **double opt-in** – confirm first via a
-confirmation link, then welcome. That click on the link also lands as a REST call in your
-application, not as a click in the Tasklist.
-
-From this exercise on it's the application that drives the process: it creates the Membership,
-starts the instance via a **message**, and completes the confirmation step via a REST endpoint.
+> *"Works on my machine" is not a test strategy. It's an excuse with better PR.*
 
 ## Learning goals
 
 After this exercise you can
 
-- replace a None Start Event with a **Message Start Event** and explain why,
-- start a process instance from Java via `createMessageCorrelation(...).correlateStartMessage()`,
-- persist the business data and reference it via the `membershipId` as a process variable,
-- implement REST endpoints that start the process and complete a wait state,
-- complete a waiting User Task via the `TaskService` over REST (instead of in the Tasklist).
+- set transaction boundaries and explain why a non-repeatable step must commit before an external effect,
+- secure a process as a unit test on an in-memory engine with the job executor turned off,
+- mock the use cases behind the delegates with `@MockitoBean`,
+- check process paths with `BpmnAwareTests` (`isWaitingAt`, `hasPassedInOrder`, `isEnded`).
 
 ## Target model
 
 ![BPMN model of the exercise](../assets/exercise-04.svg)
 
+There are no new elements, only transaction boundaries on the process from Exercise 3.
+
 Reference model: `../../models/exercise-04/membership.bpmn`
-
-**Three changes compared to Exercise 3:**
-
-1. The Start Event becomes a **Message Start Event** `startEvent_submitRegistration`
-   (`Message_SubscriptionRequested`). The start form goes away – the data comes in via the REST
-   call.
-2. Before the confirmation, a **Service Task** `serviceTask_sendConfirmationMail` is added.
-3. The Service Task path from Exercise 3 stays, but the delegates now read the `membershipId`
-   instead of the raw email address.
 
 ## The task
 
-### 1. Enable the application's business layer
+### 1. Set transaction boundaries
 
-The REST and persistence classes are commented out with `TODO Exercise 4`. Uncomment them – this
-is plumbing, not engine binding:
+The theory is in the training chapter **"Async & Transaction Boundaries"**. So far the process runs
+synchronously. The engine commits automatically at every wait state. Everywhere else you set a
+boundary with an **asynchronous continuation**: `asyncBefore` or `asyncAfter` make the engine
+commit at this point, create a job, and continue the work in a new transaction. You find the
+markers in the Properties Panel under *Asynchronous Before/After*.
 
-- `adapter/inbound/rest/MembershipController.java`
-- `application/service/RegisterMembershipService.java`
-- `adapter/outbound/cibseven/MembershipProcessAdapter.java`
-- `adapter/outbound/db/*` (Entity, Mapper, JpaRepository, PersistenceAdapter)
-- the use-case interfaces in `application/port/inbound/*` (`domain/` and the outbound ports are
-  already part of the active skeleton)
-- the confirmation and confirm classes (`SendConfirmationMail*`, `ConfirmMembership*`)
+There is no wait state between the Message Start and the User Task. Without markers,
+`claimMembership` and `sendConfirmationMail` run in one transaction. If the mail send throws, the
+engine rolls everything back and retries the job, and the spot gets reserved twice. The rule:
+separate non-repeatable work from the external effect with its own boundary.
 
-The three spots with real engine binding (`MembershipProcessAdapter`, the two delegates) still
-carry a `TODO` – you write those yourself.
+| Marker | Element | Why |
+|---|---|---|
+| `asyncBefore` | `startEvent_submitRegistration` | The correlation only creates the instance and returns |
+| `asyncAfter` | `userTask_confirmMembership` | The completion commits immediately instead of rolling back with an error in the next task |
+| `asyncBefore` | `serviceTask_sendConfirmationMail` | The reservation commits first, a mail failure only retries the send |
+| `asyncBefore` | `serviceTask_sendRejectionMail` | otherwise sits in the same transaction as `claimMembership` |
+| `asyncBefore` | `serviceTask_sendWelcomeMail` | external effect, like all mail tasks |
 
-### 2. Rebuild the model
+`claimMembership` gets no marker: it commits together with the **token**, the imagined game piece
+that marks the current state of an instance in the model.
 
-Take the model from Exercise 3 and change it in the Miragon BPMN Modeler:
+### 2. Enable the test dependency
 
-| Change | Value |
-|---|---|
-| Start Event → **Message Start Event** | ID `startEvent_submitRegistration`, name "Submit registration form", Message Name `Message_SubscriptionRequested` |
-| Remove the start form | delete the `email`/`name`/`age` fields on the Start Event |
-| New **Service Task** before the confirmation | ID `serviceTask_sendConfirmationMail`, name "Send confirmation mail", Delegate Expression `#{sendConfirmationMailDelegate}` |
+In `services/process-application/pom.xml`, uncomment the `TODO Exercise 4` block. As in
+Exercise 1, delete only the lines `<!--` and `-->` between `@exercise-4:begin` and
+`@exercise-4:end`. Afterwards this dependency is active:
 
-The flow afterwards is: Message Start → `Send confirmation mail` → `Confirm membership` (User
-Task, wait state) → `Send Welcome Mail` → End.
-
-### 3. Persist the registration and start the process
-
-**File:** `application/service/RegisterMembershipService.java`
-
-The REST endpoint `POST /api/memberships` calls `RegisterMembershipUseCase.register(...)`.
-Implement the logic: build a `Membership` object from the command, save it via the repository,
-start the process via the process port, return `membership.id()`.
-
-### 4. Start the process via correlation
-
-**File:** `adapter/outbound/cibseven/MembershipProcessAdapter.java` – **write it yourself.**
-
-A Message Start Event can't be triggered via `startProcessInstanceByKey`. Switch `startProcess(...)`
-to correlating the message `Message_SubscriptionRequested`. The `RuntimeService` gives you a
-correlation builder via `createMessageCorrelation(...)`; set the four process variables
-`membershipId`, `email`, `name`, `age`. You fill in the arguments yourself:
-
-```java
-runtimeService.createMessageCorrelation(/* message name */)
-        .setVariables(/* membershipId, email, name, age */)
-        .correlateStartMessage();
+```xml
+<dependency>
+    <groupId>org.cibseven.bpm</groupId>
+    <artifactId>cibseven-bpm-assert</artifactId>
+    <scope>test</scope>
+</dependency>
 ```
 
-### 5. Switch the delegates to the `membershipId`
+### 3. Create the test profile
 
-Until now the `SendWelcomeMailDelegate` read the raw `email`. Now the process references the
-business data via the persisted Membership:
+Create `src/test/resources/application-test.yaml`. The `test` profile runs the engine on its own
+in-memory H2 and turns the job executor off:
 
-- **`SendWelcomeMailDelegate`** and **`SendConfirmationMailDelegate`** read the process variable
-  `membershipId` from the `DelegateExecution`, turn it into a `MembershipId`, and call the
-  respective use case – **you write this yourself.**
-- **`SendWelcomeMailService`** and **`SendConfirmationMailService`** load the Membership via the
-  repository and log the email address.
+```yaml
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    url: jdbc:h2:mem:cibseven-test;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
 
-### 6. Complete the confirmation via a REST endpoint
+camunda:
+  bpm:
+    admin-user:
+      id: admin
+      password: admin
+    database:
+      type: h2
+      schema-update: true
+    job-execution:
+      enabled: false   # the test runs the async continuations itself
+    webapp:
+      enabled: false
 
-The confirmation link from the mail lands as `POST /api/memberships/{membershipId}/confirm` in
-the application. This endpoint completes the waiting User Task – not the Tasklist.
+# The webapp validates this secret at start-up, even when it is turned off
+cibseven:
+  webclient:
+    authentication:
+      jwtSecret: M9nU3ORo3s+gK23D9mO5I2h+EIqnosCFDCJi+2bKoulKqZkeQT8pGYg5RhuORlf/fWhLu5meC/SPZCv9NNuj6SK/vE5Sid04UQGrnyh04EpBdiAosAO91xezjgmbSeALUtneibseGpS0tNE4RvLIl+gXiAKqNXyO
+```
 
-- `MembershipController` gets a method `confirm(...)` that calls `ConfirmMembershipUseCase`.
-- `ConfirmMembershipService` forwards to the process port.
-- **`MembershipProcessAdapter.confirm(...)` – write it yourself:** find, via the `TaskService`,
-  the open task `userTask_confirmMembership` for the matching `membershipId` and complete it. The
-  API chain is `taskService.createTaskQuery()...singleResult()` followed by
-  `taskService.complete(...)`; you fill in the query conditions (task definition key, process
-  variable) yourself.
+> **Term: job executor.** The engine's background thread that works through the jobs from
+> asynchronous continuations. In a test it means you never know how far the instance currently
+> is. That's why it is turned off, and the test runs the jobs itself.
+
+### 4. Write the happy-path test
+
+Replace the placeholder in `src/test/java/io/miragon/training/process/MembershipProcessTest.java`
+(marked with `TODO Exercise 4`). To drive the instance, use the provided helper
+`process/util/ProcessEngineTestUtils`:
+
+- `continueToNextWaitState(processEngine)` executes the open jobs until the instance reaches its
+  next wait state or its end.
+- `findProcessInstance(runtimeService, membershipId)` looks up the instance for the `membershipId`.
+
+The scaffold is the same for every process test:
+
+```java
+@SpringBootTest
+@ActiveProfiles("test")
+class MembershipProcessTest {
+
+    @Autowired private MembershipProcess membershipProcess;
+    @Autowired private RuntimeService runtimeService;
+    @Autowired private TaskService taskService;
+    @Autowired private ProcessEngine processEngine;
+
+    @MockitoBean private ClaimMembershipUseCase claimMembershipUseCase;
+    @MockitoBean private SendConfirmationMailUseCase sendConfirmationMailUseCase;
+    @MockitoBean private SendRejectionMailUseCase sendRejectionMailUseCase;
+    @MockitoBean private SendWelcomeMailUseCase sendWelcomeMailUseCase;
+
+    @BeforeEach
+    void setUp() {
+        init(processEngine); // BpmnAwareTests.init(...)
+    }
+}
+```
+
+The happy path follows the Given – When – Then shape. Replace each placeholder `"<…>"` with the
+element ID from your model:
+
+```java
+@Test
+void happyPath_membershipIsConfirmedAndWelcomeMailIsSent() {
+    // Given: the capacity check grants a spot
+    when(claimMembershipUseCase.claimMembership(any())).thenReturn(true);
+
+    // When: the instance starts and runs to the first wait state
+    Membership membership = new Membership(new Email("jane@example.com"), new Name("Jane"), new Age(30));
+    membershipProcess.startProcess(membership);
+    ProcessInstance instance = findProcessInstance(runtimeService, membership.id().value().toString());
+    continueToNextWaitState(processEngine);
+
+    // Then: the instance waits at the user task
+    assertThat(instance).isWaitingAt("<user-task-id>");
+
+    // When: the user task is completed
+    String taskId = taskService.createTaskQuery()
+            .processInstanceId(instance.getProcessInstanceId()).singleResult().getId();
+    taskService.complete(taskId);
+    continueToNextWaitState(processEngine);
+
+    // Then: the instance ends along the confirm path
+    assertThat(instance)
+            .isEnded()
+            .hasPassedInOrder("<start>", "<…confirm-path activities, in order…>", "<confirmed-end>")
+            .hasNotPassed("<reject-activity>", "<rejected-end>");
+
+    verify(sendWelcomeMailUseCase).sendWelcomeMail(membership.id());
+}
+```
+
+### 5. Test the rejection path
+
+Write the second test, `noCapacity_membershipIsRejected`: `claimMembership` returns `false`, the
+instance runs without a wait state to `endEvent_membershipRejected`. Check that the rejection mail
+was passed, the confirmation and the welcome mail were not, and that `sendWelcomeMailUseCase` was
+never called (`verify(..., never())`).
 
 ## Constraints
 
-- The process key stays `subscribeNewsletter` and the message name exactly
-  `Message_SubscriptionRequested` – historical names that stay stable. A typo leads to a
-  `MismatchingMessageCorrelationException`.
-- The `membershipId` is from now on the reference between application and process instance; it is
-  set as a process variable at start.
-- The User Task `userTask_confirmMembership` has **no** form in this exercise – it is completed
-  via REST. A tasklist form for the approval step is added in [Exercise 5](exercise-05.md).
+- The test needs no running application. The in-memory H2 is created fresh for each test run and
+  is independent of the data under `~/.cibseven-training`.
+- Only the use cases get mocked. Delegates, model, and engine run for real.
+- The element IDs are strings in the test. The [add-on](exercise-04-addon.md) replaces them with
+  generated constants.
 
 ## Expected result
 
-Restart the application and register a person:
+Run the test class from the root directory:
 
 ```bash
-curl -X POST http://localhost:8080/api/memberships \
-  -H "Content-Type: application/json" \
-  -d '{"email": "bob@miravelo.com", "name": "Bob", "age": 25}'
+./mvnw -pl services/process-application test -Dtest=MembershipProcessTest
 ```
 
-1. The call returns the `membershipId`. `Send confirmation mail` runs through – the log shows
-   `Sending confirmation mail to bob@miravelo.com`.
-2. The process instance waits at the User Task `Confirm membership` (visible in `act_ru_task`).
-3. Confirm via the endpoint – with the ID from step 1:
-
-   ```bash
-   curl -X POST http://localhost:8080/api/memberships/<membershipId>/confirm
-   ```
-
-4. `Send Welcome Mail` runs through (`Sending welcome mail to bob@miravelo.com`), the instance ends.
+Both tests pass in a few seconds. If one fails, the assertion shows at which activity the instance
+actually stood.
 
 ## Self-check
 
-- [ ] The Start Event is a Message Start Event with the name `Message_SubscriptionRequested`
-- [ ] A `POST /api/memberships` creates a Membership, starts the instance via correlation, and
-      returns the `membershipId`
-- [ ] Both delegates read `membershipId`; the services load the Membership from the repository
-- [ ] A `POST /api/memberships/{id}/confirm` completes the waiting `userTask_confirmMembership`
-      via the `TaskService`
-- [ ] The log lines (confirmation, then welcome) appear in the right order
-- [ ] `./mvnw -pl services/process-application test -Dtest=ArchitectureTest` is green
+- [ ] `asyncBefore` is on the Message Start Event and on the three mail tasks, `asyncAfter` on the User Task, `claimMembership` has no marker
+- [ ] The job executor is turned off in the test profile
+- [ ] The happy-path test checks the order and the paths not taken
+- [ ] The rejection test checks that the welcome mail was never called
+- [ ] Both tests pass green without the application running
 
 ## Hints
 
-**Why a Message Start Event?** A None Start Event says "someone starts this somehow". A Message
-Start Event names the business trigger – *a registration has come in* – and makes it visible in
-the model. You'll need the same correlation API from [Exercise 7](exercise-07.md) on for messages
-**to running instances** too.
-
-**Why the confirmation via REST instead of the Tasklist?** In Exercise 2 the tasklist form was the
-simple way in. In a production-like setting, though, the confirmation comes from a dedicated UI or –
-as here – from a confirmation link; the click lands as a REST call, and the `TaskService` completes
-the wait state. Business interaction runs from now on through dedicated endpoints, no longer through
-the generic Tasklist.
+**Idempotency:** A retry may re-execute a Service Task. If an action may happen only once
+(reservation, payment), it must commit before the boundary or be idempotent.
 
 ## Reference solution
 
@@ -187,8 +229,12 @@ the generic Tasklist.
 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=04
 ```
 
+The solution contains both variants: `MembershipProcessPlainTest` with ID strings and
+`MembershipProcessTest` with the generated Process-API from the add-on.
+
 ## Next step
 
-In Exercise 5 the Inner Circle gets its exclusivity – with a capacity check and a gateway.
+The element IDs are still hand-typed strings in the test. The add-on turns them into verified
+constants.
 
-➡️ [Next: Exercise 5](exercise-05.md)
+➡️ [Next — Add-on: bpmn-to-code](exercise-04-addon.md)

@@ -23,6 +23,6 @@ public class SendWelcomeMailService implements SendWelcomeMailUseCase {
     @Override
     public void sendWelcomeMail(MembershipId membershipId) {
         var membership = repository.find(membershipId);
-        log.info("Sending welcome mail to {}", membership.email().value());
+        log.info("Sending welcome mail to {} (membershipId={})", membership.email().value(), membershipId.value());
     }
 }

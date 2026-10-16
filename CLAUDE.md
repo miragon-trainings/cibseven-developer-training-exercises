@@ -14,7 +14,7 @@ cd services/process-application && ../../mvnw spring-boot:run
 # Run a specific solution
 cd solutions/exercise-01 && ../../mvnw spring-boot:run
 
-# Load a reference solution into the process-application module (catch-up; valid: 00-10, two-digit; 00 = starter)
+# Load a reference solution into the process-application module (catch-up; valid: 00-07, two-digit; 00 = starter)
 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=02
 
 # Run all tests
@@ -34,7 +34,7 @@ empty password (the login form pre-fills `jdbc:h2:~/test`; replace it).
 (`camunda.bpm.database.schema-update: true`). State survives restarts; reset = stop the app and delete
 `~/.cibseven-training` (Windows: `%USERPROFILE%\.cibseven-training`).
 The running app locks the file — external DB tools cannot open it meanwhile (use the H2 console). Process tests
-(Exercise 6+) use the `test` profile with a separate in-memory H2 (`jdbc:h2:mem:cibseven-test`).
+(Exercise 4+) use the `test` profile with a separate in-memory H2 (`jdbc:h2:mem:cibseven-test`).
 
 ## Architecture
 
@@ -72,54 +72,57 @@ Multi-module Maven project:
   full hexagonal skeleton present, but CIB deps/config/`@SpringBootApplication` (`TODO Exercise 1`)
   and the business-layer beans are commented out. The early ramp is gradual: Exercise 1 = switch the
   engine on + run the given start-form / Manual-Task model (no code); Exercise 2 = model a User Task
-  with a self-made Generated Form (Cockpit only, still no Java); Exercise 3 = uncomment + implement the
-  JavaDelegate (`TODO Exercise 3`, Cockpit start); Exercise 4 = uncomment the REST / persistence /
-  message-correlation / confirm-endpoint layer (`TODO Exercise 4`).
-- `templates/exercise-10/logistics-service/` — Aufgabe 10 starter for the remote-owner service, kept OUT of
-  `services/` (and the default reactor) so `services/` stays clean for exercises 0–9. In Aufgabe 10 the
+  with a self-made Generated Form + uncomment/implement the JavaDelegate (`TODO Exercise 2`, Cockpit
+  start); Exercise 3 = uncomment the REST / persistence / message-correlation / confirm-endpoint /
+  capacity-gateway layer and implement its engine stubs (`TODO Exercise 3`). The confirm endpoint
+  (`POST /api/memberships/{id}/confirm`, `TaskService` query by business key) stays in every later
+  solution; from Exercise 3 on the confirm User Task has no form.
+- `templates/exercise-07/logistics-service/` — Aufgabe 7 starter for the remote-owner service, kept OUT of
+  `services/` (and the default reactor) so `services/` stays clean for exercises 0–6. In Aufgabe 7 the
   participant copies it into `services/logistics-service` and adds the `<module>` line. It OWNS a small
   `sendWelcomeKit` process (Signal-Start → external task `shipWelcomeKit` → End), deploys its own BPMN into
   the engine at start-up, fulfils the task via the external-task client, and drives the engine via a typed
   client it **generates itself** (`openapi-generator-maven-plugin`, spec `cibseven-engine-rest-openapi`,
-  package `org.cibseven.rest.client.*`). Runs on :8090. Ships dormant/compilable with `TODO Exercise 10`
-  (the generator block + client wiring are commented out). Verified in CI via the `-Pexercise-10` profile.
+  package `org.cibseven.rest.client.*`). Runs on :8090. Ships dormant/compilable with `TODO Exercise 7`
+  (the generator block + client wiring are commented out). Verified in CI via the `-Pexercise-07` profile.
   (Replaces the former `notification-service` / the separate `cibseven-engine-client` module.)
 - `templates/process-application-starter/` — Byte copy of the starter state of `services/process-application`
   (`src/` + `pom.xml`), outside the reactor; the baseline `load-solution` resets to. **Contract:** must stay
   byte-identical to the work module (CI: `diff -r`). After changing the starter, sync it:
   `rm -rf templates/process-application-starter/src && cp -R services/process-application/src templates/process-application-starter/ && cp services/process-application/pom.xml templates/process-application-starter/`
-- `docs/` — Per-exercise instructions (`exercise-00.md … exercise-10.md`) + assets.
-- `solutions/exercise-{01-10}/` + `solutions/extra-task-1/` — Cumulative solutions, each building on the previous.
-  Exercise 10 is nested into two sub-services: `solutions/exercise-10/process-application/` (the generic
-  engine host, which additively broadcasts `Signal_MemberActivated`) + `solutions/exercise-10/logistics-service/`
+- `docs/` — Per-exercise instructions (`exercise-00.md … exercise-07.md`, `exercise-04-addon.md`, `extra-task-1.md`) + assets.
+- `solutions/exercise-{01-07}/` + `solutions/extra-task-1/` — Cumulative solutions, each building on the previous.
+  Exercise 7 is nested into two sub-services: `solutions/exercise-07/process-application/` (the generic
+  engine host, which additively broadcasts `Signal_MemberActivated`) + `solutions/exercise-07/logistics-service/`
   (the remote owner of the `sendWelcomeKit` process; generates its own typed engine client in-module).
 - `models/` — Reference BPMN/DMN models
 - All modules (process-application + every solution) run on the same port (`8080`) and the same H2 file
   (`~/.cibseven-training/exercise.mv.db`) — one module at a time; a second instance fails at startup with
   "Database may be already in use".
-- `load-solution` (`-Dsolution=NN`, 00–10; 00 = starter) puts `services/process-application` into the "Exercise NN
+- `load-solution` (`-Dsolution=NN`, 00–07; 00 = starter) puts `services/process-application` into the "Exercise NN
   solved" state, deterministically (same NN → same `src/` + `pom.xml`, whatever was loaded before): backs up `src/` +
   `pom.xml` to `services/process-application/.load-solution-backup/<timestamp>/` (git-ignored); resets `src/main`,
   `src/test/java/.../process` and `src/test/resources` to the starter template, leaving out every file containing
   `TODO Exercise M` with M ≤ NN; copies solution NN on top (`src/main`, process tests, test resources); rebuilds
   `pom.xml` = starter pom with the `@exercise-N` blocks for N ≤ NN uncommented; deletes `target/`. `ArchitectureTest`
   is never touched. Afterwards: reload Maven; after going back, delete `~/.cibseven-training`. No catch-up for
-  `extra-task-1` and the `logistics-service` half of Exercise 10.
+  `extra-task-1` and the `logistics-service` half of Exercise 7.
   - **Contract:** `TODO Exercise N` in a starter file under `src/` is load-bearing — solution N and every later
-    solution must contain that file, unless it is dropped on purpose (`ConfirmMembership*` from 05 on). Conversely,
+    solution must contain that file, unless it is dropped on purpose. Conversely,
     an unmarked starter file is always restored (a solution can only overwrite it), so a file a solution deletes or
-    renames needs a marker. New exercise numbers up to 10 need no Ant change.
+    renames needs a marker. A new exercise number needs a new `solvedExercises` condition in the Ant task and in
+    `validate_nn` of `.github/scripts/check-load-solution.sh`; the last exercise is nested (special case in both).
   - Prepared pom blocks: every dependency/plugin a solution pom adds must exist in the starter pom as one, or
     `load-solution` won't bring it. Format: a `TODO Exercise N` comment for participants, then
     `<!-- @exercise-N[-suffix]:begin – … -->`, `<!--` on its own line, the XML, `-->` on its own line,
-    `<!-- @exercise-N[-suffix]:end -->`. Existing: `@exercise-1` (CIB Seven starters), `@exercise-6`
-    (`cibseven-bpm-assert`), `@exercise-6-addon` ×2 (`bpmn-to-code-runtime`, `bpmn-to-code-maven` plugin).
+    `<!-- @exercise-N[-suffix]:end -->`. Existing: `@exercise-1` (CIB Seven starters), `@exercise-4`
+    (`cibseven-bpm-assert`), `@exercise-4-addon` ×2 (`bpmn-to-code-runtime`, `bpmn-to-code-maven` plugin).
 
 ## Domain
 
 All exercises use Miravelo Inner Circle membership (Membership naming) from Aufgabe 0. The BPMN file is
 `membership.bpmn`, but the process key stays `subscribeNewsletter` and the start message stays
-`Message_SubscriptionRequested` for historic reasons (mentioned once in Aufgabe 4).
+`Message_SubscriptionRequested` for historic reasons (mentioned once where introduced: key in Aufgabe 2, message in Aufgabe 3).
 
 Workflow: register → send confirmation mail → wait for confirmation (with timer retry/abort) → send welcome mail.
 

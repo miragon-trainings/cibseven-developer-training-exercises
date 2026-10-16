@@ -1,29 +1,27 @@
-# Exercise 3 – Automating a step
+# Exercise 3 – The application takes over
 
-> **Prerequisite:** Exercise 2 is complete – "Confirm membership" is a User Task with a form.
+> **Prerequisite:** Exercise 2 is complete – User Task and Service Task are working, instances are started in the Cockpit.
 > **Working directory:** `services/process-application`
-> **New in this exercise:** Manual Task → Service Task, JavaDelegate, Delegate Expression, hexagonal architecture (Delegate → Use Case → Service).
+> **New in this exercise:** Message Start Event, correlation, `RuntimeService`, business key, REST endpoint, persistence, confirmation via REST (`TaskService`), Exclusive Gateway with default flow.
 
 ## What this is about
 
-One placeholder is still left: "Send welcome mail" so far runs through as a Manual Task. Now it
-should actually do something. For that it becomes a **Service Task** – the element for work that
-a **system** does.
+Miravelo launches the new **Backroad AL**, and 500 registrations come in overnight. Nobody starts
+500 instances by hand in the Cockpit: from now on **the application** starts the process as soon as
+a registration arrives via REST. Whoever signs up confirms via a link in a mail (double opt-in), and
+this click also arrives as a REST call. On top of that, the Inner Circle is limited to
+**1000 seats**: whoever doesn't get a seat anymore receives a rejection.
 
-So that the engine knows *which* code to run, you bind the Service Task via a **Delegate
-Expression** to a Spring bean: the **JavaDelegate**. The delegate is the point where the engine
-calls back into your code.
-
-> *"We're developers. A task nobody executes is a to-do note, not a process."*
+> *"500 sign-ups. That's either viral or a bot attack."* – CTO, over the second coffee
 
 ## Learning goals
 
 After this exercise you can
 
-- convert a Manual Task into a **Service Task**,
-- bind a Service Task to a Spring bean via a **Delegate Expression**,
-- implement a **JavaDelegate** that reads a process variable and calls a use case,
-- name the layers of the hexagonal architecture along one execution (Delegate → Use Case → Service).
+- start a process instance from Java via a **Message Start Event** and give it a **business key**,
+- complete a waiting User Task via REST using the **`TaskService`**,
+- model an **Exclusive Gateway** with a default flow and control it with a process variable,
+- persist business data and reference it from the process via the `membershipId`.
 
 ## Target model
 
@@ -31,84 +29,133 @@ After this exercise you can
 
 Reference model: `../../models/exercise-03/membership.bpmn`
 
-Compared to Exercise 2 exactly one element changes: the Manual Task "Send welcome mail" becomes
-the Service Task `serviceTask_sendWelcomeMail`, bound to `#{sendWelcomeMailDelegate}`. The process
-still starts via the start form in the Cockpit.
-
 ## The task
 
-### 1. Enable the delegate layer
+### 1. Uncomment the application layer
 
-The classes for this exercise are commented out with `TODO Exercise 3`. Uncomment them:
+Uncomment all files marked `TODO Exercise 3`. REST, persistence and services are complete
+afterwards. The places with engine wiring still carry a `TODO`; you write those yourself in
+steps 3 to 5:
 
-- `application/port/inbound/SendWelcomeMailUseCase.java`
-- `application/service/SendWelcomeMailService.java`
-- `adapter/inbound/cibseven/BaseDelegate.java`
-- `adapter/inbound/cibseven/SendWelcomeMailDelegate.java`
+| Layer | Files |
+|---|---|
+| REST | `adapter/inbound/rest/MembershipController.java` (`POST /api/memberships`, `POST /api/memberships/{id}/confirm`) |
+| Persistence | `adapter/outbound/db/*` |
+| Use cases + services | `RegisterMembership*`, `ConfirmMembership*`, `SendConfirmationMail*`, `ClaimMembership*`, `SendRejectionMail*` |
+| Engine (with `TODO`) | `MembershipProcessAdapter`, `SendConfirmationMailDelegate`, `ClaimMembershipDelegate`, `SendRejectionMailDelegate` |
 
-`SendWelcomeMailService` and `BaseDelegate` are complete afterwards; the delegate still carries a
-`TODO` – you write the engine binding yourself.
+### 2. Rework the model
 
-### 2. Convert "Send welcome mail" into a Service Task
+Change `membership.bpmn` in the modeler. The start form and the form on the User Task are dropped:
+the data comes in via REST, and confirmation happens via REST.
 
-In the modeler, change the element's type from **Manual Task** to **Service Task** and bind it to
-the delegate:
+| Change | Element ID | Name | Configuration |
+|---|---|---|---|
+| Start Event → **Message Start Event** | `startEvent_submitRegistration` | Submit registration form | Message Name `Message_SubscriptionRequested` |
+| New Service Task | `serviceTask_claimMembership` | Claim membership | `#{claimMembershipDelegate}` |
+| New **Exclusive Gateway** | `gateway_hasEmptySpots` | Free seat available? | Default flow: yes path |
+| Yes path: new Service Task before the User Task | `serviceTask_sendConfirmationMail` | Send confirmation mail | `#{sendConfirmationMailDelegate}` |
+| No path: new Service Task | `serviceTask_sendRejectionMail` | Send rejection mail | `#{sendRejectionMailDelegate}` |
+| No path: new End Event | `endEvent_membershipRejected` | Membership rejected | – |
+| Rename End Event | `endEvent_membershipConfirmed` | Membership confirmed | – |
 
-| Element | Type | ID | Name | Configuration |
-|---|---|---|---|---|
-| Welcome mail | Service Task | `serviceTask_sendWelcomeMail` | Send Welcome Mail | Delegate Expression: `#{sendWelcomeMailDelegate}` |
+The no path gets the condition `${!hasEmptySpots}`. The yes path is the **default flow**: the
+engine takes it when no other condition applies, so it needs none itself.
 
-### 3. Implement `SendWelcomeMailService`
+### 3. Start the process via correlation
 
-**File:** `application/service/SendWelcomeMailService.java`
+`POST /api/memberships` saves the membership and calls `MembershipProcessAdapter.startProcess(...)`.
+Implement the method: you start a Message Start Event by correlating the message via the
+`RuntimeService`. Set the `membershipId` as the **business key**, so each instance in the Cockpit can
+be mapped to a registration, and pass the four process variables from the `TODO`:
 
-The service logs the email address the welcome mail goes to. Business logic belongs here, not in
-the delegate.
+```java
+runtimeService.createMessageCorrelation(/* message name */)
+        .processInstanceBusinessKey(/* membershipId */)
+        .setVariables(/* membershipId, email, name, age */)
+        .correlateStartMessage();
+```
 
-### 4. Implement `SendWelcomeMailDelegate`
+Like the process key, the message name `Message_SubscriptionRequested` is a historical name. A
+typo leads to a `MismatchingMessageCorrelationException`.
 
-**File:** `adapter/inbound/cibseven/SendWelcomeMailDelegate.java` – **write it yourself.**
+### 4. Switch the delegates to the `membershipId`
 
-Replace the `TODO` in `executeTask(execution)`:
+From now on the process references the stored membership via the process variable
+`membershipId`, no longer via the raw `email`.
 
-- Read the process variable `email` via the `DelegateExecution` (it comes from the start form).
-- Use it to call `useCase.sendWelcomeMail(...)`.
+- Switch `SendWelcomeMailUseCase` to a `MembershipId` parameter. `SendWelcomeMailService`
+  loads the membership via the `MembershipRepository` and logs the email address, as
+  `SendConfirmationMailService` demonstrates.
+- Implement `SendWelcomeMailDelegate`, `SendConfirmationMailDelegate` and
+  `SendRejectionMailDelegate`: read `membershipId`, convert it into a `MembershipId`, call the use
+  case.
 
-Which method of the `DelegateExecution` gives you the variable, you figure out yourself – the
-task text names the API, not the finished line.
+### 5. Write the claim delegate
+
+Implement `ClaimMembershipDelegate`: it calls `ClaimMembershipUseCase` and writes the result back
+as the process variable `hasEmptySpots`. The gateway decides based on this variable. Setting it
+belongs in the delegate, because the service doesn't know the engine and only returns a
+`boolean`.
+
+### 6. Complete the confirmation via REST
+
+The confirmation link arrives in the application as `POST /api/memberships/{membershipId}/confirm`;
+the controller passes it through to `MembershipProcessAdapter.confirm(...)`. Implement the method:
+via the `TaskService`, find the open task `userTask_confirmMembership` whose instance carries the
+`membershipId` as its business key, and complete it. If there is none, throw an exception.
+
+```java
+var task = taskService.createTaskQuery()
+        /* task definition key, business key */
+        .singleResult();
+taskService.complete(/* task ID */);
+```
 
 ## Constraints
 
-- The **delegate** is an **adapter**: it reads process variables and calls a use case. Business
-  logic belongs in the service, not in the delegate.
-- In this exercise the delegate reads the raw `email` directly from the process variable. A
-  business Membership with its own ID and persistence comes only in Exercise 4.
-- Start and confirmation still run through the Cockpit – no REST yet.
+- The capacity is an in-memory counter (`MAX_SPOTS = 1000` in `ClaimMembershipService`) and is
+  back at zero after a restart.
+- `domain/` and the outbound ports are already active; you don't change them.
 
 ## Expected result
 
-Restart the application and start an instance via the Tasklist (fill in the start form). Complete
-the User Task `Confirm membership`. Then the Service Task runs through, and the log shows:
+Restart the application and register Bob:
 
-```
-Sending welcome mail to alice@miravelo.com
+```bash
+curl -X POST http://localhost:8080/api/memberships \
+  -H "Content-Type: application/json" \
+  -d '{"email": "bob@miravelo.com", "name": "Bob", "age": 25}'
 ```
 
-The instance ends at `Member joined`.
+The call returns the `membershipId`. The log shows `Claiming membership for bob@miravelo.com`
+and `Sending confirmation mail to bob@miravelo.com`. In the Cockpit the instance waits at the User
+Task and carries the `membershipId` as its business key. Confirm with the ID:
+
+```bash
+curl -X POST http://localhost:8080/api/memberships/<membershipId>/confirm
+```
+
+The log follows with `Sending welcome mail to bob@miravelo.com`; the instance ends at `Membership confirmed`.
+
+Then check the no path: temporarily set `MAX_SPOTS` to `0`, restart and register Dave
+(`dave@miravelo.com`). The log shows `Sending rejection mail to dave@miravelo.com`; the instance
+ends at `Membership rejected` without waiting at the User Task.
 
 ## Self-check
 
-- [ ] `serviceTask_sendWelcomeMail` is a Service Task and uses `#{sendWelcomeMailDelegate}`
-- [ ] `SendWelcomeMailDelegate` is implemented yourself (no `UnsupportedOperationException` stub anymore)
-- [ ] The delegate reads `email` from the `DelegateExecution` and calls the use case
-- [ ] After completing the User Task, the log line with the email address appears in the log
-- [ ] The instance ends at `Member joined`
+- [ ] The Start Event is a Message Start Event with `Message_SubscriptionRequested`
+- [ ] `POST /api/memberships` starts an instance with the `membershipId` as its business key
+- [ ] `POST /api/memberships/{id}/confirm` completes the waiting User Task via the `TaskService`
+- [ ] The gateway has a default flow and exactly one condition (`${!hasEmptySpots}`)
+- [ ] All delegates read `membershipId`, only the claim delegate sets a variable
+- [ ] `./mvnw -pl services/process-application test -Dtest=ArchitectureTest` is green
 
 ## Hints
 
-Why the separation delegate / service? The **delegate** knows the engine (`DelegateExecution`,
-process variables); the **service** knows only the business logic. That keeps the business logic
-testable without starting an engine – you'll make use of that in Exercise 6 in the process test.
+Why a Message Start Event? It names the business trigger (*a registration has come in*) in the
+model. You need the same correlation API in [Exercise 5](exercise-05.md) for messages to
+**running** instances.
 
 ## Reference solution
 
@@ -120,7 +167,7 @@ testable without starting an engine – you'll make use of that in Exercise 6 in
 
 ## Next step
 
-In Exercise 4 the **application** takes over the process: registration via REST, start via a
-message, confirmation via a REST endpoint.
+The process now has two outcomes, and nobody automatically checks that it takes the right one. In
+Exercise 4 you secure it with a process test.
 
 ➡️ [Next: Exercise 4](exercise-04.md)

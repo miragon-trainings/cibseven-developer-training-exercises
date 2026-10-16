@@ -109,15 +109,15 @@ maven_module() { # repo goal...
 # ---------------------------------------------------------------------------------------------------
 
 validate_nn() {
-    [[ $1 =~ ^(0[0-9]|10)$ ]] || die "invalid solution '$1' (expected two digits, 00-10)"
+    [[ $1 =~ ^0[0-7]$ ]] || die "invalid solution '$1' (expected two digits, 00-07)"
 }
 
 solution_dir() {
-    if [ "$1" = 10 ]; then echo solutions/exercise-10/process-application; else echo "solutions/exercise-$1"; fi
+    if [ "$1" = 07 ]; then echo solutions/exercise-07/process-application; else echo "solutions/exercise-$1"; fi
 }
 
 # ERE for a "TODO Exercise M" marker with 1 <= M <= NN (empty for 00). The number must not run on
-# into another word character, so "TODO Exercise 1" never matches "TODO Exercise 10".
+# into another word character, so "TODO Exercise 1" never matches a longer token like "TODO Exercise 12".
 marker_re() {
     local n=$((10#$1)) m alts=""
     for ((m = 1; m <= n; m++)); do alts="$alts${alts:+|}$m"; done
@@ -273,8 +273,8 @@ check_loaded_state() { # repo NN
     if [ "$nn" = 00 ]; then
         diff -r -x .DS_Store "$repo/$STARTER/src" "$mod/src" && cmp "$repo/$STARTER/pom.xml" "$mod/pom.xml" \
             || die "load-solution 00 must give back the starter (src/ + pom.xml)"
-    elif [ $((10#$nn)) -ge 4 ]; then
-        # From 04 on every starter file is either part of the solution or marked as a solved stub.
+    elif [ $((10#$nn)) -ge 3 ]; then
+        # From 03 on every starter file is either part of the solution or marked as a solved stub.
         diff -r -x .DS_Store "$repo/$(solution_dir "$nn")/src/main" "$mod/src/main" \
             || die "src/main after load-solution $nn must equal $(solution_dir "$nn")/src/main (a starter file without a TODO marker leaked in?)"
     fi

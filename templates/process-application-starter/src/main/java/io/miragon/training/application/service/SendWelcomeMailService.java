@@ -1,6 +1,6 @@
 package io.miragon.training.application.service;
 
-// TODO Exercise 3: Uncomment this class (remove the /* and */ lines).
+// TODO Exercise 2: Uncomment this class (remove the /* and */ lines).
 /*
 import io.miragon.training.application.port.inbound.SendWelcomeMailUseCase;
 import org.slf4j.Logger;

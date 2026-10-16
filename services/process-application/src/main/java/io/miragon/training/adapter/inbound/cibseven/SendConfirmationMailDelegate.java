@@ -1,6 +1,6 @@
 package io.miragon.training.adapter.inbound.cibseven;
 
-// TODO Exercise 4: Uncomment this class (remove the /* and */ lines)
+// TODO Exercise 3: Uncomment this class (remove the /* and */ lines)
 //  and then implement the TODO in executeTask(...).
 //  It needs the CIB Seven engine that you switch on in Exercise 1.
 /*
@@ -22,12 +22,12 @@ public class SendConfirmationMailDelegate extends BaseDelegate {
 
     @Override
     protected void executeTask(DelegateExecution execution) {
-        // TODO Exercise 4: Implement this delegate's engine binding yourself.
+        // TODO Exercise 3: Implement this delegate's engine binding yourself.
         //  - Read the process variable "membershipId" from the DelegateExecution (getVariable).
         //  - Convert the value into a MembershipId and call useCase.sendConfirmationMail(...) with it.
         //  How you obtain the variable via the DelegateExecution and convert the String is something
         //  you look up yourself – there is deliberately no ready-made call line here.
-        throw new UnsupportedOperationException("Exercise 4: read the 'membershipId' variable and call the use case");
+        throw new UnsupportedOperationException("Exercise 3: read the 'membershipId' variable and call the use case");
     }
 }
 */

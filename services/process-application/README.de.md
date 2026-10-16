@@ -8,18 +8,18 @@ Willkommen zum CIB Seven Developer Training!
 Laufausrüstung, Gravel Bikes, Rennräder. Das Unternehmen wächst, die Kundenbasis wächst,
 und die Prozesse müssen mithalten.
 
-In diesem Modul arbeitest du dich Schritt für Schritt durch 10 Aufgaben, die ein vollständiges
+In diesem Modul arbeitest du dich Schritt für Schritt durch 7 Aufgaben, die ein vollständiges
 Inner-Circle-Membership-System auf Basis von CIB Seven (Camunda Platform 7) aufbauen.
 
 ## Der vollständige Zielprozess
 
-So sieht der Prozess am Ende von Aufgabe 10 aus – mit allen Konzepten, die du Schritt für Schritt aufbaust:
+So sieht der Prozess am Ende von Aufgabe 7 aus – mit allen Konzepten, die du Schritt für Schritt aufbaust:
 
-![Vollständiger Membership-Prozess](../../docs/assets/exercise-10-main.svg)
+![Vollständiger Membership-Prozess](../../docs/assets/exercise-07-main.svg)
 
 Der ausgelagerte Sub-Prozess für die Ablehnung (Call Activity + DMN):
 
-![Membership-Rejection Sub-Prozess](../../docs/assets/exercise-10-sub.svg)
+![Membership-Rejection Sub-Prozess](../../docs/assets/exercise-07-sub.svg)
 
 ## Quick Start
 
@@ -46,19 +46,16 @@ http://localhost:8080/h2-console  (JDBC-URL jdbc:h2:file:~/.cibseven-training/ex
 
 | Aufgabe | Thema | Beschreibung |
 |---|---|---|
-| [0](../../docs/de/exercise-00.md) | Fachliche BPMN-Modellierung | Den Kernablauf der Mitgliedschaft rein fachlich mit dem Miragon BPMN Modeler modellieren |
-| [1](../../docs/de/exercise-01.md) | Engine & Tooling | Das vorgegebene Start-Formular-/Manual-Task-Modell durchlaufen lassen, Cockpit & DB-Tabellen kennenlernen |
-| [2](../../docs/de/exercise-02.md) | Der erste Wartepunkt | Aus dem Manual Task „Confirm" einen User Task mit selbst erstellter Generated Form machen |
-| [3](../../docs/de/exercise-03.md) | Einen Schritt automatisieren | Aus dem Manual Task „Send welcome mail" einen Service Task + JavaDelegate machen (Start über Cockpit) |
-| [4](../../docs/de/exercise-04.md) | Die Anwendung übernimmt | Message Start, REST-Endpunkte für Register + Confirm, Korrelation, Persistenz |
-| [5](../../docs/de/exercise-05.md) | Membership & Gateway | Exclusive Gateway, Kapazitätsprüfung |
-| [6](../../docs/de/exercise-06.md) | Prozess-Tests | Prozess-Unit-Test: In-Memory-Engine, gemockte Use Cases, ohne laufende Anwendung |
-| [6 · Add-on](../../docs/de/exercise-06-addon.md) | bpmn-to-code | Typsichere Process-API aus dem BPMN generieren – Strings raus, Konstanten rein |
-| [7](../../docs/de/exercise-07.md) | Boundary Events & Subprozesse | Parallel Gateway, Timer- und Message-Boundary-Events, Subprozesse |
-| [8](../../docs/de/exercise-08.md) | Kompensation (SAGA) | Automatisches Rollback via BPMN-Kompensation |
-| [9](../../docs/de/exercise-09.md) | Call Activity & DMN | Prozess-Modularisierung mit Entscheidungstabellen |
-| [10](../../docs/de/exercise-10.md) | Remote Engine & External Task | Notify-Community-Delegate als External Task in einen eigenen Remote-Worker auslagern, Benachrichtigung in einen Teams-Kanal |
-| [Extra 1](../../docs/de/extra-task-1.md) | Process-Engine-API | Engine-Lock-in lösen: Worker statt Delegates, engine-neutraler Adapter-Layer |
+| [0](../../docs/de/exercise-00.md) | Fachliche BPMN-Modellierung | Den Kernablauf der Inner-Circle-Membership rein fachlich und nur mit den Grundformen aus Kapitel 1 modellieren – der Ausgangspunkt für das ganze Training |
+| [1](../../docs/de/exercise-01.md) | Engine zum Laufen bringen | Das vorgegebene Start-Formular-/Manual-Task-Modell durchlaufen lassen, Cockpit und `act_*`-Tabellen der Engine kennenlernen |
+| [2](../../docs/de/exercise-02.md) | User Task und Service Task | „Confirm" zum User Task mit selbst erstellter Generated Form machen, „Send welcome mail" zum Service Task mit JavaDelegate (Start über Cockpit) |
+| [3](../../docs/de/exercise-03.md) | Die Anwendung übernimmt | Message Start Event, Business Key, REST-Endpunkte für Register + Confirm, Korrelation, Persistenz, Kapazitätsprüfung mit Exclusive Gateway |
+| [4](../../docs/de/exercise-04.md) | Prozess-Tests | Transaktionsgrenzen, Prozess-Unit-Test mit In-Memory-Engine, gemockten Use Cases, ohne laufende Anwendung |
+| [4 · Add-on](../../docs/de/exercise-04-addon.md) | bpmn-to-code | Element-IDs als generierte Konstanten statt handgetippter Strings, Pfade compile-sicher mit `PathWalk` navigieren |
+| [5](../../docs/de/exercise-05.md) | Subprozess, Boundary Events & Parallelität | Subprozess, Timer- und Message-Boundary-Events, Parallel Gateway, Teams-Anbindung |
+| [6](../../docs/de/exercise-06.md) | Kompensation, Call Activity & DMN | Compensation Boundary Event, Compensating End Event, Call Activity, DMN-Entscheidungstabelle, Business Rule Task |
+| [7](../../docs/de/exercise-07.md) | Remote Engine als geteilte Infrastruktur | Eine Abteilung besitzt einen **eigenen** kleinen Prozess (`sendWelcomeKit`) in ihrem Remote-Service: Modell, Worker, Deployment und Tests liegen dort; getriggert per Signal-Broadcast; die Engine über einen generierten OpenAPI-Client getrieben |
+| [Extra 1](../../docs/de/extra-task-1.md) | Process-Engine-API | Aufgabe 7 engine-neutral umbauen: Worker statt JavaDelegate, Adapter-Tausch statt Engine-Lock-in |
 
 ## Architektur
 
@@ -97,7 +94,7 @@ Für jede Aufgabe gibt es eine Referenzlösung unter `../../solutions/exercise-X
 Jede Lösung ist eine eigenständige, lauffähige Spring Boot Anwendung.
 
 Wenn du eine Aufgabe nicht ganz fertig bekommst, kannst du die Referenzlösung direkt in
-dieses Modul laden und mit ihr weiterarbeiten (gültige Werte: 00–10, zweistellig; 00 = zurück zum
+dieses Modul laden und mit ihr weiterarbeiten (gültige Werte: 00–07, zweistellig; 00 = zurück zum
 Auslieferungszustand):
 
 ```bash

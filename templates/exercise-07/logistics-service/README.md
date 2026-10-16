@@ -24,14 +24,15 @@ Exercises 0–8.
    - **`send-welcome-kit.bpmn`** – deliberately contains only an empty model with a start event.
      Model the `sendWelcomeKit` process yourself (process ID, signal + manual start event,
      external service task with topic, end event).
-   - **`pom.xml`** – uncomment the two commented-out generator blocks (bpmn-to-code + OpenAPI client)
-     and set the `TODO` values → generates the Process API + a typed `/engine-rest` client.
-   - **`EngineClientConfig`** – provide the `ProcessDefinitionApi` bean.
-   - **`EngineDeploymentAdapter`** – deploy your own model on start-up.
+   - **`pom.xml`** – uncomment the commented-out bpmn-to-code block → generates the Process API.
    - **`ShipWelcomeKitWorker`** – fulfil the external task (the class is intentionally empty).
-   - **`RemoteWelcomeKitProcessAdapter`** – start the process via the client.
+   - **`RemoteWelcomeKitProcessAdapter`** – start the process via the typed `ProcessDefinitionApi`.
+
+   The typed `/engine-rest` client, the External Task Client and the deployment of your own model come
+   ready-made from the [CIB seven community REST client](https://github.com/cibseven-community-hub/cibseven-rest-client-java)
+   (`cibseven-engine-rest-client-complete-springboot-starter`, configured in `application.yaml`).
 
 Reference solution: [`solutions/exercise-07/logistics-service`](../../../solutions/exercise-07/logistics-service).
 
-> Tip: The template already compiles in its initial state (the client part is commented out). To check
+> Tip: The template already compiles in its initial state (the bpmn-to-code part is commented out). To check
 > the template without copying it: `./mvnw -Pexercise-07 -pl templates/exercise-07/logistics-service compile`.

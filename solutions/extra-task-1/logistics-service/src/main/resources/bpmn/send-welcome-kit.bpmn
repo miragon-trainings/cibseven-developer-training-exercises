@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_SendWelcomeKit" targetNamespace="http://miravelo.io/logistics">
+  <bpmn:signal id="Signal_MemberActivated" name="Signal_MemberActivated" />
+  <bpmn:process id="sendWelcomeKit" name="Send Welcome Kit" isExecutable="true" camunda:historyTimeToLive="180">
+    <bpmn:startEvent id="startEvent_memberActivated" name="New member activated" camunda:asyncBefore="true">
+      <bpmn:outgoing>flow_memberActivatedToStart</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_memberActivated" signalRef="Signal_MemberActivated" />
+    </bpmn:startEvent>
+    <bpmn:startEvent id="startEvent_manualStart" name="Manual start (testing / fallback)">
+      <bpmn:outgoing>flow_manualStartToStart</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="gateway_start">
+      <bpmn:incoming>flow_memberActivatedToStart</bpmn:incoming>
+      <bpmn:incoming>flow_manualStartToStart</bpmn:incoming>
+      <bpmn:outgoing>flow_startToShipWelcomeKit</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="serviceTask_shipWelcomeKit" name="Ship welcome kit" camunda:type="external" camunda:topic="shipWelcomeKit">
+      <bpmn:incoming>flow_startToShipWelcomeKit</bpmn:incoming>
+      <bpmn:outgoing>flow_shipWelcomeKitToWelcomeKitShipped</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="endEvent_welcomeKitShipped" name="Welcome kit shipped">
+      <bpmn:incoming>flow_shipWelcomeKitToWelcomeKitShipped</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow_memberActivatedToStart" sourceRef="startEvent_memberActivated" targetRef="gateway_start" />
+    <bpmn:sequenceFlow id="flow_manualStartToStart" sourceRef="startEvent_manualStart" targetRef="gateway_start" />
+    <bpmn:sequenceFlow id="flow_startToShipWelcomeKit" sourceRef="gateway_start" targetRef="serviceTask_shipWelcomeKit" />
+    <bpmn:sequenceFlow id="flow_shipWelcomeKitToWelcomeKitShipped" sourceRef="serviceTask_shipWelcomeKit" targetRef="endEvent_welcomeKitShipped" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="sendWelcomeKit">
+      <bpmndi:BPMNShape id="gateway_start_di" bpmnElement="gateway_start" isMarkerVisible="true">
+        <dc:Bounds x="275" y="165" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="282" y="141" width="36" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="startEvent_memberActivated_di" bpmnElement="startEvent_memberActivated">
+        <dc:Bounds x="162" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="148" y="215" width="66" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="startEvent_manualStart_di" bpmnElement="startEvent_manualStart">
+        <dc:Bounds x="162" y="272" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="138" y="315" width="87" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="serviceTask_shipWelcomeKit_di" bpmnElement="serviceTask_shipWelcomeKit">
+        <dc:Bounds x="370" y="150" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="endEvent_welcomeKitShipped_di" bpmnElement="endEvent_welcomeKitShipped">
+        <dc:Bounds x="532" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="521" y="215" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_memberActivatedToStart_di" bpmnElement="flow_memberActivatedToStart">
+        <di:waypoint x="198" y="190" />
+        <di:waypoint x="275" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_manualStartToStart_di" bpmnElement="flow_manualStartToStart">
+        <di:waypoint x="198" y="290" />
+        <di:waypoint x="300" y="290" />
+        <di:waypoint x="300" y="215" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_startToShipWelcomeKit_di" bpmnElement="flow_startToShipWelcomeKit">
+        <di:waypoint x="325" y="190" />
+        <di:waypoint x="370" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_shipWelcomeKitToWelcomeKitShipped_di" bpmnElement="flow_shipWelcomeKitToWelcomeKitShipped">
+        <di:waypoint x="470" y="190" />
+        <di:waypoint x="532" y="190" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

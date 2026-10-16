@@ -1,8 +1,8 @@
 # Extra-Aufgabe 1 – Raus aus dem Engine-Lock-in
 
 > **Voraussetzung:** Aufgabe 7 ist abgeschlossen – der Membership-Prozess läuft vollständig, inklusive Signal-End-Event „Membership activated".
-> **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** Process-Engine-API von bpm-crafters, Worker-Pattern statt JavaDelegate, engine-neutraler Outbound-Adapter, ArchUnit-Guardrail.
+> **Arbeitsverzeichnis:** `services/process-application` (Teil A) und `services/logistics-service` (Teil B)
+> **Neu in dieser Aufgabe:** Process-Engine-API von bpm-crafters, Worker-Pattern statt JavaDelegate, engine-neutraler Outbound-Adapter, embedded- und Remote-Adapter, ArchUnit-Guardrail.
 
 ## Darum geht es
 
@@ -23,6 +23,7 @@ Nach dieser Aufgabe kannst du
 - Service Tasks über das Worker-Pattern (`@ProcessEngineWorker`) statt über `DelegateExpression` anbinden,
 - Prozesse engine-neutral starten, Nachrichten korrelieren und User Tasks abschließen,
 - begründen, warum External Tasks die `asyncBefore`-Marker überflüssig machen,
+- dieselbe API einmal embedded und einmal remote gegen `/engine-rest` betreiben,
 - per Architektur-Test garantieren, dass kein `org.cibseven.bpm`-Import mehr im Code steht.
 
 ## Ziel-Modell
@@ -39,8 +40,10 @@ Aufgerufener Prozess `handleRejection`:
 
 ## Aufgabe
 
-Kopiere am besten deine Lösung aus Aufgabe 6 und baue sie Schritt für Schritt um. Der
-Logistik-Service aus Aufgabe 7 bleibt unverändert.
+Du baust beide Services aus Aufgabe 7 um. Teil A stellt den Engine-Host auf den Embedded-Adapter um,
+Teil B den Logistik-Service auf den Remote-Adapter.
+
+### Teil A – Engine-Host: embedded
 
 ### 1. Dependencies einbinden
 
@@ -195,6 +198,55 @@ static final ArchRule no_class_should_depend_on_the_native_engine = noClasses()
 
 Ist der Test grün, steckt die Engine nur noch in `pom.xml` und `application.yaml`.
 
+### Teil B – Logistik-Service: dieselbe API, remote
+
+Der Logistik-Service aus Aufgabe 7 hat keine eigene Engine. Er wechselt ebenfalls auf die
+Process-Engine-API, nutzt aber den **Remote**-Adapter: Der Code spricht dieselbe API, der Adapter
+übersetzt sie in Aufrufe gegen `/engine-rest`.
+
+### 8. Den Remote-Adapter einbinden
+
+Ersetze in der `pom.xml` des Logistik-Services den CIB seven Java-Client durch:
+
+- `dev.bpm-crafters.process-engine-api:process-engine-api`
+- `dev.bpm-crafters.process-engine-worker:process-engine-worker-spring-boot-starter`
+- `dev.bpm-crafters.process-engine-adapters:process-engine-adapter-cib-seven-remote-spring-boot-starter`
+- `org.cibseven.commons:cibseven-commons-typed-values` (der Adapter deklariert sie als `provided`)
+
+Konfiguriere den Adapter in `application.yaml`:
+
+```yaml
+dev:
+  bpm-crafters:
+    process-api:
+      adapter:
+        cib-seven-remote:
+          enabled: true
+          client:
+            base-url: http://localhost:8080/engine-rest
+          service-tasks:
+            delivery-strategy: remote_scheduled
+            worker-id: logistics-service-worker
+            schedule-delivery-fixed-rate-in-seconds: 5
+          user-tasks:
+            delivery-strategy: remote_scheduled
+            schedule-delivery-fixed-rate-in-seconds: 5
+```
+
+### 9. Worker, Start und Deployment umstellen
+
+- `ShipWelcomeKitWorker` wird ein `@ProcessEngineWorker(topic = ServiceTasks.SHIP_WELCOME_KIT)` mit
+  `@Variable(name = "name")`. `BaseExternalTaskWorker` entfällt, Abschluss und Fehlerfall übernimmt die
+  Worker-Library.
+- `RemoteWelcomeKitProcessAdapter` startet den Prozess über
+  `startProcessApi.startProcess(new StartProcessByDefinitionCmd(PROCESS_ID, Map.of("name", ...)))`.
+- Das Modell deployt ein kleiner Adapter über die engine-neutrale `DeploymentApi`
+  (`DeployBundleCommand` mit den `NamedResource`s aus `classpath*:bpmn/*.bpmn`).
+
+Ergänze auch hier einen `ArchitectureTest`, der jede Abhängigkeit auf `org.cibseven..` verbietet.
+Danach unterscheiden sich beide Services nur noch im Adapter: embedded im Engine-Host, remote im
+Logistik-Service.
+
 ## Randbedingungen
 
 - Die `asyncBefore`-Marker an den Service Tasks entfallen. Ein External Task ist ein Wait State: Die
@@ -203,6 +255,9 @@ Ist der Test grün, steckt die Engine nur noch in `pom.xml` und `application.yam
   [Aufgabe 4 · Add-on](exercise-04-addon.md).
 - Service Tasks und User Tasks werden per Polling etwa alle 5 Sekunden zugestellt. Ein `confirm`
   direkt nach der Registrierung kann deshalb noch keinen Task finden.
+- Die Auto-Deployment-Option der Worker-Library (`dev.bpm-crafters.process-api.worker.deployment`)
+  greift mit dem Remote-Adapter nicht. Deshalb deployt der Logistik-Service sein Modell selbst über
+  die `DeploymentApi`. Im Engine-Host deployt weiterhin das CIB-seven-Starter-Auto-Deployment.
 
 ## Erwartetes Ergebnis
 
@@ -221,6 +276,10 @@ mit Hanna (Alter `25`): Der aufgerufene Prozess wartet zusätzlich am User Task 
 expressing regret*. Eine dritte Anmeldung, die du nach ein paar Sekunden mit
 `POST /api/memberships/$MEMBERSHIP_ID/confirm` bestätigst, endet an `Membership activated`.
 
+Läuft der Logistik-Service mit, startet das Signal eine `sendWelcomeKit`-Instanz, und dessen Worker
+verschickt das Kit über den Remote-Adapter. `POST http://localhost:8090/api/welcome-kits` startet den
+Prozess über die `StartProcessApi`.
+
 ## Selbstcheck
 
 - [ ] Alle sieben Service Tasks sind `camunda:type="external"` mit Topic
@@ -228,6 +287,7 @@ expressing regret*. Eine dritte Anmeldung, die du nach ein paar Sekunden mit
 - [ ] Der Outbound-Adapter nutzt `StartProcessApi`, `CorrelationApi` und `UserTaskCompletionApi`
 - [ ] `@EnableProcessApplication` ist entfernt, die `EngineCommandExecutor`-Bean ist gesetzt
 - [ ] Der ArchUnit-Test meldet keine Abhängigkeit auf `org.cibseven.bpm`
+- [ ] Der Logistik-Service nutzt den Remote-Adapter und hat keine Abhängigkeit auf `org.cibseven..` im Code
 
 ## Hinweise
 
@@ -236,7 +296,8 @@ Modul `cib-seven-with-process-engine-api`.
 
 ## Referenzlösung
 
-`../../solutions/extra-task-1/`
+- Engine-Host (embedded): `../../solutions/extra-task-1/process-application/`
+- Logistik-Service (remote): `../../solutions/extra-task-1/logistics-service/`
 
 ## Nächster Schritt
 

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * A small action owned by the Logistics service: re-send a welcome kit on demand. It starts a fresh
  * {@code sendWelcomeKit} instance through the engine — the moment the department drives the shared
- * engine over REST (Direction 2), through the generated typed client behind {@code WelcomeKitProcess}.
+ * engine over REST (Direction 2), through the typed CIB seven client behind {@code WelcomeKitProcess}.
  */
 @RestController
 @RequestMapping("/api/welcome-kits")

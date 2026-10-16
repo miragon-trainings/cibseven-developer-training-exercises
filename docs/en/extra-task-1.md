@@ -1,8 +1,8 @@
 # Extra Task 1 – Breaking Free from Engine Lock-in
 
 > **Prerequisite:** Exercise 7 is complete – the Membership process runs end to end, including the "Membership activated" signal end event.
-> **Working directory:** `services/process-application`
-> **New in this exercise:** Process-Engine-API from bpm-crafters, worker pattern instead of JavaDelegate, engine-neutral outbound adapter, ArchUnit guardrail.
+> **Working directory:** `services/process-application` (Part A) and `services/logistics-service` (Part B)
+> **New in this exercise:** Process-Engine-API from bpm-crafters, worker pattern instead of JavaDelegate, engine-neutral outbound adapter, embedded and remote adapter, ArchUnit guardrail.
 
 ## What this is about
 
@@ -23,6 +23,7 @@ After this exercise you can
 - wire up service tasks via the worker pattern (`@ProcessEngineWorker`) instead of `DelegateExpression`,
 - start processes, correlate messages, and complete user tasks engine-neutrally,
 - explain why external tasks make the `asyncBefore` markers unnecessary,
+- run the same API once embedded and once remote against `/engine-rest`,
 - guarantee via an architecture test that no `org.cibseven.bpm` import is left in the code.
 
 ## Target model
@@ -39,8 +40,10 @@ Called process `handleRejection`:
 
 ## The task
 
-The easiest path is to copy your Exercise 6 solution and refactor it step by step. The
-logistics service from Exercise 7 stays unchanged.
+You rework both services from Exercise 7. Part A switches the engine host to the embedded adapter,
+Part B switches the logistics service to the remote adapter.
+
+### Part A – Engine host: embedded
 
 ### 1. Add the dependencies
 
@@ -197,6 +200,55 @@ static final ArchRule no_class_should_depend_on_the_native_engine = noClasses()
 
 Once the test is green, the engine only lives in `pom.xml` and `application.yaml`.
 
+### Part B – Logistics service: the same API, remote
+
+The logistics service from Exercise 7 has no engine of its own. It switches to the Process-Engine-API
+as well, but uses the **remote** adapter: the code talks to the same API, the adapter translates it
+into calls against `/engine-rest`.
+
+### 8. Add the remote adapter
+
+In the logistics service's `pom.xml`, replace the CIB seven Java client with:
+
+- `dev.bpm-crafters.process-engine-api:process-engine-api`
+- `dev.bpm-crafters.process-engine-worker:process-engine-worker-spring-boot-starter`
+- `dev.bpm-crafters.process-engine-adapters:process-engine-adapter-cib-seven-remote-spring-boot-starter`
+- `org.cibseven.commons:cibseven-commons-typed-values` (the adapter declares it as `provided`)
+
+Configure the adapter in `application.yaml`:
+
+```yaml
+dev:
+  bpm-crafters:
+    process-api:
+      adapter:
+        cib-seven-remote:
+          enabled: true
+          client:
+            base-url: http://localhost:8080/engine-rest
+          service-tasks:
+            delivery-strategy: remote_scheduled
+            worker-id: logistics-service-worker
+            schedule-delivery-fixed-rate-in-seconds: 5
+          user-tasks:
+            delivery-strategy: remote_scheduled
+            schedule-delivery-fixed-rate-in-seconds: 5
+```
+
+### 9. Switch the worker, the start, and the deployment
+
+- `ShipWelcomeKitWorker` becomes a `@ProcessEngineWorker(topic = ServiceTasks.SHIP_WELCOME_KIT)` with
+  `@Variable(name = "name")`. `BaseExternalTaskWorker` goes away; the worker library handles
+  completion and failure.
+- `RemoteWelcomeKitProcessAdapter` starts the process via
+  `startProcessApi.startProcess(new StartProcessByDefinitionCmd(PROCESS_ID, Map.of("name", ...)))`.
+- A small adapter deploys the model through the engine-neutral `DeploymentApi`
+  (`DeployBundleCommand` with the `NamedResource`s from `classpath*:bpmn/*.bpmn`).
+
+Add an `ArchitectureTest` here as well that forbids every dependency on `org.cibseven..`. After that
+the two services differ only in their adapter: embedded in the engine host, remote in the logistics
+service.
+
 ## Constraints
 
 - The `asyncBefore` markers on the service tasks are gone. An external task is a wait state: the
@@ -205,6 +257,10 @@ Once the test is green, the engine only lives in `pom.xml` and `application.yaml
   [Exercise 4 · Add-on](exercise-04-addon.md).
 - Service tasks and user tasks are delivered via polling roughly every 5 seconds. A `confirm`
   right after the registration may therefore not find a task yet.
+- The worker library's auto-deployment option (`dev.bpm-crafters.process-api.worker.deployment`)
+  doesn't kick in with the remote adapter. That's why the logistics service deploys its model itself
+  through the `DeploymentApi`. In the engine host, the CIB seven starter's auto-deployment keeps
+  deploying.
 
 ## Expected result
 
@@ -224,6 +280,10 @@ this with Hanna (age `25`): the called process additionally waits at the User Ta
 expressing regret*. A third sign-up that you confirm after a few seconds with
 `POST /api/memberships/$MEMBERSHIP_ID/confirm` ends at `Membership activated`.
 
+If the logistics service runs alongside, the signal starts a `sendWelcomeKit` instance, and its
+worker ships the kit through the remote adapter. `POST http://localhost:8090/api/welcome-kits` starts
+the process through the `StartProcessApi`.
+
 ## Self-check
 
 - [ ] All seven service tasks are `camunda:type="external"` with a topic
@@ -231,6 +291,7 @@ expressing regret*. A third sign-up that you confirm after a few seconds with
 - [ ] The outbound adapter uses `StartProcessApi`, `CorrelationApi`, and `UserTaskCompletionApi`
 - [ ] `@EnableProcessApplication` is removed, the `EngineCommandExecutor` bean is in place
 - [ ] The ArchUnit test reports no dependency on `org.cibseven.bpm`
+- [ ] The logistics service uses the remote adapter and has no dependency on `org.cibseven..` in its code
 
 ## Hints
 
@@ -239,7 +300,8 @@ module `cib-seven-with-process-engine-api`.
 
 ## Reference solution
 
-`../../solutions/extra-task-1/`
+- Engine host (embedded): `../../solutions/extra-task-1/process-application/`
+- Logistics service (remote): `../../solutions/extra-task-1/logistics-service/`
 
 ## Next step
 

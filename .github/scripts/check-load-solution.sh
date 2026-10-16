@@ -117,7 +117,7 @@ solution_dir() {
 }
 
 # ERE for a "TODO Exercise M" marker with 1 <= M <= NN (empty for 00). The number must not run on
-# into another word character, so "TODO Exercise 1" never matches "TODO Exercise 10".
+# into another word character, so "TODO Exercise 1" never matches a longer token like "TODO Exercise 12".
 marker_re() {
     local n=$((10#$1)) m alts=""
     for ((m = 1; m <= n; m++)); do alts="$alts${alts:+|}$m"; done

@@ -33,7 +33,7 @@
         <java.version>21</java.version>
         <cib7.version>2.2.0</cib7.version>
         <archunit.version>1.5.1</archunit.version>
-        <bpmn-to-code.version>6.2.0</bpmn-to-code.version>
+        <bpmn-to-code.version>6.3.0</bpmn-to-code.version>
         <cibseven-rest-client.version>2.2.0</cibseven-rest-client.version>
     </properties>
 

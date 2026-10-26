@@ -171,8 +171,8 @@ Exception. Das steckt hinter
 - Der Host trägt kein `send-welcome-kit.bpmn`.
 - „Remote" ist die Sicht des Clients. Eine Standalone-Engine (CIB Seven Run) ergäbe dasselbe Bild.
 - Der Aufbau folgt dem Blueprint
-  [`miragon-blueprints/cibseven-remote-example`](https://github.com/miragon-blueprints/cibseven-remote-example)
-  (dort Kotlin/Gradle, hier Java/Maven).
+  [`process-engine-blueprints/examples/cibseven-remote`](https://github.com/Miragon/process-engine-blueprints/tree/main/examples/cibseven-remote/java-maven)
+  (Java/Maven-Variante).
 
 ## Erwartetes Ergebnis
 

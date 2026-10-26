@@ -169,8 +169,8 @@ Inject the `ProcessDefinitionApi` into `RemoteWelcomeKitProcessAdapter` and star
 - The host carries no `send-welcome-kit.bpmn`.
 - "Remote" is the client's view. A standalone engine (CIB Seven Run) would give the same picture.
 - The setup follows the blueprint
-  [`miragon-blueprints/cibseven-remote-example`](https://github.com/miragon-blueprints/cibseven-remote-example)
-  (Kotlin/Gradle there, Java/Maven here).
+  [`process-engine-blueprints/examples/cibseven-remote`](https://github.com/Miragon/process-engine-blueprints/tree/main/examples/cibseven-remote/java-maven)
+  (Java/Maven variant).
 
 ## Expected result
 

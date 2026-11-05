@@ -68,14 +68,27 @@
             <scope>test</scope>
         </dependency>
         <!--
-          TODO Exercise 4: Uncomment the assertions for the process test (CIB Seven port of
-          camunda-bpm-assert). Version managed centrally in the root pom.xml.
+          TODO Exercise 4: Uncomment the process-test dependencies: the assertions (CIB Seven port of
+          camunda-bpm-assert) and Process Test Coverage, which writes a coverage report per test class.
+          Process Test Coverage needs kotlin-reflect but does not declare it; without it Spring skips
+          the coverage listener and the tests fail with "Coverage state must be initialized".
+          Versions managed centrally in the root pom.xml and the Spring Boot BOM.
         -->
-        <!-- @exercise-4:begin – process-test assertions -->
+        <!-- @exercise-4:begin – process-test dependencies -->
         <!--
         <dependency>
             <groupId>org.cibseven.bpm</groupId>
             <artifactId>cibseven-bpm-assert</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.cibseven.community.process_test_coverage</groupId>
+            <artifactId>cibseven-process-test-coverage-spring-test-platform-7</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
             <scope>test</scope>
         </dependency>
         -->

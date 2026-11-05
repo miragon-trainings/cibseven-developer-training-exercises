@@ -35,6 +35,7 @@
         <archunit.version>1.5.1</archunit.version>
         <bpmn-to-code.version>7.0.1</bpmn-to-code.version>
         <cibseven-rest-client.version>2.2.0</cibseven-rest-client.version>
+        <process-test-coverage.version>2.2.0</process-test-coverage.version>
     </properties>
 
     <!--
@@ -73,6 +74,14 @@
                 <groupId>org.cibseven.bpm</groupId>
                 <artifactId>cibseven-bpm-assert</artifactId>
                 <version>${cib7.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- Process tests: coverage report per test class (CIB seven community extension
+                 Process Test Coverage). kotlin-reflect, which it needs, comes from the Spring Boot BOM -->
+            <dependency>
+                <groupId>org.cibseven.community.process_test_coverage</groupId>
+                <artifactId>cibseven-process-test-coverage-spring-test-platform-7</artifactId>
+                <version>${process-test-coverage.version}</version>
                 <scope>test</scope>
             </dependency>
             <!-- Engine core — a worker without an engine starter (Aufgabe 7) brings it explicitly

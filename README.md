@@ -39,7 +39,7 @@ Detailed exercise descriptions can be found in [`docs/`](docs/).
 | [1](docs/en/exercise-01.md) | Getting the engine running | Run the given start-form / Manual-Task model end-to-end, get to know the Cockpit and the engine's `act_*` tables |
 | [2](docs/en/exercise-02.md) | User Task and Service Task | Turn "Confirm" into a User Task with a self-made Generated Form and "Send welcome mail" into a Service Task with a JavaDelegate (started from the Cockpit) |
 | [3](docs/en/exercise-03.md) | The application takes over | Message start event, business key, REST endpoints for register + confirm, correlation, persistence, capacity check with an exclusive gateway |
-| [4](docs/en/exercise-04.md) | Process tests | Transaction boundaries, process unit test with an in-memory engine and mocked use cases, without a running application |
+| [4](docs/en/exercise-04.md) | Process tests | Transaction boundaries, process unit test with an in-memory engine and mocked use cases, without a running application, coverage report |
 | [4 · Add-on](docs/en/exercise-04-addon.md) | bpmn-to-code | Element IDs as generated constants instead of hand-typed strings, compile-safe path navigation with `PathWalk` |
 | [5](docs/en/exercise-05.md) | Subprocess, boundary events & parallelism | Subprocess, timer and message boundary events, parallel gateway, Teams integration |
 | [6](docs/en/exercise-06.md) | Compensation, call activity & DMN | Compensation boundary event, compensating end event, call activity, DMN decision table, business rule task |

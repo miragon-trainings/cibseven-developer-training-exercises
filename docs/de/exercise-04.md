@@ -2,16 +2,15 @@
 
 > **Voraussetzung:** Aufgabe 3 ist abgeschlossen – Gateway, Kapazitätsprüfung und beide Prozessausgänge laufen.
 > **Arbeitsverzeichnis:** `services/process-application`
-> **Neu in dieser Aufgabe:** Transaktionsgrenzen (`asyncBefore`/`asyncAfter`), In-Memory-Engine mit H2, abgeschalteter Job Executor, `@MockitoBean`, Assertions mit `BpmnAwareTests`.
+> **Neu in dieser Aufgabe:** Transaktionsgrenzen (`asyncBefore`/`asyncAfter`), In-Memory-Engine mit H2, abgeschalteter Job Executor, `@MockitoBean`, Assertions mit `BpmnAwareTests`, Coverage-Report (Process Test Coverage).
 
 ## Darum geht es
 
-In der Cockpit-Demo hat der Prozess einmal funktioniert. Ob er nächste Woche noch funktioniert,
-wenn jemand einen Sequenzfluss umbiegt oder eine Bedingung dreht, weiß niemand. Ein **Prozess-Test**
-startet den echten Prozess in einer In-Memory-Engine, lässt die echten Delegates laufen und ersetzt
-nur die Fachlogik dahinter durch Mocks. Welchen Weg die Instanz nehmen muss, steht dann als
-Assertion im Test und wird bei jedem Build geprüft. Vorher machst du den Prozess mit
-Transaktionsgrenzen robust.
+In der Cockpit-Demo hat der Prozess einmal funktioniert. Ob er noch funktioniert, nachdem jemand
+einen Sequenzfluss umbiegt, weiß niemand. Ein **Prozess-Test** startet den echten Prozess in einer
+In-Memory-Engine, lässt die echten Delegates laufen und mockt nur die Fachlogik dahinter. Der Weg,
+den die Instanz nehmen muss, wird zur Assertion und bei jedem Build geprüft. Vorher machst du den
+Prozess mit Transaktionsgrenzen robust.
 
 > *„Works on my machine" ist kein Testkonzept. Es ist eine Ausrede mit besserer PR.*
 
@@ -22,7 +21,7 @@ Nach dieser Aufgabe kannst du
 - Transaktionsgrenzen setzen und begründen, warum ein nicht wiederholbarer Schritt vor einem externen Effekt committen muss,
 - einen Prozess als Unit-Test auf einer In-Memory-Engine mit abgeschaltetem Job Executor absichern,
 - die Use Cases hinter den Delegates mit `@MockitoBean` mocken,
-- Prozesspfade mit `BpmnAwareTests` prüfen (`isWaitingAt`, `hasPassedInOrder`, `isEnded`).
+- Prozesspfade mit `BpmnAwareTests` prüfen (`isWaitingAt`, `hasPassedInOrder`, `isEnded`) und ungetestete Pfade im Coverage-Report finden.
 
 ## Ziel-Modell
 
@@ -36,11 +35,10 @@ Referenzmodell: `../../models/exercise-04/membership.bpmn`
 
 ### 1. Transaktionsgrenzen setzen
 
-Theorie dazu steht im Trainingskapitel **„Async & Transaction Boundaries"**. Bisher läuft der Prozess
-synchron. Die Engine committet automatisch an jedem Wait State. Überall sonst setzt du eine Grenze
-mit einer **asynchronen Continuation**: `asyncBefore` oder `asyncAfter` lassen die Engine an dieser
-Stelle committen, einen Job anlegen und die Arbeit in einer neuen Transaktion fortsetzen. Du findest
-die Marker im Properties Panel unter *Asynchronous Before/After*.
+Bisher läuft der Prozess synchron, und die Engine committet nur an Wait States. Eine **asynchrone
+Continuation** (`asyncBefore` oder `asyncAfter`, Properties Panel → *Asynchronous Before/After*)
+lässt die Engine committen, einen Job anlegen und in einer neuen Transaktion weitermachen. Theorie:
+Trainingskapitel **„Async & Transaction Boundaries"**.
 
 Zwischen Message Start und User Task liegt kein Wait State. Ohne Marker laufen `claimMembership` und
 `sendConfirmationMail` in einer Transaktion. Wirft der Mailversand, rollt die Engine alles zurück und
@@ -58,11 +56,11 @@ Arbeit durch eine eigene Grenze vom externen Effekt.
 `claimMembership` bekommt keinen Marker: Er committet gemeinsam mit dem **Token**, der gedachten
 Spielfigur, die den aktuellen Stand einer Instanz im Modell markiert.
 
-### 2. Test-Dependency aktivieren
+### 2. Test-Dependencies aktivieren
 
 Kommentiere in `services/process-application/pom.xml` den Block `TODO Exercise 4` ein. Wie in
 Aufgabe 1 löschst du nur die Zeilen `<!--` und `-->` zwischen `@exercise-4:begin` und
-`@exercise-4:end`. Danach ist diese Dependency aktiv:
+`@exercise-4:end`. Danach sind diese Dependencies aktiv:
 
 ```xml
 <dependency>
@@ -70,7 +68,20 @@ Aufgabe 1 löschst du nur die Zeilen `<!--` und `-->` zwischen `@exercise-4:begi
     <artifactId>cibseven-bpm-assert</artifactId>
     <scope>test</scope>
 </dependency>
+<dependency>
+    <groupId>org.cibseven.community.process_test_coverage</groupId>
+    <artifactId>cibseven-process-test-coverage-spring-test-platform-7</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.jetbrains.kotlin</groupId>
+    <artifactId>kotlin-reflect</artifactId>
+    <scope>test</scope>
+</dependency>
 ```
+
+Process Test Coverage, eine Community-Erweiterung von CIB seven, schreibt pro Testklasse einen Report,
+welche Elemente die Tests durchlaufen haben. Sie braucht `kotlin-reflect`, bringt es aber nicht mit.
 
 ### 3. Testprofil anlegen
 
@@ -111,13 +122,13 @@ cibseven:
 ```
 
 > **Begriff: Job Executor.** Der Hintergrund-Thread der Engine, der die Jobs aus asynchronen
-> Continuations abarbeitet. Im Test weißt du dadurch nie, wie weit die Instanz gerade ist. Deshalb
-> ist er abgeschaltet, und der Test führt die Jobs selbst aus.
+> Continuations abarbeitet. Im Test wüsstest du nie, wie weit die Instanz ist, deshalb führt der
+> Test die Jobs selbst aus.
 
 ### 4. Happy-Path-Test schreiben
 
 Ersetze den Platzhalter in `src/test/java/io/miragon/training/process/MembershipProcessTest.java`
-(markiert mit `TODO Exercise 4`). Für das Treiben der Instanz nutzt du den vorgegebenen Helfer
+(markiert mit `TODO Exercise 4`). Für die Ausführung der Jobs nutzt du den vorgegebenen Helfer
 `process/util/ProcessEngineTestUtils`:
 
 - `continueToNextWaitState(processEngine)` führt die offenen Jobs aus, bis die Instanz den nächsten
@@ -182,20 +193,32 @@ void happyPath_membershipIsConfirmedAndWelcomeMailIsSent() {
 }
 ```
 
-### 5. Ablehnungspfad testen
+### 5. Sehen, was dein Test abdeckt
+
+Lege `src/test/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
+mit dieser Zeile an. Sie schaltet die Coverage für jeden Spring-Boot-Test ein; die Testklasse bleibt, wie sie ist:
+
+```text
+org.cibseven.community.process_test_coverage.spring_test.platform7.ProcessEngineCoverageConfiguration
+```
+
+Führe den Test aus (Befehl unter *Erwartetes Ergebnis*) und öffne
+`target/process-test-coverage/io.miragon.training.process.MembershipProcessTest/report.html`.
+Grüne Elemente hat ein Test erreicht, weiße nie. Der Ablehnungspfad ist noch weiß: 13 von
+17 Elementen (Sequenzflüsse zählen mit), etwa 76 %.
+
+### 6. Ablehnungspfad testen
 
 Schreibe den zweiten Test `noCapacity_membershipIsRejected`: `claimMembership` liefert `false`, die
 Instanz läuft ohne Wait State bis `endEvent_membershipRejected`. Prüfe, dass die Ablehnungs-Mail
 durchlaufen wurde, Bestätigung und Willkommens-Mail nicht, und dass `sendWelcomeMailUseCase` nie
-aufgerufen wurde (`verify(..., never())`).
+aufgerufen wurde (`verify(..., never())`). Führe die Testklasse erneut aus und lade den Report neu.
 
 ## Randbedingungen
 
-- Der Test braucht keine laufende Anwendung. Die In-Memory-H2 wird pro Testlauf frisch angelegt und
-  ist unabhängig von den Daten unter `~/.cibseven-training`.
+- Der Test braucht keine laufende Anwendung. Die In-Memory-H2 ist pro Lauf frisch, unabhängig von
+  `~/.cibseven-training`.
 - Gemockt werden nur die Use Cases. Delegates, Modell und Engine laufen echt.
-- Die Element-IDs stehen als Strings im Test. Das [Add-on](exercise-04-addon.md) ersetzt sie durch
-  generierte Konstanten.
 
 ## Erwartetes Ergebnis
 
@@ -206,7 +229,7 @@ Führe die Testklasse aus dem Wurzelverzeichnis aus:
 ```
 
 Beide Tests laufen in wenigen Sekunden durch. Schlägt einer fehl, zeigt die Assertion, an welcher
-Aktivität die Instanz tatsächlich stand.
+Aktivität die Instanz tatsächlich stand. Der Coverage-Report zeigt das Modell komplett grün.
 
 ## Selbstcheck
 
@@ -215,11 +238,16 @@ Aktivität die Instanz tatsächlich stand.
 - [ ] Der Happy-Path-Test prüft die Reihenfolge und die nicht genommenen Pfade
 - [ ] Der Ablehnungstest prüft, dass die Willkommens-Mail nie aufgerufen wurde
 - [ ] Beide Tests laufen grün, ohne dass die Anwendung gestartet ist
+- [ ] Der Coverage-Report zeigt jedes Element des Modells grün
 
 ## Hinweise
 
 **Idempotenz:** Ein Retry darf einen Service Task erneut ausführen. Darf eine Aktion nur einmal
 passieren (Reservierung, Zahlung), muss sie vor der Grenze committen oder idempotent sein.
+
+**Coverage als Quality Gate (optional):** Eine statische, verschachtelte `@TestConfiguration` mit
+einer `ProcessEngineCoverageProperties`-Bean und `assertClassCoverageAtLeast(1.0)` lässt den Build
+unter 100 % scheitern. Kommentiere einen Test aus: Der Build schlägt fehl.
 
 ## Referenzlösung
 

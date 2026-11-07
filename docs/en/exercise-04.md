@@ -2,16 +2,15 @@
 
 > **Prerequisite:** Exercise 3 is complete – the gateway, the capacity check, and both process outcomes are working.
 > **Working directory:** `services/process-application`
-> **New in this exercise:** transaction boundaries (`asyncBefore`/`asyncAfter`), in-memory engine with H2, the job executor turned off, `@MockitoBean`, assertions with `BpmnAwareTests`.
+> **New in this exercise:** transaction boundaries (`asyncBefore`/`asyncAfter`), in-memory engine with H2, the job executor turned off, `@MockitoBean`, assertions with `BpmnAwareTests`, coverage report (Process Test Coverage).
 
 ## What this is about
 
-In the Cockpit demo the process worked once. Whether it still works next week, when someone
-reroutes a sequence flow or flips a condition, nobody knows. A **process test** starts the real
-process in an in-memory engine, lets the real delegates run, and replaces only the business logic
-behind them with mocks. Which path the instance has to take is then an assertion in the test and
-gets checked on every build. Before that, you make the process resilient with transaction
-boundaries.
+In the Cockpit demo the process worked once. Whether it still works after someone reroutes a
+sequence flow, nobody knows. A **process test** starts the real process in an in-memory engine,
+runs the real delegates and mocks only the business logic behind them. The path the instance must
+take becomes an assertion, checked on every build. First you make the process resilient with
+transaction boundaries.
 
 > *"Works on my machine" is not a test strategy. It's an excuse with better PR.*
 
@@ -22,7 +21,7 @@ After this exercise you can
 - set transaction boundaries and explain why a non-repeatable step must commit before an external effect,
 - secure a process as a unit test on an in-memory engine with the job executor turned off,
 - mock the use cases behind the delegates with `@MockitoBean`,
-- check process paths with `BpmnAwareTests` (`isWaitingAt`, `hasPassedInOrder`, `isEnded`).
+- check process paths with `BpmnAwareTests` (`isWaitingAt`, `hasPassedInOrder`, `isEnded`) and find untested paths in the coverage report.
 
 ## Target model
 
@@ -36,11 +35,10 @@ Reference model: `../../models/exercise-04/membership.bpmn`
 
 ### 1. Set transaction boundaries
 
-The theory is in the training chapter **"Async & Transaction Boundaries"**. So far the process runs
-synchronously. The engine commits automatically at every wait state. Everywhere else you set a
-boundary with an **asynchronous continuation**: `asyncBefore` or `asyncAfter` make the engine
-commit at this point, create a job, and continue the work in a new transaction. You find the
-markers in the Properties Panel under *Asynchronous Before/After*.
+So far the process runs synchronously, and the engine commits only at wait states. An
+**asynchronous continuation** (`asyncBefore` or `asyncAfter`, Properties Panel → *Asynchronous
+Before/After*) makes the engine commit, create a job and continue in a new transaction. Theory:
+training chapter **"Async & Transaction Boundaries"**.
 
 There is no wait state between the Message Start and the User Task. Without markers,
 `claimMembership` and `sendConfirmationMail` run in one transaction. If the mail send throws, the
@@ -58,11 +56,11 @@ separate non-repeatable work from the external effect with its own boundary.
 `claimMembership` gets no marker: it commits together with the **token**, the imagined game piece
 that marks the current state of an instance in the model.
 
-### 2. Enable the test dependency
+### 2. Enable the test dependencies
 
 In `services/process-application/pom.xml`, uncomment the `TODO Exercise 4` block. As in
 Exercise 1, delete only the lines `<!--` and `-->` between `@exercise-4:begin` and
-`@exercise-4:end`. Afterwards this dependency is active:
+`@exercise-4:end`. Afterwards these dependencies are active:
 
 ```xml
 <dependency>
@@ -70,7 +68,20 @@ Exercise 1, delete only the lines `<!--` and `-->` between `@exercise-4:begin` a
     <artifactId>cibseven-bpm-assert</artifactId>
     <scope>test</scope>
 </dependency>
+<dependency>
+    <groupId>org.cibseven.community.process_test_coverage</groupId>
+    <artifactId>cibseven-process-test-coverage-spring-test-platform-7</artifactId>
+    <scope>test</scope>
+</dependency>
+<dependency>
+    <groupId>org.jetbrains.kotlin</groupId>
+    <artifactId>kotlin-reflect</artifactId>
+    <scope>test</scope>
+</dependency>
 ```
+
+Process Test Coverage, a CIB seven community extension, writes a report per test class showing which
+elements the tests passed. It needs `kotlin-reflect` but does not declare it.
 
 ### 3. Create the test profile
 
@@ -111,8 +122,8 @@ cibseven:
 ```
 
 > **Term: job executor.** The engine's background thread that works through the jobs from
-> asynchronous continuations. In a test it means you never know how far the instance currently
-> is. That's why it is turned off, and the test runs the jobs itself.
+> asynchronous continuations. In a test you would never know how far the instance is, so the test
+> runs the jobs itself.
 
 ### 4. Write the happy-path test
 
@@ -182,20 +193,32 @@ void happyPath_membershipIsConfirmedAndWelcomeMailIsSent() {
 }
 ```
 
-### 5. Test the rejection path
+### 5. See what your test covers
+
+Create `src/test/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
+with this line. It switches the coverage on for every Spring Boot test; the test class stays as it is:
+
+```text
+org.cibseven.community.process_test_coverage.spring_test.platform7.ProcessEngineCoverageConfiguration
+```
+
+Run the test (command under *Expected result*) and open
+`target/process-test-coverage/io.miragon.training.process.MembershipProcessTest/report.html`.
+Green elements were reached by a test, white ones never. The rejection path is still white: 13 of
+17 elements (sequence flows count too), about 76 %.
+
+### 6. Test the rejection path
 
 Write the second test, `noCapacity_membershipIsRejected`: `claimMembership` returns `false`, the
 instance runs without a wait state to `endEvent_membershipRejected`. Check that the rejection mail
 was passed, the confirmation and the welcome mail were not, and that `sendWelcomeMailUseCase` was
-never called (`verify(..., never())`).
+never called (`verify(..., never())`). Run the test class again and reload the report.
 
 ## Constraints
 
-- The test needs no running application. The in-memory H2 is created fresh for each test run and
-  is independent of the data under `~/.cibseven-training`.
+- The test needs no running application. The in-memory H2 is fresh for each run, independent of
+  `~/.cibseven-training`.
 - Only the use cases get mocked. Delegates, model, and engine run for real.
-- The element IDs are strings in the test. The [add-on](exercise-04-addon.md) replaces them with
-  generated constants.
 
 ## Expected result
 
@@ -206,7 +229,7 @@ Run the test class from the root directory:
 ```
 
 Both tests pass in a few seconds. If one fails, the assertion shows at which activity the instance
-actually stood.
+actually stood. The coverage report shows the model fully green.
 
 ## Self-check
 
@@ -215,11 +238,16 @@ actually stood.
 - [ ] The happy-path test checks the order and the paths not taken
 - [ ] The rejection test checks that the welcome mail was never called
 - [ ] Both tests pass green without the application running
+- [ ] The coverage report shows every element of the model green
 
 ## Hints
 
 **Idempotency:** A retry may re-execute a Service Task. If an action may happen only once
 (reservation, payment), it must commit before the boundary or be idempotent.
+
+**Coverage as a quality gate (optional):** A static nested `@TestConfiguration` with a
+`ProcessEngineCoverageProperties` bean and `assertClassCoverageAtLeast(1.0)` fails the build below
+100 %. Comment out a test and the build fails.
 
 ## Reference solution
 

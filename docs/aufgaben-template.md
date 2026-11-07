@@ -251,7 +251,7 @@ Weitere Festlegungen:
 
   Gehört ein Block zu einem Add-on, bekommt die Kennung ein Suffix (`@exercise-4-addon`). Dieselbe
   Kennung darf mehrfach vorkommen, etwa für Dependency und Plugin. Bisher gibt es `@exercise-1`
-  (CIB-Seven-Starter), `@exercise-4` (`cibseven-bpm-assert`) und `@exercise-4-addon`
+  (CIB-Seven-Starter), `@exercise-4` (`cibseven-bpm-assert`, Process Test Coverage, `kotlin-reflect`) und `@exercise-4-addon`
   (`bpmn-to-code-runtime`, Plugin `bpmn-to-code-maven`).
 - **Starter-Kopie.** `templates/process-application-starter/` ist eine Byte-Kopie von `src/` und
   `pom.xml` des Arbeitsmoduls im Auslieferungszustand; auf sie setzt `load-solution` zurück. Wer das
@@ -288,7 +288,7 @@ in Aufgabe 0 bewusst **nicht** vor – sie werden erst in Aufgabe 5 bzw. 6 einge
 | 1 | Engine, Deployment, Cockpit, Tasklist, Prozessdefinition, **Prozessinstanz**, Prozessvariable, **Start-Formular** (Generated Form am Start Event, vorhanden), **Manual Task** (Durchlauf ohne Code), **Embedded-Datenbank** (H2 als Datei), H2-Konsole, `act_*`-Tabellen (`re` / `ru` / `hi`) |
 | 2 | Prozess-Key, Element-ID, `isExecutable`, `historyTimeToLive`, **User Task**, **Wait State**, **Generated Form selbst erstellen** (am User Task), Manual Task → **Service Task**, **JavaDelegate**, **Delegate Expression**, hexagonale Architektur (Delegate → Use Case → Service), Prozessvariable im Delegate lesen |
 | 3 | Message Start Event, Nachricht, **Korrelation** (`createMessageCorrelation` / `correlateStartMessage`), **`RuntimeService`** (Prozessstart aus Java), **Business Key**, **REST-Endpunkt**, **Persistenz** (Repository), Task-Completion per REST (`TaskService`, Confirm-Endpunkt), `membershipId` als Prozessreferenz, Exclusive Gateway (Default-Flow, Flow-Bedingung) |
-| 4 | **Transaktionsgrenze**, **asynchrone Continuation** (`asyncBefore` / `asyncAfter`), Commit und Rollback, **Token**, Idempotenz, Prozess-Test, In-Memory-Engine (H2), **Job Executor**, Mock (`@MockitoBean`), Assertion (`BpmnAwareTests`) |
+| 4 | **Transaktionsgrenze**, **asynchrone Continuation** (`asyncBefore` / `asyncAfter`), Commit und Rollback, **Token**, Idempotenz, Prozess-Test, In-Memory-Engine (H2), **Job Executor**, Mock (`@MockitoBean`), Assertion (`BpmnAwareTests`), Process Test Coverage |
 | 4 · Add-on | generierte Process-API, `bpmn-to-code` |
 | 5 | eingebetteter Subprozess, Boundary Event (unterbrechend / nicht unterbrechend), Timer als Duration und als Cycle, Message Boundary Event, Parallel Gateway (Fork / Join) |
 | 6 | Kompensation, Compensation Boundary Event, Kompensations-Handler (`isForCompensation`), Association, Compensating End Event, SAGA-Muster, Call Activity, Called Element, In-/Out-Mapping, DMN, Entscheidungstabelle, Business Rule Task, `mapDecisionResult` |

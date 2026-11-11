@@ -74,6 +74,17 @@ open http://localhost:8080/webapp/#/seven/auth/start    # admin / admin
 open http://localhost:8080/h2-console    # JDBC-URL jdbc:h2:file:~/.cibseven-training/exercise, Benutzer sa, kein Passwort
 ```
 
+### Maven Wrapper und IntelliJ
+
+`./mvnw` ist der Maven Wrapper: Er lädt beim ersten Aufruf die im Projekt festgelegte Maven-Version, du
+brauchst nur ein JDK 21. IntelliJ liest dieselbe Datei (`.mvn/wrapper/maven-wrapper.properties`) und
+importiert das Projekt dann mit dem Maven aus dem Wrapper. Liegt das Projekt in WSL oder arbeitest du
+unter Windows mit Git Bash, kann dieser Import fehlschlagen: IntelliJ löst die Abhängigkeiten nicht auf,
+der Code bleibt rot, Autovervollständigung und Navigation fehlen. Stell dann unter *Settings → Build,
+Execution, Deployment → Build Tools → Maven* den **Maven home path** auf **Bundled (Maven 3)** und lade
+das Maven-Projekt neu. Lösche die Wrapper-Dateien (`mvnw`, `mvnw.cmd`, `.mvn/`) nicht – `./mvnw` im
+Terminal braucht sie.
+
 ### Lösung einer Aufgabe laden
 
 Das `process-application`-Modul startet im Zustand von **Aufgabe 1** (Engine noch auskommentiert). Wenn du

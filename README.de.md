@@ -1,193 +1,81 @@
-# CIB Seven Developer Training Exercises
+# CIB seven Developer Training: Übungen
 
-> 🇩🇪 **Deutsch** · [🇬🇧 English](README.md)
+[![Build](https://github.com/miragon-trainings/cibseven-developer-training-exercises/actions/workflows/build.yml/badge.svg)](https://github.com/miragon-trainings/cibseven-developer-training-exercises/actions/workflows/build.yml)
+[![Training-Hub](https://img.shields.io/badge/training%20hub-cib--seven.trainings.miragon.io-335DE5)](https://cib-seven.trainings.miragon.io/)
+[![License: MIT](https://img.shields.io/github/license/miragon-trainings/cibseven-developer-training-exercises)](LICENSE)
+[![English](https://img.shields.io/badge/read%20me-in%20English-lightgrey)](README.md)
 
-Praxisübungen für das CIB Seven Developer Training. Das Projekt implementiert einen Inner-Circle-Membership-Prozess mit CIB Seven als Process Engine und einer hexagonalen Architektur, die Business-Logik von Infrastruktur entkoppelt.
+![CIB seven Developer Training, Hands-on Exercises: der Miravelo-Membership-Prozess, den du bis Aufgabe 6 gebaut hast, mit Gateway, Subprozess, Timern und Kompensation](.github/hero.png)
 
-## Übungen
+Der praktische Teil von Miragons CIB seven Developer Training: Du bringst einen Geschäftsprozess von der Whiteboard-Skizze zur getesteten Spring-Boot-Anwendung auf [CIB seven](https://cibseven.org), der Open-Source-Fortführung von Camunda 7.
 
-### Hintergrund: Miravelo
-
-**Miravelo** ist ein Online-Shop für hochwertige Fahrräder — Gravel Bikes für lange
-Wochenendtouren, Rennräder für alle, die es auf dem Asphalt schnell mögen. Die Kundschaft
-ist jung, markenbewusst und ziemlich leidenschaftlich.
-
-Der Shop wächst, neue Produkte kommen laufend dazu. Das Team beschließt:
-Wir bauen einen **Newsletter**, damit Kundinnen und Kunden über Produkt-Launches und
-exklusive Angebote informiert bleiben. Jemand trägt sich ein, bekommt eine
-Willkommens-Mail – fertig.
+## Warum
 
 > *„Das ist doch in einer Stunde gebaut."*
-> — Jeder Entwickler, der einen Newsletter unterschätzt hat.
+> — Jede Entwicklerin und jeder Entwickler, die je ein Anmeldeformular unterschätzt haben.
 
-Das Training findet im Kontext des exklusiven **Miravelo Inner Circle** statt — einer auf
-tausend Plätze limitierten Membership für die treuesten Kundinnen und Kunden. Du modellierst
-zuerst den Kernablauf fachlich, automatisierst ihn dann Schritt für Schritt und ergänzt unterwegs
-die Ausnahmen.
+Die Slides zeigen, was eine Process Engine kann; hier findest du heraus, was es dafür braucht. Am Ende hast du die Wartezustände, Timeouts und Rollbacks selbst erlebt.
 
-Was folgt, ist eine Reise durch immer komplexere BPMN-Muster: Gateways, Boundary Events,
-Subprozesse, Parallel Gateways, Call Activities, DMN-Entscheidungstabellen und Kompensation —
-jede Aufgabe baut auf der vorherigen auf.
+## Was du bekommst
 
-![Prozessmodell](docs/newsletter-subscription.png)
+- **Eine Geschichte.** Miravelo, ein Shop für Premium-Fahrräder, öffnet tausend Plätze im *Inner Circle*: Registrierung, Double Opt-in, Willkommens-Mail.
+- **Eine echte Anwendung, kein Spielzeug.** Du arbeitest in einem Spring-Boot-Modul mit hexagonaler Architektur, und ArchUnit meldet sich, sobald die Engine in deine Domäne durchsickert.
+- **Zwei Sprachen.** Jede Aufgabe hat eine Schritt-für-Schritt-Anleitung auf [Deutsch](docs/de/exercise-00.md) und [Englisch](docs/en/exercise-00.md).
+- **Keine Engine, keine Datenbank zu installieren.** Beide starten mit der Anwendung.
 
-### Aufgabenübersicht
+## Die Aufgaben
 
-Detaillierte Aufgabenbeschreibungen befinden sich in [`docs/`](docs/).
-
-| Aufgabe | Thema | Beschreibung |
+| # | Thema | Du baust |
 |---|---|---|
-| [0](docs/de/exercise-00.md) | Fachliche BPMN-Modellierung | Den Kernablauf der Inner-Circle-Membership rein fachlich und nur mit den Grundformen aus Kapitel 1 modellieren – der Ausgangspunkt für das ganze Training |
-| [1](docs/de/exercise-01.md) | Engine zum Laufen bringen | Das vorgegebene Start-Formular-/Manual-Task-Modell durchlaufen lassen, Cockpit und `act_*`-Tabellen der Engine kennenlernen |
-| [2](docs/de/exercise-02.md) | User Task und Service Task | „Confirm" zum User Task mit selbst erstellter Generated Form machen, „Send welcome mail" zum Service Task mit JavaDelegate (Start über Cockpit) |
-| [3](docs/de/exercise-03.md) | Die Anwendung übernimmt | Message Start Event, Business Key, REST-Endpunkte für Register + Confirm, Korrelation, Persistenz, Kapazitätsprüfung mit Exclusive Gateway |
-| [4](docs/de/exercise-04.md) | Prozess-Tests | Transaktionsgrenzen, Prozess-Unit-Test mit In-Memory-Engine, gemockten Use Cases, ohne laufende Anwendung, Coverage-Report |
-| [4 · Add-on](docs/de/exercise-04-addon.md) | bpmn-to-code | Element-IDs als generierte Konstanten statt handgetippter Strings, Pfade compile-sicher mit `PathWalk` navigieren |
-| [5](docs/de/exercise-05.md) | Subprozess, Boundary Events & Parallelität | Subprozess, Timer- und Message-Boundary-Events, Parallel Gateway, Teams-Anbindung |
-| [6](docs/de/exercise-06.md) | Kompensation, Call Activity & DMN | Compensation Boundary Event, Compensating End Event, Call Activity, DMN-Entscheidungstabelle, Business Rule Task |
-| [7](docs/de/exercise-07.md) | Remote Engine als geteilte Infrastruktur | Eine Abteilung besitzt einen **eigenen** kleinen Prozess (`sendWelcomeKit`) in ihrem Remote-Service: Modell, Worker, Deployment und Tests liegen dort; getriggert per Signal-Broadcast; die Engine über einen generierten OpenAPI-Client getrieben |
-| [Extra 1](docs/de/extra-task-1.md) | Process-Engine-API | Aufgabe 7 engine-neutral umbauen: Worker statt JavaDelegate, Adapter-Tausch statt Engine-Lock-in |
+| [0](docs/de/exercise-00.md) | BPMN auf fachlicher Ebene | Den Membership-Ablauf als Modell, noch ohne Code |
+| [1](docs/de/exercise-01.md) | Die Engine zum Laufen bringen | Die eingeschaltete Engine, einen ersten Prozess im Cockpit, einen Blick in die `act_*`-Tabellen |
+| [2](docs/de/exercise-02.md) | User Task und Service Task | Ein Formular zum Bestätigen, einen JavaDelegate für die Willkommens-Mail |
+| [3](docs/de/exercise-03.md) | Die Anwendung übernimmt | REST-Endpunkte, Message-Korrelation, Persistenz und eine Kapazitätsprüfung |
+| [4](docs/de/exercise-04.md) | Prozesstests | Tests auf einer In-Memory-Engine, dazu einen Coverage-Report |
+| [4 · Add-on](docs/de/exercise-04-addon.md) | bpmn-to-code (optional) | Generierte Konstanten statt händisch getippter Element-IDs |
+| [5](docs/de/exercise-05.md) | Subprozess, Boundary Events, Parallelität | Tägliche Erinnerungen, einen Timeout, einen Rückzug und eine Begrüßung in Teams |
+| [6](docs/de/exercise-06.md) | Kompensation, Call Activity, DMN | Einen kompensierten Platz-Claim, einen Ablehnungsprozess mit Entscheidungstabelle |
+| [7](docs/de/exercise-07.md) | Remote Engine | Einen Logistik-Service, der seinen eigenen Prozess auf der geteilten Engine besitzt |
+| [Extra 1](docs/de/extra-task-1.md) | Process Engine API (optional) | Aufgabe 7 noch einmal, gegen eine engine-neutrale API |
 
-> Aufbau, Sprache und Qualitätskriterien der Aufgaben sind in
-> [`docs/aufgaben-template.md`](docs/aufgaben-template.md) festgehalten. Neue oder geänderte
-> Aufgaben werden mit dem Skill `aufgaben-review` gegengeprüft
-> (`.claude/skills/aufgaben-review/SKILL.md`).
+## Loslegen
 
-## Quick Start
-
-Die Engine nutzt eine eingebettete H2-Datenbank, die als Datei unter `~/.cibseven-training` liegt –
-du musst keine Datenbank installieren oder starten. Der Datenbestand übersteht einen Neustart; für
-einen sauberen Neuanfang beende die Anwendung und lösche den Ordner `~/.cibseven-training`
-(unter Windows `%USERPROFILE%\.cibseven-training`).
+Du brauchst JDK 21, Git, IntelliJ IDEA oder VS Code und den Miragon BPMN Modeler, den du in [Aufgabe 0](docs/de/exercise-00.md) installierst. Der [Setup-Guide](https://cib-seven.trainings.miragon.io/setup) im Training-Hub führt dich durch; die Zugangsdaten hat dein Trainer oder deine Trainerin.
 
 ```bash
-# Alles bauen
+git clone https://github.com/miragon-trainings/cibseven-developer-training-exercises.git
+cd cibseven-developer-training-exercises
 ./mvnw clean install
-
-# process-application-Modul starten (das eine Modul, in dem du alle Aufgaben bearbeitest)
-cd services/process-application && ../../mvnw spring-boot:run
-
-# CIB Seven Cockpit
-open http://localhost:8080/webapp/#/seven/auth/start    # admin / admin
-
-# H2-Konsole (Engine-Tabellen) – im Login die vorbelegte JDBC-URL jdbc:h2:~/test ersetzen
-open http://localhost:8080/h2-console    # JDBC-URL jdbc:h2:file:~/.cibseven-training/exercise, Benutzer sa, kein Passwort
 ```
 
-### Maven Wrapper und IntelliJ
+Der erste Build lädt Maven herunter und endet mit `BUILD SUCCESS`; in cmd.exe nimmst du `mvnw.cmd`. Dann öffne [Aufgabe 0](docs/de/exercise-00.md).
 
-`./mvnw` ist der Maven Wrapper: Er lädt beim ersten Aufruf die im Projekt festgelegte Maven-Version, du
-brauchst nur ein JDK 21. IntelliJ liest dieselbe Datei (`.mvn/wrapper/maven-wrapper.properties`) und
-importiert das Projekt dann mit dem Maven aus dem Wrapper. Liegt das Projekt in WSL oder arbeitest du
-unter Windows mit Git Bash, kann dieser Import fehlschlagen: IntelliJ löst die Abhängigkeiten nicht auf,
-der Code bleibt rot, Autovervollständigung und Navigation fehlen. Stell dann unter *Settings → Build,
-Execution, Deployment → Build Tools → Maven* den **Maven home path** auf **Bundled (Maven 3)** und lade
-das Maven-Projekt neu. Lösche die Wrapper-Dateien (`mvnw`, `mvnw.cmd`, `.mvn/`) nicht – `./mvnw` im
-Terminal braucht sie.
+## Eine Aufgabe aufholen
 
-### Lösung einer Aufgabe laden
-
-Das `process-application`-Modul startet im Zustand von **Aufgabe 1** (Engine noch auskommentiert). Wenn du
-eine Aufgabe nicht ganz fertig bekommst, kannst du die Referenzlösung in dein `process-application`-Modul
-laden und mit ihr weiterarbeiten:
+Im Wurzelordner des Repos, bei gestoppter Anwendung, lädst du den Stand „Aufgabe 2 gelöst“, um mit Aufgabe 3 weiterzumachen:
 
 ```bash
-# solutions/exercise-02 in das process-application-Modul laden (gültige Werte: 00–07, zweistellig; 00 = zurück zum Auslieferungszustand)
 ./mvnw -pl services/process-application antrun:run@load-solution -Dsolution=02
 ```
 
-Der Task setzt `src/` und `pom.xml` auf den Auslieferungszustand zurück und kopiert die Lösung darüber:
-`src/main` (Java, `application.yaml`, BPMN/DMN), die Prozess-Tests und die passende `pom.xml` (etwa mit
-den CIB-Seven-Startern aus Aufgabe 1). Die Stubs der späteren Aufgaben bleiben stehen, der
-`ArchitectureTest` bleibt, wie er ist. Deine eigenen Änderungen in `src/` und `pom.xml` werden ersetzt –
-der Task sichert sie vorher unter `services/process-application/.load-solution-backup/<Zeitstempel>/`.
-Weil sich die `pom.xml` ändert, lass Maven danach erneut laufen (IntelliJ: Maven-Projekt neu laden).
-Bist du zu einer früheren Aufgabe zurückgesprungen, beende die Anwendung und lösche den Ordner
-`~/.cibseven-training` – sonst bleiben Deployments und Prozessinstanzen der späteren Aufgabe in der Datenbank.
+Gültig sind `01` bis `07`; `00` bringt dich zurück zum Anfang. Deine eigenen Änderungen landen vorher in `services/process-application/.load-solution-backup/`. Lade danach das Maven-Projekt neu; bist du zu einer früheren Aufgabe zurückgegangen, setze auch die Datenbank zurück. Extra 1 und den Logistik-Service aus Aufgabe 7 lädt der Befehl nicht; ihre Lösungen liegen in [`solutions/`](solutions/).
 
-Alle Module – das `process-application`-Modul **und** alle Solutions – laufen auf demselben Port
-(`8080`) und nutzen dieselbe eingebettete H2-Datenbankdatei; es läuft also immer nur **ein** Modul zur Zeit
-(die laufende Anwendung sperrt die Datei, eine zweite Instanz bricht beim Start ab).
+## Wenn es hakt
 
-## Repository-Struktur
+- **Mit leerer Datenbank starten:** Anwendung stoppen und den Ordner `.cibseven-training` in deinem Home-Verzeichnis löschen.
+- **„Database may be already in use“:** Ein anderes Modul oder eine Lösung läuft noch; stoppe es.
+- **Roter Code in IntelliJ unter WSL oder Git Bash:** In IntelliJs Maven-Einstellungen **Maven home path** auf **Bundled (Maven 3)** stellen und das Projekt neu laden.
+- **Roter Code in VS Code:** In der Befehlspalette **Java: Clean Java Language Server Workspace** ausführen.
 
-```
-cibseven-developer-training-exercises/
-├── docs/                             # Aufgabenbeschreibungen: docs/de/ (Deutsch) + docs/en/ (Englisch) + Assets
-├── services/                         # Die Services, an denen du arbeitest
-│   ├── process-application/          # Prozess-Anwendung (startet im Zustand von Aufgabe 1)
-│   │   └── src/main/java/io/miragon/training/
-│   │       ├── adapter/
-│   │       │   ├── inbound/
-│   │       │   │   ├── cibseven/     # JavaDelegate-Implementierungen
-│   │       │   │   └── rest/         # REST-Controller
-│   │       │   └── outbound/
-│   │       │       ├── cibseven/     # Process-Engine-Adapter (Start/Korrelation)
-│   │       │       └── db/           # JPA-Persistence-Adapter
-│   │       ├── application/
-│   │       │   ├── port/
-│   │       │   │   ├── inbound/      # Use-Case-Interfaces
-│   │       │   │   └── outbound/     # Repository- und Prozess-Port-Interfaces
-│   │       │   └── service/          # Use-Case-Implementierungen
-│   │       └── domain/               # Domain-Modell (reines Java, keine Framework-Abhängigkeiten)
-│   └── (logistics-service/)          # erst in Aufgabe 7 aus templates/ angelegt (Remote-Owner)
-├── templates/
-│   ├── exercise-07/logistics-service/ # Vorlage für den Aufgabe-7-Worker (in services/ kopieren)
-│   └── process-application-starter/  # Auslieferungszustand von process-application (Basis für load-solution)
-├── solutions/                        # Kumulative Lösungen pro Aufgabe (exercise-01 … exercise-07, extra-task-1)
-│   ├── exercise-{01-07}/             # exercise-07/ ist verschachtelt: process-application/ + logistics-service/
-│   └── extra-task-1/
-├── models/                           # Referenz-BPMN-/DMN-Modelle
-└── pom.xml
-```
+## Hilfe und Feedback
 
-## Technologie-Stack
+- **Während des Trainings:** Frag deinen Trainer oder deine Trainerin.
+- **Fehler in einer Aufgabe:** [Issue eröffnen](https://github.com/miragon-trainings/cibseven-developer-training-exercises/issues).
 
-| Komponente | Technologie |
-|---|---|
-| Sprache | Java 21 |
-| Framework | Spring Boot 4 |
-| Process Engine | CIB Seven 2.2.0 |
-| Datenbank | H2 (eingebettet, dateibasiert; JPA / Hibernate) |
-| Build | Maven |
-| Architektur-Tests | ArchUnit |
+## Mitwirken
 
-## CIB Seven
+Wie das Repository gebaut wird, wie die Lösungen synchron bleiben und wie du eine Aufgabe änderst, steht in [CONTRIBUTING.md](CONTRIBUTING.md) (Englisch).
 
-[CIB Seven](https://cibseven.org) ist eine community-gepflegte Distribution von Camunda Platform 7. Sie bietet volle Kompatibilität mit der Camunda-7-API und wird unabhängig als Open Source weiterentwickelt.
+## Lizenz
 
-In diesem Projekt läuft CIB Seven eingebettet in Spring Boot, stellt die Camunda-Webanwendung unter `http://localhost:8080/webapp/#/seven/auth/start` bereit und übernimmt die BPMN-Prozessausführung für den Inner-Circle-Membership-Prozess.
-
-Service Tasks werden über das `JavaDelegate`-Pattern mit `DelegateExpression` angebunden:
-
-```java
-@Component
-public class SendWelcomeMailDelegate extends BaseDelegate {
-
-    private final SendWelcomeMailUseCase useCase;
-
-    public SendWelcomeMailDelegate(SendWelcomeMailUseCase useCase) {
-        this.useCase = useCase;
-    }
-
-    @Override
-    protected void executeTask(DelegateExecution execution) {
-        var subscriptionId = (String) execution.getVariable("subscriptionId");
-        useCase.sendWelcomeMail(new SubscriptionId(UUID.fromString(subscriptionId)));
-    }
-}
-```
-
-## Architektur
-
-Das Projekt folgt einer **hexagonalen Architektur** (Ports & Adapters):
-
-```
-REST / JavaDelegates           Application              CIB7 / Database
-  (Inbound-Adapter)    →   Ports + Services   →     (Outbound-Adapter)
-                               ↑
-                            Domain
-                        (engine-neutral)
-```
-
-Architekturregeln werden zur Build-Zeit über [ArchUnit](https://www.archunit.org/)-Tests sichergestellt.
+[MIT](LICENSE) © Miragon

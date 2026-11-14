@@ -3,10 +3,11 @@
 > **Voraussetzung:** Aufgabe 2 ist abgeschlossen – User Task und Service Task laufen, gestartet wird im Cockpit.
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** Message Start Event, Korrelation, `RuntimeService`, Business Key, REST-Endpunkt, Persistenz, Bestätigung per REST (`TaskService`), Exclusive Gateway mit Default-Flow.
+> **Dauer:** 60–90 Min.
 
 ## Darum geht es
 
-Miravelo launcht das neue **Backroad AL**, über Nacht kommen 500 Registrierungen rein. Niemand
+MiraVelo launcht das neue **Backroad AL**, über Nacht kommen 500 Registrierungen rein. Niemand
 startet 500 Instanzen von Hand im Cockpit: Ab jetzt startet **die Anwendung** den Prozess, sobald
 eine Registrierung per REST eingeht. Wer sich anmeldet, bestätigt per Link in einer Mail
 (Double-Opt-In), und auch dieser Klick kommt als REST-Aufruf an. Außerdem ist der Inner Circle auf
@@ -51,7 +52,7 @@ Die Daten kommen per REST herein, bestätigt wird per REST.
 
 | Änderung | Element-ID | Name | Konfiguration |
 |---|---|---|---|
-| Start Event → **Message Start Event** | `startEvent_submitRegistration` | Submit registration form | Message Name `Message_SubscriptionRequested` |
+| Start Event → **Message Start Event** | `startEvent_submitRegistration` | Submit registration form | Message Name `Message_MembershipRequested` |
 | Neuer Service Task | `serviceTask_claimMembership` | Claim membership | `#{claimMembershipDelegate}` |
 | Neues **Exclusive Gateway** | `gateway_hasEmptySpots` | Free seat available? | Default-Flow: Ja-Pfad |
 | Ja-Pfad: neuer Service Task vor dem User Task | `serviceTask_sendConfirmationMail` | Send confirmation mail | `#{sendConfirmationMailDelegate}` |
@@ -76,8 +77,8 @@ runtimeService.createMessageCorrelation(/* Message-Name */)
         .correlateStartMessage();
 ```
 
-Der Message-Name `Message_SubscriptionRequested` ist wie der Prozess-Key ein historischer Name. Ein
-Tippfehler führt zur `MismatchingMessageCorrelationException`.
+Ein Tippfehler im Message-Namen `Message_MembershipRequested` führt zur
+`MismatchingMessageCorrelationException`.
 
 ### 4. Die Delegates auf die `membershipId` umstellen
 
@@ -144,7 +145,7 @@ endet an `Membership rejected`, ohne am User Task zu warten.
 
 ## Selbstcheck
 
-- [ ] Das Start Event ist ein Message Start Event mit `Message_SubscriptionRequested`
+- [ ] Das Start Event ist ein Message Start Event mit `Message_MembershipRequested`
 - [ ] `POST /api/memberships` startet eine Instanz mit der `membershipId` als Business Key
 - [ ] `POST /api/memberships/{id}/confirm` schließt den wartenden User Task über den `TaskService` ab
 - [ ] Das Gateway hat einen Default-Flow und genau eine Bedingung (`${!hasEmptySpots}`)

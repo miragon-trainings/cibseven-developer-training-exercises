@@ -12,6 +12,6 @@ public class NotifyCommunityService implements NotifyCommunityUseCase {
 
     @Override
     public void notifyCommunity() {
-        log.info("Publishing in the community: a new member just joined the Miravelo Inner Circle! 🎉");
+        log.info("Publishing in the community: a new member just joined the MiraVelo Inner Circle! 🎉");
     }
 }

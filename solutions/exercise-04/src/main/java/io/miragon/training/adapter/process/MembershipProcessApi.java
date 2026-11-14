@@ -16,12 +16,12 @@ import io.miragon.bpmn.runtime.ProcessId;
 import io.miragon.bpmn.runtime.SequenceFlows;
 import java.util.List;
 
-public final class SubscribeNewsletterProcessApi {
-  public static final ProcessId PROCESS_ID = new ProcessId("subscribeNewsletter");
+public final class MembershipProcessApi {
+  public static final ProcessId PROCESS_ID = new ProcessId("membership");
 
   public static final BpmnEngine PROCESS_ENGINE = BpmnEngine.CAMUNDA_7;
 
-  private SubscribeNewsletterProcessApi() {
+  private MembershipProcessApi() {
   }
 
   /**
@@ -255,7 +255,7 @@ public final class SubscribeNewsletterProcessApi {
 
       @Override
       public MessageName getMessage() {
-        return Messages.SUBSCRIPTION_REQUESTED;
+        return Messages.MEMBERSHIP_REQUESTED;
       }
 
       @Override

@@ -3,10 +3,11 @@
 > **Voraussetzung:** Aufgabe 4 inklusive Add-on ist abgeschlossen – die Prozess-Tests laufen gegen die generierte Process-API.
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** eingebetteter Subprozess, Timer Boundary Events (unterbrechend und nicht unterbrechend), Message Boundary Event, Parallel Gateway, ein Outbound-Adapter nach Microsoft Teams.
+> **Dauer:** 45–60 Min.
 
 ## Darum geht es
 
-Viele Bewerberinnen und Bewerber bestätigen nie und blockieren damit Plätze. Miravelo will deshalb
+Viele Bewerberinnen und Bewerber bestätigen nie und blockieren damit Plätze. MiraVelo will deshalb
 täglich erinnern, nach dreieinhalb Tagen ohne Bestätigung automatisch abbrechen und einen Rückzug
 per REST erlauben. Wer es bis zur Aktivierung schafft, wird parallel zur Willkommens-Mail in einem
 **Microsoft-Teams-Kanal** der Community begrüßt.

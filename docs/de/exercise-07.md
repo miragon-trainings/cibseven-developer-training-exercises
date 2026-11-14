@@ -3,6 +3,7 @@
 > **Voraussetzung:** Aufgabe 6 ist abgeschlossen – der vollständige Membership-Prozess läuft.
 > **Arbeitsverzeichnis:** `services/process-application` (Teil A) und `services/logistics-service` (Teil B, wird in dieser Aufgabe angelegt)
 > **Neu in dieser Aufgabe:** Signal-End-Event und Signal-Start-Event, External Task, ein zweiter Service als Prozess-Owner, der CIB seven Java-Client für `/engine-rest`.
+> **Dauer:** 45–60 Min.
 
 ## Darum geht es
 
@@ -46,7 +47,7 @@ logistics-service  (Remote-Owner – eigene JVM, :8090)
 
 ## Ziel-Modell
 
-Membership-Prozess (`subscribeNewsletter`): Das End Event „Membership activated" wirft
+Membership-Prozess (`membership`): Das End Event „Membership activated" wirft
 `Signal_MemberActivated`.
 
 ![BPMN Membership-Prozess](../assets/exercise-07-main.svg)

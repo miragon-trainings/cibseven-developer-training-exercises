@@ -1,8 +1,9 @@
-# Exercise 7 – The Engine as Shared Infrastructure
+# Exercise 7 – The engine as shared infrastructure
 
 > **Prerequisite:** Exercise 6 is complete – the full membership process runs.
 > **Working directory:** `services/process-application` (Part A) and `services/logistics-service` (Part B, created in this exercise)
 > **New in this exercise:** Signal End Event and Signal Start Event, External Task, a second service as the process owner, the CIB seven Java client for `/engine-rest`.
+> **Duration:** 45–60 min
 
 ## What this is about
 
@@ -45,7 +46,7 @@ logistics-service  (remote owner – own JVM, :8090)
 
 ## Target model
 
-Membership process (`subscribeNewsletter`): the End Event "Membership activated" throws
+Membership process (`membership`): the End Event "Membership activated" throws
 `Signal_MemberActivated`.
 
 ![BPMN membership process](../assets/exercise-07-main.svg)

@@ -4,7 +4,7 @@
 
 Welcome to the CIB Seven Developer Training!
 
-**Miravelo** is a lifestyle online shop for people in a quarterlife crisis – portafilter machines,
+**MiraVelo** is a lifestyle online shop for people in a quarterlife crisis – portafilter machines,
 running gear, gravel bikes, road bikes. The company is growing, the customer base is growing,
 and the processes have to keep up.
 
@@ -45,16 +45,16 @@ http://localhost:8080/h2-console  (JDBC URL jdbc:h2:file:~/.cibseven-training/ex
 
 | Exercise | Topic | Description |
 |---|---|---|
-| [0](../../docs/en/exercise-00.md) | Business-level BPMN modeling | Model the core Inner Circle membership flow purely at the business level, using only the shapes from Chapter 1 — the starting point for the whole training |
-| [1](../../docs/en/exercise-01.md) | Getting the engine running | Run the given start-form / Manual-Task model end-to-end, get to know the Cockpit and the engine's `act_*` tables |
+| [0](../../docs/en/exercise-00.md) | Model the membership flow | Model the core Inner Circle membership flow purely at the business level, using only the shapes from Chapter 1 — the starting point for the whole training |
+| [1](../../docs/en/exercise-01.md) | Get the engine running | Run the given start-form / Manual-Task model end-to-end, get to know the Cockpit and the engine's `act_*` tables |
 | [2](../../docs/en/exercise-02.md) | User Task and Service Task | Turn "Confirm" into a User Task with a self-made Generated Form and "Send welcome mail" into a Service Task with a JavaDelegate (started from the Cockpit) |
 | [3](../../docs/en/exercise-03.md) | The application takes over | Message start event, business key, REST endpoints for register + confirm, correlation, persistence, capacity check with an exclusive gateway |
-| [4](../../docs/en/exercise-04.md) | Process tests | Transaction boundaries, process unit test with an in-memory engine and mocked use cases, without a running application, coverage report |
-| [4 · Add-on](../../docs/en/exercise-04-addon.md) | bpmn-to-code | Element IDs as generated constants instead of hand-typed strings, compile-safe path navigation with `PathWalk` |
-| [5](../../docs/en/exercise-05.md) | Subprocess, boundary events & parallelism | Subprocess, timer and message boundary events, parallel gateway, Teams integration |
-| [6](../../docs/en/exercise-06.md) | Compensation, call activity & DMN | Compensation boundary event, compensating end event, call activity, DMN decision table, business rule task |
-| [7](../../docs/en/exercise-07.md) | Remote engine as shared infrastructure | A department owns its **own** small process (`sendWelcomeKit`) in its remote service: model, worker, deployment and tests live there; triggered by a signal broadcast; the engine is driven through a generated OpenAPI client |
-| [Extra 1](../../docs/en/extra-task-1.md) | Process Engine API | Rebuild Exercise 7 engine-neutrally: workers instead of JavaDelegates, swapping adapters instead of engine lock-in |
+| [4](../../docs/en/exercise-04.md) | Secure the process with tests | Transaction boundaries, process unit test with an in-memory engine and mocked use cases, without a running application, coverage report |
+| [4 · Add-on](../../docs/en/exercise-04-addon.md) | From strings to type-safe constants | Element IDs as generated constants instead of hand-typed strings, compile-safe path navigation with `PathWalk` |
+| [5](../../docs/en/exercise-05.md) | Subprocess, boundary events and parallelism | Subprocess, timer and message boundary events, parallel gateway, Teams integration |
+| [6](../../docs/en/exercise-06.md) | Compensation, Call Activity and DMN | Compensation boundary event, compensating end event, call activity, DMN decision table, business rule task |
+| [7](../../docs/en/exercise-07.md) | The engine as shared infrastructure | A department owns its **own** small process (`sendWelcomeKit`) in its remote service: model, worker, deployment and tests live there; triggered by a signal broadcast; the engine is driven through a generated OpenAPI client |
+| [Extra 1](../../docs/en/extra-task-1.md) | Break free from engine lock-in | Rebuild Exercise 7 engine-neutrally: workers instead of JavaDelegates, swapping adapters instead of engine lock-in |
 
 ## Architecture
 

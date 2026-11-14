@@ -22,12 +22,12 @@ import io.miragon.bpmn.runtime.TimerEvent;
 import io.miragon.bpmn.runtime.TimerType;
 import java.util.List;
 
-public final class SubscribeNewsletterProcessApi {
-  public static final ProcessId PROCESS_ID = new ProcessId("subscribeNewsletter");
+public final class MembershipProcessApi {
+  public static final ProcessId PROCESS_ID = new ProcessId("membership");
 
   public static final BpmnEngine PROCESS_ENGINE = BpmnEngine.CAMUNDA_7;
 
-  private SubscribeNewsletterProcessApi() {
+  private MembershipProcessApi() {
   }
 
   /**
@@ -343,8 +343,7 @@ public final class SubscribeNewsletterProcessApi {
       }
 
       public static final class Next {
-        public SequenceFlows<ServiceTaskReSendConfirmationMail> serviceTaskReSendConfirmationMail(
-            ) {
+        public SequenceFlows<ServiceTaskReSendConfirmationMail> serviceTaskReSendConfirmationMail() {
           return SequenceFlows.single(new ElementId("flow_resendEveryDayToReSendConfirmationMail"), ServiceTaskReSendConfirmationMail.INSTANCE);
         }
       }
@@ -645,7 +644,7 @@ public final class SubscribeNewsletterProcessApi {
 
       @Override
       public MessageName getMessage() {
-        return Messages.SUBSCRIPTION_REQUESTED;
+        return Messages.MEMBERSHIP_REQUESTED;
       }
 
       @Override

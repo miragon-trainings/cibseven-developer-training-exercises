@@ -3,6 +3,7 @@
 > **Prerequisite:** Exercise 5 is complete – subprocess, boundary events and parallel branches are running.
 > **Working directory:** `services/process-application`
 > **New in this exercise:** compensation (Compensation Boundary Event, compensation handler, Compensating End Event), Call Activity with in-mapping, DMN decision table, Business Rule Task.
+> **Duration:** 60–90 min
 
 ## What this is about
 
@@ -10,7 +11,7 @@ In Exercise 5, `revokeClaim` sits in the sequence flow of every abort path. With
 path you would have to wire it in again. **BPMN compensation** instead declares once which
 activity undoes which other one, and the engine invokes the handler on abort by itself.
 
-On top of that, Miravelo doesn't want to let rejected applicants between 21 and 29 go without a
+On top of that, MiraVelo doesn't want to let rejected applicants between 21 and 29 go without a
 fight. The rejection handling therefore moves into its **own process**, invoked via a **Call
 Activity**. Who belongs to the target group is decided by a **DMN decision table** that the
 business side can maintain itself later.

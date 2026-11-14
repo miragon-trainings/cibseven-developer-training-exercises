@@ -3,6 +3,7 @@
 > **Voraussetzung:** Aufgabe 7 ist abgeschlossen – der Membership-Prozess läuft vollständig, inklusive Signal-End-Event „Membership activated".
 > **Arbeitsverzeichnis:** `services/process-application` (Teil A) und `services/logistics-service` (Teil B)
 > **Neu in dieser Aufgabe:** Process-Engine-API von bpm-crafters, Worker-Pattern statt JavaDelegate, engine-neutraler Outbound-Adapter, embedded- und Remote-Adapter, ArchUnit-Guardrail.
+> **Dauer:** 30–45 Min.
 
 ## Darum geht es
 
@@ -112,7 +113,7 @@ Ersetze `RuntimeService` durch `StartProcessApi` und `CorrelationApi`:
 public void startProcess(Membership membership) {
     var membershipId = membership.id().value().toString();
     startProcessApi.startProcess(new StartProcessByMessageCmd(
-            Messages.SUBSCRIPTION_REQUESTED.getValue(),
+            Messages.MEMBERSHIP_REQUESTED.getValue(),
             Map.of(
                     "membershipId", membershipId,
                     "email", membership.email().value(),

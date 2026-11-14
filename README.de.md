@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/github/license/miragon-trainings/cibseven-developer-training-exercises)](LICENSE)
 [![English](https://img.shields.io/badge/read%20me-in%20English-lightgrey)](README.md)
 
-![CIB seven Developer Training, Hands-on Exercises: der Miravelo-Membership-Prozess, den du bis Aufgabe 6 gebaut hast, mit Gateway, Subprozess, Timern und Kompensation](.github/hero.png)
+![CIB seven Developer Training, Hands-on Exercises: der MiraVelo-Membership-Prozess, den du bis Aufgabe 7 gebaut hast, mit Gateway, Subprozess, Timern und Kompensation](.github/hero.png)
 
 Der praktische Teil von Miragons CIB seven Developer Training: Du bringst einen Geschäftsprozess von der Whiteboard-Skizze zur getesteten Spring-Boot-Anwendung auf [CIB seven](https://cibseven.org), der Open-Source-Fortführung von Camunda 7.
 
@@ -18,7 +18,7 @@ Die Slides zeigen, was eine Process Engine kann; hier findest du heraus, was es 
 
 ## Was du bekommst
 
-- **Eine Geschichte.** Miravelo, ein Shop für Premium-Fahrräder, öffnet tausend Plätze im *Inner Circle*: Registrierung, Double Opt-in, Willkommens-Mail.
+- **Eine Geschichte.** MiraVelo, ein Shop für Premium-Fahrräder, öffnet tausend Plätze im *Inner Circle*: Registrierung, Double Opt-in, Willkommens-Mail.
 - **Eine echte Anwendung, kein Spielzeug.** Du arbeitest in einem Spring-Boot-Modul mit hexagonaler Architektur, und ArchUnit meldet sich, sobald die Engine in deine Domäne durchsickert.
 - **Zwei Sprachen.** Jede Aufgabe hat eine Schritt-für-Schritt-Anleitung auf [Deutsch](docs/de/exercise-00.md) und [Englisch](docs/en/exercise-00.md).
 - **Keine Engine, keine Datenbank zu installieren.** Beide starten mit der Anwendung.
@@ -27,16 +27,16 @@ Die Slides zeigen, was eine Process Engine kann; hier findest du heraus, was es 
 
 | # | Thema | Du baust |
 |---|---|---|
-| [0](docs/de/exercise-00.md) | BPMN auf fachlicher Ebene | Den Membership-Ablauf als Modell, noch ohne Code |
+| [0](docs/de/exercise-00.md) | Den Mitgliedschaftsablauf fachlich modellieren | Den Membership-Ablauf als Modell, noch ohne Code |
 | [1](docs/de/exercise-01.md) | Die Engine zum Laufen bringen | Die eingeschaltete Engine, einen ersten Prozess im Cockpit, einen Blick in die `act_*`-Tabellen |
 | [2](docs/de/exercise-02.md) | User Task und Service Task | Ein Formular zum Bestätigen, einen JavaDelegate für die Willkommens-Mail |
 | [3](docs/de/exercise-03.md) | Die Anwendung übernimmt | REST-Endpunkte, Message-Korrelation, Persistenz und eine Kapazitätsprüfung |
-| [4](docs/de/exercise-04.md) | Prozesstests | Tests auf einer In-Memory-Engine, dazu einen Coverage-Report |
-| [4 · Add-on](docs/de/exercise-04-addon.md) | bpmn-to-code (optional) | Generierte Konstanten statt händisch getippter Element-IDs |
-| [5](docs/de/exercise-05.md) | Subprozess, Boundary Events, Parallelität | Tägliche Erinnerungen, einen Timeout, einen Rückzug und eine Begrüßung in Teams |
-| [6](docs/de/exercise-06.md) | Kompensation, Call Activity, DMN | Einen kompensierten Platz-Claim, einen Ablehnungsprozess mit Entscheidungstabelle |
-| [7](docs/de/exercise-07.md) | Remote Engine | Einen Logistik-Service, der seinen eigenen Prozess auf der geteilten Engine besitzt |
-| [Extra 1](docs/de/extra-task-1.md) | Process Engine API (optional) | Aufgabe 7 noch einmal, gegen eine engine-neutrale API |
+| [4](docs/de/exercise-04.md) | Den Prozess mit Tests absichern | Tests auf einer In-Memory-Engine, dazu einen Coverage-Report |
+| [4 · Add-on](docs/de/exercise-04-addon.md) | Von Strings zu typsicheren Konstanten | Optional: generierte Konstanten statt händisch getippter Element-IDs |
+| [5](docs/de/exercise-05.md) | Subprozess, Boundary Events und Parallelität | Tägliche Erinnerungen, einen Timeout, einen Rückzug und eine Begrüßung in Teams |
+| [6](docs/de/exercise-06.md) | Kompensation, Call Activity und DMN | Einen kompensierten Platz-Claim, einen Ablehnungsprozess mit Entscheidungstabelle |
+| [7](docs/de/exercise-07.md) | Die Engine als geteilte Infrastruktur | Einen Logistik-Service, der seinen eigenen Prozess auf der geteilten Engine besitzt |
+| [Extra 1](docs/de/extra-task-1.md) | Raus aus dem Engine-Lock-in | Optional: Aufgabe 7 noch einmal, gegen eine engine-neutrale API |
 
 ## Loslegen
 

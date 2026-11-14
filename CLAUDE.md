@@ -124,9 +124,8 @@ Multi-module Maven project:
 
 ## Domain
 
-All exercises use Miravelo Inner Circle membership (Membership naming) from Aufgabe 0. The BPMN file is
-`membership.bpmn`, but the process key stays `subscribeNewsletter` and the start message stays
-`Message_SubscriptionRequested` for historic reasons (mentioned once where introduced: key in Aufgabe 2, message in Aufgabe 3).
+All exercises use the MiraVelo Inner Circle membership ("Membership") from Aufgabe 0. The BPMN file is
+`membership.bpmn`, the process key is `membership` and the start message is `Message_MembershipRequested`.
 
 Workflow: register → send confirmation mail → wait for confirmation (with timer retry/abort) → send welcome mail.
 

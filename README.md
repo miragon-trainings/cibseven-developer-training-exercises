@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/github/license/miragon-trainings/cibseven-developer-training-exercises)](LICENSE)
 [![Deutsch](https://img.shields.io/badge/lies%20mich-auf%20Deutsch-lightgrey)](README.de.md)
 
-![CIB seven Developer Training, Hands-on Exercises: the Miravelo membership process you will have built by Exercise 6, with gateway, subprocess, timers and compensation](.github/hero.png)
+![CIB seven Developer Training, Hands-on Exercises: the MiraVelo membership process you will have built by Exercise 7, with gateway, subprocess, timers and compensation](.github/hero.png)
 
 The hands-on half of Miragon's CIB seven Developer Training: you take one business process from a whiteboard sketch to a tested Spring Boot application on [CIB seven](https://cibseven.org), the open-source continuation of Camunda 7.
 
@@ -18,7 +18,7 @@ Slides show you what a process engine can do; this repo is where you find out wh
 
 ## What you get
 
-- **One story.** Miravelo, a premium bike shop, opens a thousand *Inner Circle* membership seats: registration, double opt-in, welcome mail.
+- **One story.** MiraVelo, a premium bike shop, opens a thousand *Inner Circle* membership seats: registration, double opt-in, welcome mail.
 - **A real application, not a toy.** You work in one Spring Boot module with a hexagonal architecture, and ArchUnit tells you when the engine leaks into your domain.
 - **Two languages.** Every exercise has a step-by-step guide in [English](docs/en/exercise-00.md) and [German](docs/de/exercise-00.md).
 - **No engine or database to install.** Both start with the application.
@@ -27,16 +27,16 @@ Slides show you what a process engine can do; this repo is where you find out wh
 
 | # | Topic | You build |
 |---|---|---|
-| [0](docs/en/exercise-00.md) | Business-level BPMN | The membership flow as a model, before any code |
-| [1](docs/en/exercise-01.md) | Getting the engine running | The engine switched on, a first process in the Cockpit, a look at the `act_*` tables |
+| [0](docs/en/exercise-00.md) | Model the membership flow | The membership flow as a model, before any code |
+| [1](docs/en/exercise-01.md) | Get the engine running | The engine switched on, a first process in the Cockpit, a look at the `act_*` tables |
 | [2](docs/en/exercise-02.md) | User Task and Service Task | A form to confirm, a JavaDelegate that sends the welcome mail |
 | [3](docs/en/exercise-03.md) | The application takes over | REST endpoints, message correlation, persistence and a capacity check |
-| [4](docs/en/exercise-04.md) | Process tests | Tests on an in-memory engine, plus a coverage report |
-| [4 · Add-on](docs/en/exercise-04-addon.md) | bpmn-to-code (optional) | Generated constants instead of hand-typed element IDs |
-| [5](docs/en/exercise-05.md) | Subprocess, boundary events, parallelism | Daily reminders, a timeout, a withdrawal and a Teams welcome |
-| [6](docs/en/exercise-06.md) | Compensation, call activity, DMN | A compensated seat claim, a rejection process with a decision table |
-| [7](docs/en/exercise-07.md) | Remote engine | A logistics service that owns its own process on the shared engine |
-| [Extra 1](docs/en/extra-task-1.md) | Process Engine API (optional) | Exercise 7 rewritten against an engine-neutral API |
+| [4](docs/en/exercise-04.md) | Secure the process with tests | Tests on an in-memory engine, plus a coverage report |
+| [4 · Add-on](docs/en/exercise-04-addon.md) | From strings to type-safe constants | Optional: generated constants instead of hand-typed element IDs |
+| [5](docs/en/exercise-05.md) | Subprocess, boundary events and parallelism | Daily reminders, a timeout, a withdrawal and a Teams welcome |
+| [6](docs/en/exercise-06.md) | Compensation, Call Activity and DMN | A compensated seat claim, a rejection process with a decision table |
+| [7](docs/en/exercise-07.md) | The engine as shared infrastructure | A logistics service that owns its own process on the shared engine |
+| [Extra 1](docs/en/extra-task-1.md) | Break free from engine lock-in | Optional: Exercise 7 rewritten against an engine-neutral API |
 
 ## Get started
 

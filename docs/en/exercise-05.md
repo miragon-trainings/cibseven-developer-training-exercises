@@ -1,12 +1,13 @@
-# Exercise 5 – Subprocess, Boundary Events and Parallelism
+# Exercise 5 – Subprocess, boundary events and parallelism
 
 > **Prerequisite:** Exercise 4 including the add-on is complete – the process tests run against the generated Process API.
 > **Working directory:** `services/process-application`
 > **New in this exercise:** embedded subprocess, Timer Boundary Events (interrupting and non-interrupting), Message Boundary Event, Parallel Gateway, an outbound adapter to Microsoft Teams.
+> **Duration:** 45–60 min
 
 ## What this is about
 
-Many applicants never confirm and thereby block spots. Miravelo therefore wants to send a daily
+Many applicants never confirm and thereby block spots. MiraVelo therefore wants to send a daily
 reminder, cancel automatically after three and a half days without confirmation, and allow a
 withdrawal via REST. Whoever makes it to activation gets welcomed in a community **Microsoft Teams
 channel**, in parallel with the welcome mail.

@@ -12,7 +12,7 @@
                   modeler:executionPlatform="Camunda Platform"
                   modeler:executionPlatformVersion="7.24.0">
 
-  <bpmn:process id="subscribeNewsletter"
+  <bpmn:process id="membership"
                 name="Join Inner Circle"
                 isExecutable="true"
                 camunda:historyTimeToLive="180">
@@ -57,7 +57,7 @@
   </bpmn:process>
 
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="subscribeNewsletter">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="membership">
       <bpmndi:BPMNShape id="startEvent_membershipWanted_di" bpmnElement="startEvent_membershipWanted">
         <dc:Bounds x="152" y="82" width="36" height="36"/>
         <bpmndi:BPMNLabel>

@@ -3,6 +3,7 @@
 > **Voraussetzung:** [Aufgabe 4](exercise-04.md) ist abgeschlossen – beide Prozess-Tests sind grün.
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** das Maven-Plugin `bpmn-to-code`, generierte Process-API, Konstanten statt String-Literale, compile-sichere Pfad-Navigation mit `PathWalk`.
+> **Dauer:** 20–30 Min.
 
 ## Darum geht es
 
@@ -73,7 +74,7 @@ Das Plugin läuft in der Phase `generate-sources`, also bei jedem Build. Stoß s
 ./mvnw -pl services/process-application generate-sources
 ```
 
-Danach liegt `io.miragon.training.adapter.process.SubscribeNewsletterProcessApi` unter `src/main/java`.
+Danach liegt `io.miragon.training.adapter.process.MembershipProcessApi` unter `src/main/java`.
 
 ### 3. Einzelne Element-IDs im Test ersetzen
 
@@ -81,7 +82,7 @@ Jedes Element bekommt unter `FlowNodes` eine Klasse mit der Konstante `ELEMENT_I
 überall, wo der Test ein einzelnes Element nennt, also in `isWaitingAt(...)` und `hasNotPassed(...)`:
 
 ```java
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
+import io.miragon.training.adapter.process.MembershipProcessApi.FlowNodes;
 
 assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
 ```
@@ -121,11 +122,11 @@ Wrapper-Typen, in String-Kontexten rufst du `.getValue()` auf. Die Message-Namen
 generierten Klasse `Messages`:
 
 ```java
-// ProcessEngineTestUtils: statt "subscribeNewsletter"
-private static final String PROCESS_DEFINITION_KEY = SubscribeNewsletterProcessApi.PROCESS_ID.getValue();
+// ProcessEngineTestUtils: statt "membership"
+private static final String PROCESS_DEFINITION_KEY = MembershipProcessApi.PROCESS_ID.getValue();
 
-// MembershipProcessAdapter: statt "Message_SubscriptionRequested"
-runtimeService.createMessageCorrelation(Messages.SUBSCRIPTION_REQUESTED.getValue()) ...
+// MembershipProcessAdapter: statt "Message_MembershipRequested"
+runtimeService.createMessageCorrelation(Messages.MEMBERSHIP_REQUESTED.getValue()) ...
 ```
 
 ## Randbedingungen
@@ -151,7 +152,7 @@ Mach zwei Gegenproben, jeweils gefolgt von `generate-sources`:
 
 ## Selbstcheck
 
-- [ ] `SubscribeNewsletterProcessApi` wird beim Build generiert
+- [ ] `MembershipProcessApi` wird beim Build generiert
 - [ ] Im Prozess-Test steht kein Element-ID-String mehr
 - [ ] Beide Tests beschreiben ihren Pfad mit `PathWalk`
 - [ ] `ProcessEngineTestUtils` nutzt `PROCESS_ID`, der Outbound-Adapter nutzt `Messages.*`

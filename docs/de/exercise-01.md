@@ -3,6 +3,7 @@
 > **Voraussetzung:** Aufgabe 0 ist abgeschlossen (der Kernablauf liegt fachlich vor).
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** CIB-Seven-Starter, Engine-Konfiguration, Embedded-Datenbank (H2), Auto-Deployment, Cockpit, H2-Konsole, `act_*`-Tabellen, Start-Formular, Manual Task.
+> **Dauer:** 20–30 Min.
 
 ## Darum geht es
 
@@ -74,7 +75,7 @@ wichtigsten:
 
 | Tabelle | Präfix | Inhalt |
 |---|---|---|
-| `act_re_procdef` | `re` = Repository | deployte **Prozessdefinitionen** (`subscribeNewsletter`) |
+| `act_re_procdef` | `re` = Repository | deployte **Prozessdefinitionen** (`membership`) |
 | `act_ru_execution` | `ru` = Runtime | **laufende** Prozessinstanzen |
 | `act_ru_task` | `ru` | offene **User Tasks** |
 | `act_ru_variable` | `ru` | **Prozessvariablen** laufender Instanzen |
@@ -90,7 +91,7 @@ SELECT key_, name_, version_ FROM act_re_procdef;
 
 Öffne [http://localhost:8080/webapp/#/seven/auth/start](http://localhost:8080/webapp/#/seven/auth/start)
 (admin / admin). Unter **Processes** erscheint `Join Inner Circle`, der Anzeigename zum
-Prozess-Key `subscribeNewsletter`. Klick dich durch **Cockpit**, **Tasklist** und **Admin**.
+Prozess-Key `membership`. Klick dich durch **Cockpit**, **Tasklist** und **Admin**.
 
 ### 7. Prozess durchspielen
 
@@ -121,7 +122,7 @@ End Event durch.
 ## Selbstcheck
 
 - [ ] Dependencies, Konfiguration und `@SpringBootApplication` sind aktiviert
-- [ ] Die Anwendung startet, `act_re_procdef` enthält `subscribeNewsletter`
+- [ ] Die Anwendung startet, `act_re_procdef` enthält `membership`
 - [ ] `Join Inner Circle` erscheint im Cockpit unter **Processes**
 - [ ] Eine über das Start-Formular gestartete Instanz steht in der History auf `COMPLETED`
 - [ ] Du kannst erklären, warum die Instanz an den Manual Tasks nicht wartet

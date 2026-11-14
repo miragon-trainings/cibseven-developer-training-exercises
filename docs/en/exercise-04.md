@@ -1,8 +1,9 @@
-# Exercise 4 – Securing the process with tests
+# Exercise 4 – Secure the process with tests
 
 > **Prerequisite:** Exercise 3 is complete – the gateway, the capacity check, and both process outcomes are working.
 > **Working directory:** `services/process-application`
 > **New in this exercise:** transaction boundaries (`asyncBefore`/`asyncAfter`), in-memory engine with H2, the job executor turned off, `@MockitoBean`, assertions with `BpmnAwareTests`, coverage report (Process Test Coverage).
+> **Duration:** 45–60 min
 
 ## What this is about
 

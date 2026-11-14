@@ -3,10 +3,11 @@
 > **Voraussetzung:** Kapitel 1 – du kennst BPMN als Notation: Start- und End Events, User Task und Service Task, Sequenzfluss, Exclusive Gateway und Parallel Gateway.
 > **Arbeitsverzeichnis:** ein beliebiger Ordner deiner Wahl (noch kein Code, noch kein Modul).
 > **Neu in dieser Aufgabe:** BPMN-Modeler, der fachliche Kernablauf der Mitgliedschaft als gemeinsame Landkarte.
+> **Dauer:** 20–30 Min.
 
 ## Darum geht es
 
-**Miravelo** ist ein Online-Shop für hochwertige Fahrräder. Für die treuesten Kundinnen und Kunden
+**MiraVelo** ist ein Online-Shop für hochwertige Fahrräder. Für die treuesten Kundinnen und Kunden
 gibt es den **Inner Circle**, eine Mitgliedschaft mit begrenzter Platzzahl: Wer beitreten will,
 registriert sich, bekommt einen Platz reserviert, bestätigt per Double-Opt-In und wird willkommen
 geheißen. Bevor irgendetwas automatisiert wird, hältst du diesen Kernablauf fachlich fest. Ab

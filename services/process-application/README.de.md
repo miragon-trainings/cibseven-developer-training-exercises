@@ -4,7 +4,7 @@
 
 Willkommen zum CIB Seven Developer Training!
 
-**Miravelo** ist ein Lifestyle-Online-Shop für Menschen in der Quarterlife-Crisis – Siebträger,
+**MiraVelo** ist ein Lifestyle-Online-Shop für Menschen in der Quarterlife-Crisis – Siebträger,
 Laufausrüstung, Gravel Bikes, Rennräder. Das Unternehmen wächst, die Kundenbasis wächst,
 und die Prozesse müssen mithalten.
 
@@ -46,16 +46,16 @@ http://localhost:8080/h2-console  (JDBC-URL jdbc:h2:file:~/.cibseven-training/ex
 
 | Aufgabe | Thema | Beschreibung |
 |---|---|---|
-| [0](../../docs/de/exercise-00.md) | Fachliche BPMN-Modellierung | Den Kernablauf der Inner-Circle-Membership rein fachlich und nur mit den Grundformen aus Kapitel 1 modellieren – der Ausgangspunkt für das ganze Training |
-| [1](../../docs/de/exercise-01.md) | Engine zum Laufen bringen | Das vorgegebene Start-Formular-/Manual-Task-Modell durchlaufen lassen, Cockpit und `act_*`-Tabellen der Engine kennenlernen |
+| [0](../../docs/de/exercise-00.md) | Den Mitgliedschaftsablauf fachlich modellieren | Den Kernablauf der Inner-Circle-Membership rein fachlich und nur mit den Grundformen aus Kapitel 1 modellieren – der Ausgangspunkt für das ganze Training |
+| [1](../../docs/de/exercise-01.md) | Die Engine zum Laufen bringen | Das vorgegebene Start-Formular-/Manual-Task-Modell durchlaufen lassen, Cockpit und `act_*`-Tabellen der Engine kennenlernen |
 | [2](../../docs/de/exercise-02.md) | User Task und Service Task | „Confirm" zum User Task mit selbst erstellter Generated Form machen, „Send welcome mail" zum Service Task mit JavaDelegate (Start über Cockpit) |
 | [3](../../docs/de/exercise-03.md) | Die Anwendung übernimmt | Message Start Event, Business Key, REST-Endpunkte für Register + Confirm, Korrelation, Persistenz, Kapazitätsprüfung mit Exclusive Gateway |
-| [4](../../docs/de/exercise-04.md) | Prozess-Tests | Transaktionsgrenzen, Prozess-Unit-Test mit In-Memory-Engine, gemockten Use Cases, ohne laufende Anwendung, Coverage-Report |
-| [4 · Add-on](../../docs/de/exercise-04-addon.md) | bpmn-to-code | Element-IDs als generierte Konstanten statt handgetippter Strings, Pfade compile-sicher mit `PathWalk` navigieren |
-| [5](../../docs/de/exercise-05.md) | Subprozess, Boundary Events & Parallelität | Subprozess, Timer- und Message-Boundary-Events, Parallel Gateway, Teams-Anbindung |
-| [6](../../docs/de/exercise-06.md) | Kompensation, Call Activity & DMN | Compensation Boundary Event, Compensating End Event, Call Activity, DMN-Entscheidungstabelle, Business Rule Task |
-| [7](../../docs/de/exercise-07.md) | Remote Engine als geteilte Infrastruktur | Eine Abteilung besitzt einen **eigenen** kleinen Prozess (`sendWelcomeKit`) in ihrem Remote-Service: Modell, Worker, Deployment und Tests liegen dort; getriggert per Signal-Broadcast; die Engine über einen generierten OpenAPI-Client getrieben |
-| [Extra 1](../../docs/de/extra-task-1.md) | Process-Engine-API | Aufgabe 7 engine-neutral umbauen: Worker statt JavaDelegate, Adapter-Tausch statt Engine-Lock-in |
+| [4](../../docs/de/exercise-04.md) | Den Prozess mit Tests absichern | Transaktionsgrenzen, Prozess-Unit-Test mit In-Memory-Engine, gemockten Use Cases, ohne laufende Anwendung, Coverage-Report |
+| [4 · Add-on](../../docs/de/exercise-04-addon.md) | Von Strings zu typsicheren Konstanten | Element-IDs als generierte Konstanten statt handgetippter Strings, Pfade compile-sicher mit `PathWalk` navigieren |
+| [5](../../docs/de/exercise-05.md) | Subprozess, Boundary Events und Parallelität | Subprozess, Timer- und Message-Boundary-Events, Parallel Gateway, Teams-Anbindung |
+| [6](../../docs/de/exercise-06.md) | Kompensation, Call Activity und DMN | Compensation Boundary Event, Compensating End Event, Call Activity, DMN-Entscheidungstabelle, Business Rule Task |
+| [7](../../docs/de/exercise-07.md) | Die Engine als geteilte Infrastruktur | Eine Abteilung besitzt einen **eigenen** kleinen Prozess (`sendWelcomeKit`) in ihrem Remote-Service: Modell, Worker, Deployment und Tests liegen dort; getriggert per Signal-Broadcast; die Engine über einen generierten OpenAPI-Client getrieben |
+| [Extra 1](../../docs/de/extra-task-1.md) | Raus aus dem Engine-Lock-in | Aufgabe 7 engine-neutral umbauen: Worker statt JavaDelegate, Adapter-Tausch statt Engine-Lock-in |
 
 ## Architektur
 

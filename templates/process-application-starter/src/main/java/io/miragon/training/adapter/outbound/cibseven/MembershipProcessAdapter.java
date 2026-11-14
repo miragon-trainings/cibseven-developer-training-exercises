@@ -27,7 +27,7 @@ public class MembershipProcessAdapter implements MembershipProcess {
     @Override
     public void startProcess(Membership membership) {
         // TODO Exercise 3: Start the process instance yourself via the RuntimeService.
-        //  - Correlate the start message "Message_SubscriptionRequested" (createMessageCorrelation).
+        //  - Correlate the start message "Message_MembershipRequested" (createMessageCorrelation).
         //  - Set the business key of the new instance to membership.id().value().toString().
         //  - Pass these four process variables as a Map (the keys must be named exactly like this):
         //      "membershipId" <- membership.id().value().toString()

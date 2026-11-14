@@ -3,6 +3,7 @@
 > **Prerequisite:** [Exercise 4](exercise-04.md) is complete – both process tests are green.
 > **Working directory:** `services/process-application`
 > **New in this exercise:** the Maven plugin `bpmn-to-code`, a generated Process-API, constants instead of string literals, compile-safe path navigation with `PathWalk`.
+> **Duration:** 20–30 min
 
 ## What this is about
 
@@ -73,7 +74,7 @@ The plugin runs in the `generate-sources` phase, so on every build. Trigger it o
 ./mvnw -pl services/process-application generate-sources
 ```
 
-Afterwards `io.miragon.training.adapter.process.SubscribeNewsletterProcessApi` sits under `src/main/java`.
+Afterwards `io.miragon.training.adapter.process.MembershipProcessApi` sits under `src/main/java`.
 
 ### 3. Replace the single element IDs in the test
 
@@ -81,7 +82,7 @@ Every element gets a class under `FlowNodes` with the constant `ELEMENT_ID`. Use
 test names a single element, that is, in `isWaitingAt(...)` and `hasNotPassed(...)`:
 
 ```java
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
+import io.miragon.training.adapter.process.MembershipProcessApi.FlowNodes;
 
 assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
 ```
@@ -121,11 +122,11 @@ Also replace the strings in the test helper and in the outbound adapter. `Proces
 in the generated class `Messages`:
 
 ```java
-// ProcessEngineTestUtils: instead of "subscribeNewsletter"
-private static final String PROCESS_DEFINITION_KEY = SubscribeNewsletterProcessApi.PROCESS_ID.getValue();
+// ProcessEngineTestUtils: instead of "membership"
+private static final String PROCESS_DEFINITION_KEY = MembershipProcessApi.PROCESS_ID.getValue();
 
-// MembershipProcessAdapter: instead of "Message_SubscriptionRequested"
-runtimeService.createMessageCorrelation(Messages.SUBSCRIPTION_REQUESTED.getValue()) ...
+// MembershipProcessAdapter: instead of "Message_MembershipRequested"
+runtimeService.createMessageCorrelation(Messages.MEMBERSHIP_REQUESTED.getValue()) ...
 ```
 
 ## Constraints
@@ -151,7 +152,7 @@ Do two counter-checks, each followed by `generate-sources`:
 
 ## Self-check
 
-- [ ] `SubscribeNewsletterProcessApi` is generated at build time
+- [ ] `MembershipProcessApi` is generated at build time
 - [ ] The process test no longer contains any element-ID string
 - [ ] Both tests describe their path with `PathWalk`
 - [ ] `ProcessEngineTestUtils` uses `PROCESS_ID`, the outbound adapter uses `Messages.*`

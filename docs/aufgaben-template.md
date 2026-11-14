@@ -14,7 +14,7 @@ die übrigen entfallen, wenn sie nichts beitragen.
 | # | Abschnitt | Inhalt |
 |---|---|---|
 | 1 | **`# Aufgabe N – Titel`** | Kurz, aktiv, ohne Doppelpunkt-Kaskaden |
-| 2 | **Info-Kasten** (Blockquote direkt unter dem Titel) | `Voraussetzung` · `Arbeitsverzeichnis` · `Neu in dieser Aufgabe` |
+| 2 | **Info-Kasten** (Blockquote direkt unter dem Titel) | `Voraussetzung` · `Arbeitsverzeichnis` · `Neu in dieser Aufgabe` · `Dauer` |
 | 3 | **`## Darum geht es`** | Ausgangssituation: fachlicher Anlass in 2–4 Sätzen, höchstens ein Zitat |
 | 4 | **`## Lernziele`** | „Nach dieser Aufgabe kannst du …" – 3–4 Bullets, jeder mit einem Verb |
 | 5 | **`## Ziel-Modell`** | Grafik (`../assets/exercise-NN.svg`) und Referenzpfad, ohne die Story zu wiederholen; bei reinen Code-Aufgaben ein Satz, dass kein Modell dazukommt |
@@ -39,6 +39,7 @@ beobachtbare Verhalten, Letzteres ist die abhakbare Abnahme.
 > **Voraussetzung:** Aufgabe 2 ist abgeschlossen.
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** Message Start Event, Business Key, Exclusive Gateway
+> **Dauer:** 60–90 Min.
 ```
 
 ### Referenzlösung – Format
@@ -159,7 +160,7 @@ das Bild – nie das Bild allein.
 
 Weitere Festlegungen:
 
-- **Prozess-Key** (nicht „Prozess-ID"), wenn die Engine gemeint ist (`subscribeNewsletter`).
+- **Prozess-Key** (nicht „Prozess-ID"), wenn die Engine gemeint ist (`membership`).
 - **Element-ID**, wenn eine BPMN-ID gemeint ist (`serviceTask_sendWelcomeMail`).
 - **Delegate** (männlich, „der Delegate"), **das Modell**, **die Instanz**.
 - Erste Nennung eines Begriffs, der nicht vorausgesetzt werden kann, bekommt einen
@@ -205,11 +206,9 @@ Weitere Festlegungen:
 
 ## 3. Konsistenz über das Training hinweg
 
-- **Domäne:** durchgehend *Membership* / Miravelo Inner Circle – ab Aufgabe 0. Der
-  Prozess-Key bleibt aus historischen Gründen `subscribeNewsletter`, die BPMN-Datei heißt
-  `membership.bpmn`, der Start-Message-Name `Message_SubscriptionRequested`. Diese
-  technischen Altnamen werden bei ihrer Einführung einmal erwähnt (Prozess-Key in Aufgabe 2,
-  Message-Name in Aufgabe 3) und danach nicht mehr kommentiert.
+- **Domäne:** durchgehend *Membership* (die MiraVelo Inner Circle Membership) – ab Aufgabe 0.
+  Der Prozess-Key ist `membership`, die BPMN-Datei heißt `membership.bpmn`, der
+  Start-Message-Name `Message_MembershipRequested`.
 - **Personen in Beispielen:** alphabetisch fortlaufend (Alice, Bob, Carol, Dave, Eve,
   Grace, Hanna, Jane) – jede Aufgabe nimmt die nächsten Namen.
 - **Element-ID-Konvention:** `startEvent_`, `endEvent_`, `userTask_`, `serviceTask_`,
@@ -308,7 +307,7 @@ Zwei Regeln dazu:
 ## 5. Checkliste vor dem Commit einer Aufgabe
 
 - [ ] Alle Pflichtabschnitte vorhanden und in der Reihenfolge aus Abschnitt 1
-- [ ] Info-Kasten mit Voraussetzung, Arbeitsverzeichnis, Neuerungen
+- [ ] Info-Kasten mit Voraussetzung, Arbeitsverzeichnis, Neuerungen, Dauer
 - [ ] Jeder Arbeitsschritt beginnt mit einem Imperativ
 - [ ] Kein Abschnitt und kein Schritt startet direkt mit einem Codeblock, einer Tabelle oder
       einem Diagramm – überall steht mindestens ein erklärender Satz davor

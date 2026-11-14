@@ -10,7 +10,7 @@ import java.util.List;
 public final class Messages {
   public static final MessageName CONFIRMATION_REJECTED = new MessageName("Message_ConfirmationRejected");
 
-  public static final MessageName SUBSCRIPTION_REQUESTED = new MessageName("Message_SubscriptionRequested");
+  public static final MessageName MEMBERSHIP_REQUESTED = new MessageName("Message_MembershipRequested");
 
   private Messages() {
   }
@@ -18,6 +18,6 @@ public final class Messages {
   public static List<MessageName> all() {
     return List.of(
         CONFIRMATION_REJECTED,
-        SUBSCRIPTION_REQUESTED);
+        MEMBERSHIP_REQUESTED);
   }
 }

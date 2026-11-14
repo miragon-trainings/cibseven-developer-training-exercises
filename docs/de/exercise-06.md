@@ -3,6 +3,7 @@
 > **Voraussetzung:** Aufgabe 5 ist abgeschlossen – Subprozess, Boundary Events und Parallelzweige laufen.
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** Kompensation (Compensation Boundary Event, Kompensations-Handler, Compensating End Event), Call Activity mit In-Mapping, DMN-Entscheidungstabelle, Business Rule Task.
+> **Dauer:** 60–90 Min.
 
 ## Darum geht es
 
@@ -10,7 +11,7 @@ In Aufgabe 5 liegt `revokeClaim` im Sequenzfluss jedes Abbruchpfads. Mit jedem n
 müsstest du ihn erneut einbauen. **BPMN-Kompensation** deklariert stattdessen einmal, welche
 Aktivität welche andere rückgängig macht, und die Engine ruft den Handler beim Abbruch selbst auf.
 
-Außerdem will Miravelo abgelehnte Bewerberinnen und Bewerber zwischen 21 und 29 nicht kampflos
+Außerdem will MiraVelo abgelehnte Bewerberinnen und Bewerber zwischen 21 und 29 nicht kampflos
 ziehen lassen. Die Ablehnungsbehandlung wandert deshalb in einen **eigenen Prozess**, aufgerufen
 über eine **Call Activity**. Wer die Zielgruppe ist, entscheidet eine **DMN-Entscheidungstabelle**,
 die der Fachbereich später selbst pflegen kann.

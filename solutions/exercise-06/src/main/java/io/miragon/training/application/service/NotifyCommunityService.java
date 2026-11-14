@@ -31,7 +31,7 @@ public class NotifyCommunityService implements NotifyCommunityUseCase {
         var name = membership.name().value();
         log.info("Notifying community about new Inner Circle member {} (membershipId={})", name, membershipId.value());
         notificationPublisher.publish(new Notification(
-                "Miravelo Inner Circle",
+                "MiraVelo Inner Circle",
                 "🎉 New Inner Circle member: " + name + "!"));
     }
 }

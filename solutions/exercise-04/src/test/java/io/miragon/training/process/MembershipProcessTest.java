@@ -1,7 +1,7 @@
 package io.miragon.training.process;
 
 import io.miragon.bpmn.runtime.path.PathWalk;
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
+import io.miragon.training.adapter.process.MembershipProcessApi.FlowNodes;
 import io.miragon.training.application.port.inbound.ClaimMembershipUseCase;
 import io.miragon.training.application.port.inbound.SendConfirmationMailUseCase;
 import io.miragon.training.application.port.inbound.SendRejectionMailUseCase;

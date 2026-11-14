@@ -1,8 +1,9 @@
-# Exercise 1 – Getting the engine running
+# Exercise 1 – Get the engine running
 
 > **Prerequisite:** Exercise 0 is complete (the core flow exists at the business level).
 > **Working directory:** `services/process-application`
 > **New in this exercise:** CIB Seven starter, engine configuration, embedded database (H2), auto-deployment, Cockpit, H2 console, `act_*` tables, start form, Manual Task.
+> **Duration:** 20–30 min
 
 ## What this is about
 
@@ -74,7 +75,7 @@ important:
 
 | Table | Prefix | Content |
 |---|---|---|
-| `act_re_procdef` | `re` = Repository | deployed **process definitions** (`subscribeNewsletter`) |
+| `act_re_procdef` | `re` = Repository | deployed **process definitions** (`membership`) |
 | `act_ru_execution` | `ru` = Runtime | **running** process instances |
 | `act_ru_task` | `ru` | open **User Tasks** |
 | `act_ru_variable` | `ru` | **process variables** of running instances |
@@ -90,7 +91,7 @@ SELECT key_, name_, version_ FROM act_re_procdef;
 
 Open [http://localhost:8080/webapp/#/seven/auth/start](http://localhost:8080/webapp/#/seven/auth/start)
 (admin / admin). Under **Processes** you see `Join Inner Circle`, the display name for the
-process key `subscribeNewsletter`. Click your way through **Cockpit**, **Tasklist** and **Admin**.
+process key `membership`. Click your way through **Cockpit**, **Tasklist** and **Admin**.
 
 ### 7. Play through the process
 
@@ -121,7 +122,7 @@ End Event.
 ## Self-check
 
 - [ ] Dependencies, configuration and `@SpringBootApplication` are enabled
-- [ ] The application starts, `act_re_procdef` contains `subscribeNewsletter`
+- [ ] The application starts, `act_re_procdef` contains `membership`
 - [ ] `Join Inner Circle` appears in the Cockpit under **Processes**
 - [ ] An instance started via the start form shows as `COMPLETED` in the History
 - [ ] You can explain why the instance doesn't wait at the Manual Tasks

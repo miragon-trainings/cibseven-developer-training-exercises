@@ -8,7 +8,7 @@ import io.miragon.training.application.port.inbound.SendConfirmationMailUseCase;
 import io.miragon.training.application.port.inbound.SendRejectionMailUseCase;
 import io.miragon.training.application.port.inbound.SendWelcomeMailUseCase;
 import io.miragon.bpmn.runtime.path.PathWalk;
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
+import io.miragon.training.adapter.process.MembershipProcessApi.FlowNodes;
 import io.miragon.training.application.port.outbound.MembershipProcess;
 import io.miragon.training.domain.Age;
 import io.miragon.training.domain.Email;

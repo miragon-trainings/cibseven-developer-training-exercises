@@ -158,8 +158,7 @@ public final class HandleRejectionProcessApi {
       }
 
       public static final class Next {
-        public SequenceFlows<BusinessRuleTaskCategorizeApplicant> businessRuleTaskCategorizeApplicant(
-            ) {
+        public SequenceFlows<BusinessRuleTaskCategorizeApplicant> businessRuleTaskCategorizeApplicant() {
           return SequenceFlows.single(new ElementId("flow_confirmationRejectedToCategorizeApplicant"), BusinessRuleTaskCategorizeApplicant.INSTANCE);
         }
       }

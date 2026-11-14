@@ -3,6 +3,7 @@
 > **Voraussetzung:** Aufgabe 3 ist abgeschlossen – Gateway, Kapazitätsprüfung und beide Prozessausgänge laufen.
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** Transaktionsgrenzen (`asyncBefore`/`asyncAfter`), In-Memory-Engine mit H2, abgeschalteter Job Executor, `@MockitoBean`, Assertions mit `BpmnAwareTests`, Coverage-Report (Process Test Coverage).
+> **Dauer:** 45–60 Min.
 
 ## Darum geht es
 

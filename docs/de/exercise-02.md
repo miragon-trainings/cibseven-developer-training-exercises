@@ -3,6 +3,7 @@
 > **Voraussetzung:** Aufgabe 1 ist abgeschlossen – die Engine startet und deployt `membership.bpmn`.
 > **Arbeitsverzeichnis:** `services/process-application`
 > **Neu in dieser Aufgabe:** Prozess-Key, Element-ID, User Task, Wait State, Generated Form am User Task, Service Task, JavaDelegate, Delegate Expression.
+> **Dauer:** 45–60 Min.
 
 ## Darum geht es
 
@@ -46,8 +47,8 @@ die Engine-Anbindung schreibst du in Schritt 4 selbst.
 
 Öffne `src/main/resources/bpmn/membership.bpmn` im Miragon BPMN Modeler. Alle Änderungen machst du
 dort im Properties Panel, nicht im XML. Wirf zuerst einen Blick auf die Prozess-Eigenschaften: Der
-**Prozess-Key** `subscribeNewsletter` ist der Name, unter dem die Engine den Prozess kennt (ein
-historischer Name, er bleibt so). `Executable` ist aktiv, `History Time To Live` steht auf `180`.
+**Prozess-Key** `membership` ist der Name, unter dem die Engine den Prozess kennt.
+`Executable` ist aktiv, `History Time To Live` steht auf `180`.
 
 Ändere den Typ von „Confirm" auf **User Task** und lege unter **Forms** eine Generated Form an:
 

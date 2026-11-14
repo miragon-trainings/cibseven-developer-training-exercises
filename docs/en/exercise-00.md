@@ -1,12 +1,13 @@
-# Exercise 0 – Model the membership flow at the business level
+# Exercise 0 – Model the membership flow
 
 > **Prerequisite:** Chapter 1 – you know BPMN as a notation: Start and End Events, User Task and Service Task, sequence flow, Exclusive Gateway and Parallel Gateway.
 > **Working directory:** any folder you like (no code yet, no module yet).
 > **New in this exercise:** BPMN modeler, the membership core flow as a shared map.
+> **Duration:** 20–30 min
 
 ## What this is about
 
-**Miravelo** is an online shop for premium bikes. For its most loyal customers there is the
+**MiraVelo** is an online shop for premium bikes. For its most loyal customers there is the
 **Inner Circle**, a membership with a limited number of seats: whoever wants to join registers,
 gets a seat reserved, confirms via double opt-in and is welcomed. Before anything gets automated,
 you capture this core flow at the business level. From Exercise 1 on you automate it piece by

@@ -12,7 +12,7 @@ import dev.bpmcrafters.processengineapi.task.TaskSubscriptionApi;
 import dev.bpmcrafters.processengineapi.task.UserTaskCompletionApi;
 import dev.bpmcrafters.processengineapi.task.support.UserTaskSupport;
 import io.miragon.training.adapter.process.Messages;
-import io.miragon.training.adapter.process.SubscribeNewsletterProcessApi.FlowNodes;
+import io.miragon.training.adapter.process.MembershipProcessApi.FlowNodes;
 import io.miragon.training.application.port.outbound.MembershipProcess;
 import io.miragon.training.domain.Membership;
 import io.miragon.training.domain.MembershipId;
@@ -58,7 +58,7 @@ public class MembershipProcessAdapter implements MembershipProcess {
         var membershipId = membership.id().value().toString();
         startProcessApi.startProcess(
                 new StartProcessByMessageCmd(
-                        Messages.SUBSCRIPTION_REQUESTED.getValue(),
+                        Messages.MEMBERSHIP_REQUESTED.getValue(),
                         Map.of(
                                 "membershipId", membershipId,
                                 "email", membership.email().value(),

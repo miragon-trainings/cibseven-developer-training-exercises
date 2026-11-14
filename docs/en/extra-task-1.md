@@ -1,8 +1,9 @@
-# Extra Task 1 – Breaking Free from Engine Lock-in
+# Extra Task 1 – Break free from engine lock-in
 
 > **Prerequisite:** Exercise 7 is complete – the Membership process runs end to end, including the "Membership activated" signal end event.
 > **Working directory:** `services/process-application` (Part A) and `services/logistics-service` (Part B)
 > **New in this exercise:** Process-Engine-API from bpm-crafters, worker pattern instead of JavaDelegate, engine-neutral outbound adapter, embedded and remote adapter, ArchUnit guardrail.
+> **Duration:** 30–45 min
 
 ## What this is about
 
@@ -113,7 +114,7 @@ Replace `RuntimeService` with `StartProcessApi` and `CorrelationApi`:
 public void startProcess(Membership membership) {
     var membershipId = membership.id().value().toString();
     startProcessApi.startProcess(new StartProcessByMessageCmd(
-            Messages.SUBSCRIPTION_REQUESTED.getValue(),
+            Messages.MEMBERSHIP_REQUESTED.getValue(),
             Map.of(
                     "membershipId", membershipId,
                     "email", membership.email().value(),

@@ -3,10 +3,11 @@
 > **Prerequisite:** Exercise 2 is complete – User Task and Service Task are working, instances are started in the Cockpit.
 > **Working directory:** `services/process-application`
 > **New in this exercise:** Message Start Event, correlation, `RuntimeService`, business key, REST endpoint, persistence, confirmation via REST (`TaskService`), Exclusive Gateway with default flow.
+> **Duration:** 60–90 min
 
 ## What this is about
 
-Miravelo launches the new **Backroad AL**, and 500 registrations come in overnight. Nobody starts
+MiraVelo launches the new **Backroad AL**, and 500 registrations come in overnight. Nobody starts
 500 instances by hand in the Cockpit: from now on **the application** starts the process as soon as
 a registration arrives via REST. Whoever signs up confirms via a link in a mail (double opt-in), and
 this click also arrives as a REST call. On top of that, the Inner Circle is limited to
@@ -51,7 +52,7 @@ the data comes in via REST, and confirmation happens via REST.
 
 | Change | Element ID | Name | Configuration |
 |---|---|---|---|
-| Start Event → **Message Start Event** | `startEvent_submitRegistration` | Submit registration form | Message Name `Message_SubscriptionRequested` |
+| Start Event → **Message Start Event** | `startEvent_submitRegistration` | Submit registration form | Message Name `Message_MembershipRequested` |
 | New Service Task | `serviceTask_claimMembership` | Claim membership | `#{claimMembershipDelegate}` |
 | New **Exclusive Gateway** | `gateway_hasEmptySpots` | Free seat available? | Default flow: yes path |
 | Yes path: new Service Task before the User Task | `serviceTask_sendConfirmationMail` | Send confirmation mail | `#{sendConfirmationMailDelegate}` |
@@ -76,8 +77,8 @@ runtimeService.createMessageCorrelation(/* message name */)
         .correlateStartMessage();
 ```
 
-Like the process key, the message name `Message_SubscriptionRequested` is a historical name. A
-typo leads to a `MismatchingMessageCorrelationException`.
+A typo in the message name `Message_MembershipRequested` leads to a
+`MismatchingMessageCorrelationException`.
 
 ### 4. Switch the delegates to the `membershipId`
 
@@ -144,7 +145,7 @@ ends at `Membership rejected` without waiting at the User Task.
 
 ## Self-check
 
-- [ ] The Start Event is a Message Start Event with `Message_SubscriptionRequested`
+- [ ] The Start Event is a Message Start Event with `Message_MembershipRequested`
 - [ ] `POST /api/memberships` starts an instance with the `membershipId` as its business key
 - [ ] `POST /api/memberships/{id}/confirm` completes the waiting User Task via the `TaskService`
 - [ ] The gateway has a default flow and exactly one condition (`${!hasEmptySpots}`)

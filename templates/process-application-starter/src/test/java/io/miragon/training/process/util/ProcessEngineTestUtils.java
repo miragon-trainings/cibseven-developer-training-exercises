@@ -19,7 +19,7 @@ import org.cibseven.bpm.engine.runtime.ProcessInstance;
  */
 public final class ProcessEngineTestUtils {
 
-    private static final String PROCESS_DEFINITION_KEY = "subscribeNewsletter";
+    private static final String PROCESS_DEFINITION_KEY = "membership";
 
     private ProcessEngineTestUtils() {
     }

@@ -8,13 +8,13 @@ import java.util.List;
  * BPMN message names used to correlate messages to running process instances.
  */
 public final class Messages {
-  public static final MessageName SUBSCRIPTION_REQUESTED = new MessageName("Message_SubscriptionRequested");
+  public static final MessageName MEMBERSHIP_REQUESTED = new MessageName("Message_MembershipRequested");
 
   private Messages() {
   }
 
   public static List<MessageName> all() {
     return List.of(
-        SUBSCRIPTION_REQUESTED);
+        MEMBERSHIP_REQUESTED);
   }
 }

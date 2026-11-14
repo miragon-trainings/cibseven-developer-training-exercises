@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1d2hcmz" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.20.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
-  <bpmn:process id="subscribeNewsletter" isExecutable="true" camunda:historyTimeToLive="180">
+  <bpmn:process id="membership" isExecutable="true" camunda:historyTimeToLive="180">
     <bpmn:startEvent id="startEvent_submitRegistration" name="Submit registration form" camunda:asyncBefore="true">
       <bpmn:outgoing>flow_submitRegistrationToClaimMembership</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_0rxlo7x" messageRef="Message_3p5jpc1" />
@@ -159,11 +159,11 @@
     <bpmn:sequenceFlow id="flow_reSendConfirmationMailToMailSentAgain" sourceRef="serviceTask_reSendConfirmationMail" targetRef="endEvent_mailSentAgain" />
     <bpmn:association id="association_compensateClaim" associationDirection="One" sourceRef="event_compensateClaim" targetRef="serviceTask_revokeClaim" />
   </bpmn:process>
-  <bpmn:message id="Message_3p5jpc1" name="Message_SubscriptionRequested" />
+  <bpmn:message id="Message_3p5jpc1" name="Message_MembershipRequested" />
   <bpmn:message id="Message_ConfirmationRejected" name="Message_ConfirmationRejected" />
   <bpmn:signal id="Signal_MemberActivated" name="Signal_MemberActivated" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="subscribeNewsletter">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="membership">
       <bpmndi:BPMNShape id="Event_11n7oe2_di" bpmnElement="startEvent_submitRegistration">
         <dc:Bounds x="-1038" y="-738" width="36" height="36" />
         <bpmndi:BPMNLabel>

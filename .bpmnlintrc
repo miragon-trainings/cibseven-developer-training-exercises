@@ -5,7 +5,8 @@
     "plugin:camunda-compat/camunda-platform-7-24"
   ],
   "rules": {
-    "fake-join": "off"
+    "fake-join": "off",
+    "@miragon/rules/no-generated-ids": "off"
   },
   "moddleExtensions": {
     "camunda": "camunda-bpmn-moddle/resources/camunda.json"

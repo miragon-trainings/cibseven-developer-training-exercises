@@ -1,7 +1,6 @@
 package io.miragon.training.process.util;
 
 import io.miragon.training.adapter.process.MembershipProcessApi;
-import org.cibseven.bpm.engine.ManagementService;
 import org.cibseven.bpm.engine.ProcessEngine;
 import org.cibseven.bpm.engine.RuntimeService;
 import org.cibseven.bpm.engine.runtime.Job;
@@ -12,42 +11,15 @@ import org.cibseven.bpm.engine.runtime.ProcessInstance;
  *
  * <p>The job executor is disabled in the {@code test} profile (see {@code application-test.yaml}).
  * That makes the process wait at every {@code camunda:asyncBefore/After}: no background thread ever
- * picks the job up. These helpers push the process forward from the test thread instead, so the
- * timing is fully under our control and the test stays fast and reproducible.
+ * picks the job up. The test pushes the process forward from the test thread with
+ * {@code execute(job(...))}, one job per call like one run of the job executor, so the timing is
+ * fully under our control. These helpers cover the timer and the instance lookup.
  */
 public final class ProcessEngineTestUtils {
 
     private static final String PROCESS_DEFINITION_KEY = MembershipProcessApi.PROCESS_ID.getValue();
 
     private ProcessEngineTestUtils() {
-    }
-
-    /**
-     * Executes all pending async-continuation ("message") jobs one after another until the process
-     * reaches its next wait state (user/receive task, timer, or end).
-     */
-    public static void continueToNextWaitState(ProcessEngine processEngine) {
-        continueToNextWaitState(processEngine, null);
-    }
-
-    /**
-     * Like {@link #continueToNextWaitState(ProcessEngine)}, but only drives the jobs of a single
-     * process instance. Useful when an activity broadcasts a signal that starts a second,
-     * independent instance which should <em>not</em> be driven by this call.
-     */
-    public static void continueToNextWaitState(ProcessEngine processEngine, String processInstanceId) {
-        ManagementService managementService = processEngine.getManagementService();
-        for (int i = 0; i < 50; i++) {
-            var query = managementService.createJobQuery().active().messages();
-            if (processInstanceId != null) {
-                query = query.processInstanceId(processInstanceId);
-            }
-            Job job = query.listPage(0, 1).stream().findFirst().orElse(null);
-            if (job == null) {
-                return;
-            }
-            managementService.executeJob(job.getId());
-        }
     }
 
     /**

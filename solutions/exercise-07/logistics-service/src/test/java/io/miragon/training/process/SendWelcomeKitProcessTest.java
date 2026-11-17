@@ -17,11 +17,12 @@ import java.util.UUID;
 
 import static io.miragon.training.process.util.ProcessEngineTestUtils.broadcastSignal;
 import static io.miragon.training.process.util.ProcessEngineTestUtils.completeExternalTask;
-import static io.miragon.training.process.util.ProcessEngineTestUtils.continueToNextWaitState;
 import static io.miragon.training.process.util.ProcessEngineTestUtils.findInstance;
 import static io.miragon.training.process.util.ProcessEngineTestUtils.startProcessByKey;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.assertThat;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.execute;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.init;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.job;
 
 /**
  * Process-model behaviour test for the {@code sendWelcomeKit} model — it lives here because this service
@@ -58,14 +59,17 @@ class SendWelcomeKitProcessTest {
 
     @Test
     void theSignalStartsTheProcessAndTheWorkerShipsTheKitToTheEnd() {
+        // given
         broadcastSignal(processEngine, Signals.MEMBER_ACTIVATED.getValue(), Map.of("name", "Jane"));
         ProcessInstance instance = findInstance(processEngine, SendWelcomeKitProcessApi.PROCESS_ID.getValue());
 
+        // when
         // The signal start is asyncBefore: the instance commits at once and only reaches the external task
         // once its async continuation runs. With the job executor off, we drive that from the test thread.
-        continueToNextWaitState(processEngine);
+        execute(job(FlowNodes.StartEventMemberActivated.ELEMENT_ID, instance));
         completeExternalTask(processEngine, ServiceTasks.SHIP_WELCOME_KIT); // stands in for the remote worker
 
+        // then
         var signalPath = PathWalk.from(FlowNodes.startEventMemberActivated())
                 .then(next -> next.gatewayStart())
                 .then(next -> next.serviceTaskShipWelcomeKit())
@@ -78,13 +82,16 @@ class SendWelcomeKitProcessTest {
 
     @Test
     void theManualStartAlsoRunsTheProcess() {
+        // given
         // The second (none) start event lets the service drive a run itself, over the engine's REST API
         // (RemoteWelcomeKitProcessAdapter) — for a manual re-send or a test, independent of the signal.
         startProcessByKey(processEngine, SendWelcomeKitProcessApi.PROCESS_ID.getValue(), Map.of("name", "Jane"));
         ProcessInstance instance = findInstance(processEngine, SendWelcomeKitProcessApi.PROCESS_ID.getValue());
 
+        // when
         completeExternalTask(processEngine, ServiceTasks.SHIP_WELCOME_KIT);
 
+        // then
         var manualPath = PathWalk.from(FlowNodes.startEventManualStart())
                 .then(next -> next.gatewayStart())
                 .then(next -> next.serviceTaskShipWelcomeKit())

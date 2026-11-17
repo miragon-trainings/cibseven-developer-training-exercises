@@ -28,11 +28,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import static io.miragon.training.process.util.ProcessEngineTestUtils.continueToNextWaitState;
 import static io.miragon.training.process.util.ProcessEngineTestUtils.findProcessInstance;
 import static io.miragon.training.process.util.ProcessEngineTestUtils.fireTimer;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.assertThat;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.calledProcessInstance;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.execute;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.init;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.job;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.jobQuery;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -98,24 +101,26 @@ class MembershipProcessTest {
         when(claimMembershipUseCase.claimMembership(any())).thenReturn(true);
         membershipProcess.startProcess(new Membership(id, new Email("user@example.com"), new Name("User"), new Age(age)));
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
-        continueToNextWaitState(processEngine, instance.getProcessInstanceId());
-        assertThat(instance).isWaitingAt(MembershipProcessApi.FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
+        execute(job(MembershipProcessApi.FlowNodes.StartEventSubmitRegistration.ELEMENT_ID, instance));
+        execute(job(MembershipProcessApi.FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID, instance));
         return instance;
     }
 
     @Test
     void happyPath_membershipActivated() {
+        // given
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, 30);
 
+        // when
         String taskId = taskService.createTaskQuery()
                 .processInstanceId(instance.getProcessInstanceId()).singleResult().getId();
         taskService.complete(taskId);
-        continueToNextWaitState(processEngine, instance.getProcessInstanceId());
+        execute(job(MembershipProcessApi.FlowNodes.UserTaskConfirmMembership.ELEMENT_ID, instance));
+        execute(job(MembershipProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, instance));
+        execute(job(MembershipProcessApi.FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID, instance));
 
-        // After confirmation the flow forks: Send Welcome Mail and Notify community both run in
-        // parallel as in-engine delegates, so the parallel join fires on its own.
-
+        // then
         // The subprocess is a scope bracket: onto() steps onto it without recording it, inside() walks
         // its interior and resumes on the subprocess, so the step to the fork is checked again.
         var happyPath = PathWalk.from(MembershipProcessApi.FlowNodes.startEventSubmitRegistration())
@@ -149,13 +154,17 @@ class MembershipProcessTest {
 
     @Test
     void noCapacity_membershipIsRejected() {
+        // given
         when(claimMembershipUseCase.claimMembership(any())).thenReturn(false);
         MembershipId id = new MembershipId();
         membershipProcess.startProcess(new Membership(id, new Email("jack@example.com"), new Name("Jack"), new Age(40)));
-
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
-        continueToNextWaitState(processEngine, instance.getProcessInstanceId());
 
+        // when
+        execute(job(MembershipProcessApi.FlowNodes.StartEventSubmitRegistration.ELEMENT_ID, instance));
+        execute(job(MembershipProcessApi.FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID, instance));
+
+        // then
         var rejectionPath = PathWalk.from(MembershipProcessApi.FlowNodes.startEventSubmitRegistration())
                 .then(next -> next.serviceTaskClaimMembership())
                 .then(next -> next.gatewayHasEmptySpots())
@@ -172,12 +181,15 @@ class MembershipProcessTest {
 
     @Test
     void abortTimer_lowValueApplicant_callActivityAcceptsRejectionAndCompensates() {
+        // given
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, 40); // age 40 -> DMN: not high value
 
+        // when
         fireTimer(processEngine, MembershipProcessApi.FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID);
-        continueToNextWaitState(processEngine);
+        execute(job(jobQuery().messages().activityId(MembershipProcessApi.FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID), instance));
 
+        // then
         // Asserted unordered: the engine orders passed activities by end time, and the compensation
         // handler finishes before the end event that throws the compensation.
         var abortPath = PathWalk.from(MembershipProcessApi.FlowNodes.userTaskConfirmMembership())
@@ -196,11 +208,13 @@ class MembershipProcessTest {
 
     @Test
     void rejectMessage_highValueApplicant_callActivityAsksForRegretMailThenCompensates() {
+        // given
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, 25); // age 25 -> DMN: high value
 
+        // when
         membershipProcess.rejectMembership(id);
-        continueToNextWaitState(processEngine);
+        execute(job(MembershipProcessApi.FlowNodes.EventConfirmationRejected.ELEMENT_ID, instance));
 
         // the called handleRejection instance now waits for the regret mail to be written
         String regretTaskId = taskService.createTaskQuery()
@@ -208,8 +222,9 @@ class MembershipProcessTest {
                 .singleResult()
                 .getId();
         taskService.complete(regretTaskId);
-        continueToNextWaitState(processEngine);
+        execute(job(HandleRejectionProcessApi.FlowNodes.UserTaskWriteRegretMail.ELEMENT_ID, calledProcessInstance(instance)));
 
+        // then
         var rejectPath = PathWalk.from(MembershipProcessApi.FlowNodes.userTaskConfirmMembership())
                 .interruptedBy(MembershipProcessApi.FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventConfirmationRejected())
                 .then(next -> next.callActivityHandleRejection())
@@ -225,20 +240,28 @@ class MembershipProcessTest {
 
     @Test
     void resendTimer_nonInterrupting_resendsConfirmationMailAndKeepsWaiting() {
+        // given
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, 30);
-        verify(sendConfirmationMailUseCase, times(1)).sendConfirmationMail(id);
 
+        // when
         fireTimer(processEngine, MembershipProcessApi.FlowNodes.EventResendEveryDay.ELEMENT_ID);
-        continueToNextWaitState(processEngine, instance.getProcessInstanceId());
-
-        assertThat(instance).isWaitingAt(MembershipProcessApi.FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
-        verify(reSendConfirmationMailUseCase, times(1)).reSendConfirmationMail(id);
-
+        execute(job(jobQuery().messages().activityId(MembershipProcessApi.FlowNodes.EventResendEveryDay.ELEMENT_ID), instance));
+        execute(job(MembershipProcessApi.FlowNodes.ServiceTaskReSendConfirmationMail.ELEMENT_ID, instance));
         String taskId = taskService.createTaskQuery()
                 .processInstanceId(instance.getProcessInstanceId()).singleResult().getId();
         taskService.complete(taskId);
-        continueToNextWaitState(processEngine, instance.getProcessInstanceId());
-        assertThat(instance).isEnded().hasPassed(MembershipProcessApi.FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
+        execute(job(MembershipProcessApi.FlowNodes.UserTaskConfirmMembership.ELEMENT_ID, instance));
+        execute(job(MembershipProcessApi.FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, instance));
+        execute(job(MembershipProcessApi.FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID, instance));
+
+        // then
+        assertThat(instance)
+                .isEnded()
+                .hasPassed(
+                        MembershipProcessApi.FlowNodes.ServiceTaskReSendConfirmationMail.ELEMENT_ID,
+                        MembershipProcessApi.FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
+        verify(sendConfirmationMailUseCase, times(1)).sendConfirmationMail(id);
+        verify(reSendConfirmationMailUseCase, times(1)).reSendConfirmationMail(id);
     }
 }

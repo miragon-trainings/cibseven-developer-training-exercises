@@ -156,7 +156,9 @@ Add three tests and mock `RevokeClaimUseCase`, `ReSendConfirmationMailUseCase`, 
 `NotifyCommunityUseCase` for them:
 
 - **Timeout:** Fire the timer with `fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID)`
-  from `ProcessEngineTestUtils`, execute the open jobs, and check the path with `hasPassedInOrder`:
+  from `ProcessEngineTestUtils`. The event carries `asyncAfter`, so run that job next with
+  `execute(job(jobQuery().messages().activityId(FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID), instance))`
+  and check the path with `hasPassedInOrder`:
 
   ```java
   var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
@@ -167,7 +169,9 @@ Add three tests and mock `RevokeClaimUseCase`, `ReSendConfirmationMailUseCase`, 
 
 - **Withdrawal:** Instead of the timer, call `membershipProcess.rejectMembership(id)`. The path runs
   via `eventConfirmationRejected()`.
-- **Reminder:** Fire `FlowNodes.EventResendEveryDay.ELEMENT_ID` and check that
+- **Reminder:** Fire `FlowNodes.EventResendEveryDay.ELEMENT_ID`, run the event's `asyncAfter` job
+  and then the job of the re-send task, one `execute(job(...))` each. The cycle timer schedules its
+  next run on the same element, so pick the async job with `jobQuery().messages()`. Check that
   `reSendConfirmationMailUseCase` was called and the instance is still waiting at the user task.
 
 ## Constraints

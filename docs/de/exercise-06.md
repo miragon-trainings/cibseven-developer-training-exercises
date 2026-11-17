@@ -136,9 +136,10 @@ auslöst. Decke dann beide DMN-Zweige ab:
   (`HandleRejectionProcessApi.FlowNodes.UserTaskWriteRegretMail.ELEMENT_ID`). Schließe den Task ab
   und prüfe denselben Pfad mit `eventConfirmationRejected()`.
 
-Der aufgerufene Prozess ist eine eigene Instanz mit eigenen Jobs. Rufe `continueToNextWaitState`
-deshalb **ohne** Instanz-ID auf, sonst bleibt der Job hinter `userTask_writeRegretMail` liegen. Im
-Happy Path und bei fehlender Kapazität prüfst du `hasNotPassed` jetzt mit
+Der aufgerufene Prozess ist eine eigene Instanz mit eigenen Jobs. Führe den Job hinter
+`userTask_writeRegretMail` deshalb auf dieser Instanz aus:
+`execute(job(HandleRejectionProcessApi.FlowNodes.UserTaskWriteRegretMail.ELEMENT_ID, calledProcessInstance(instance)))`.
+Im Happy Path und bei fehlender Kapazität prüfst du `hasNotPassed` jetzt mit
 `CallActivityHandleRejection` statt `ServiceTaskRevokeClaim`.
 
 ## Randbedingungen

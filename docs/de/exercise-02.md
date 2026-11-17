@@ -27,7 +27,11 @@ Nach dieser Aufgabe kannst du
 
 ![BPMN-Modell der Aufgabe](../assets/exercise-02.svg)
 
-Referenzmodell: `../../models/exercise-02/membership.bpmn`
+Du baust dieses Ziel-Modell nicht neu, sondern änderst das bestehende Modell aus Aufgabe 1:
+`services/process-application/src/main/resources/bpmn/membership.bpmn`. Nur diese Datei deployt
+die Engine beim Start.
+
+Referenzmodell zum Vergleich: `../../models/exercise-02/membership.bpmn`
 
 ## Aufgabe
 
@@ -45,8 +49,9 @@ die Engine-Anbindung schreibst du in Schritt 4 selbst.
 
 ### 2. „Confirm" in einen User Task umwandeln
 
-Öffne `src/main/resources/bpmn/membership.bpmn` im Miragon BPMN Modeler. Alle Änderungen machst du
-dort im Properties Panel, nicht im XML. Wirf zuerst einen Blick auf die Prozess-Eigenschaften: Der
+Öffne `services/process-application/src/main/resources/bpmn/membership.bpmn` im Miragon BPMN
+Modeler. Alle Änderungen dieser und der nächsten Schritte machst du in dieser Datei, im Properties
+Panel und nicht im XML. Speichere die Datei nach jeder Änderung. Wirf zuerst einen Blick auf die Prozess-Eigenschaften: Der
 **Prozess-Key** `membership` ist der Name, unter dem die Engine den Prozess kennt.
 `Executable` ist aktiv, `History Time To Live` steht auf `180`.
 
@@ -66,7 +71,7 @@ beim Abschließen als neue Prozessvariable gespeichert.
 
 ### 3. „Send welcome mail" in einen Service Task umwandeln
 
-Ändere den Typ von „Send welcome mail" auf **Service Task** und binde ihn an den Delegate:
+Ändere im selben Modell den Typ von „Send welcome mail" auf **Service Task** und binde ihn an den Delegate:
 
 | Element | Typ | Element-ID | Name | Delegate Expression |
 |---|---|---|---|---|

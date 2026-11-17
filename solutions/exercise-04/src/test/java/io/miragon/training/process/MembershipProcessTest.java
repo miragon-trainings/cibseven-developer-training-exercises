@@ -23,10 +23,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import static io.miragon.training.process.util.ProcessEngineTestUtils.continueToNextWaitState;
 import static io.miragon.training.process.util.ProcessEngineTestUtils.findProcessInstance;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.assertThat;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.execute;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.init;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.job;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -74,24 +75,25 @@ class MembershipProcessTest {
 
     @Test
     void happyPath_membershipIsConfirmedAndWelcomeMailIsSent() {
+        // given
         when(claimMembershipUseCase.claimMembership(any())).thenReturn(true);
-
         Membership membership = new Membership(new Email("jane@example.com"), new Name("Jane"), new Age(30));
         MembershipId id = membership.id();
         membershipProcess.startProcess(membership);
-
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
-        continueToNextWaitState(processEngine);
 
-        assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
-
+        // when
+        execute(job(FlowNodes.StartEventSubmitRegistration.ELEMENT_ID, instance));
+        execute(job(FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID, instance));
         String taskId = taskService.createTaskQuery()
                 .processInstanceId(instance.getProcessInstanceId())
                 .singleResult()
                 .getId();
         taskService.complete(taskId);
-        continueToNextWaitState(processEngine);
+        execute(job(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID, instance));
+        execute(job(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, instance));
 
+        // then
         var happyPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
                 .then(next -> next.serviceTaskClaimMembership())
                 .then(next -> next.gatewayHasEmptySpots())
@@ -115,15 +117,18 @@ class MembershipProcessTest {
 
     @Test
     void noCapacity_membershipIsRejected() {
+        // given
         when(claimMembershipUseCase.claimMembership(any())).thenReturn(false);
-
         Membership membership = new Membership(new Email("jack@example.com"), new Name("Jack"), new Age(40));
         MembershipId id = membership.id();
         membershipProcess.startProcess(membership);
-
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
-        continueToNextWaitState(processEngine);
 
+        // when
+        execute(job(FlowNodes.StartEventSubmitRegistration.ELEMENT_ID, instance));
+        execute(job(FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID, instance));
+
+        // then
         var rejectionPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
                 .then(next -> next.serviceTaskClaimMembership())
                 .then(next -> next.gatewayHasEmptySpots())

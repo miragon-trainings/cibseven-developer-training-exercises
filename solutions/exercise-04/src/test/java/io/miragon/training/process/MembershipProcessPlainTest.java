@@ -21,10 +21,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import static io.miragon.training.process.util.ProcessEngineTestUtils.continueToNextWaitState;
 import static io.miragon.training.process.util.ProcessEngineTestUtils.findProcessInstance;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.assertThat;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.execute;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.init;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.job;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -75,25 +76,25 @@ class MembershipProcessPlainTest {
 
     @Test
     void happyPath_membershipIsConfirmedAndWelcomeMailIsSent() {
+        // given
         when(claimMembershipUseCase.claimMembership(any())).thenReturn(true);
-
         Membership membership = new Membership(new Email("jane@example.com"), new Name("Jane"), new Age(30));
         MembershipId id = membership.id();
         membershipProcess.startProcess(membership);
-
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
-        continueToNextWaitState(processEngine);
 
-        assertThat(instance).isWaitingAt("userTask_confirmMembership");
-
+        // when
+        execute(job("startEvent_submitRegistration", instance));
+        execute(job("serviceTask_sendConfirmationMail", instance));
         String taskId = taskService.createTaskQuery()
                 .processInstanceId(instance.getProcessInstanceId())
                 .singleResult()
                 .getId();
         taskService.complete(taskId);
-        continueToNextWaitState(processEngine);
+        execute(job("userTask_confirmMembership", instance));
+        execute(job("serviceTask_sendWelcomeMail", instance));
 
-
+        // then
         assertThat(instance)
                 .isEnded()
                 .hasPassedInOrder(
@@ -116,15 +117,18 @@ class MembershipProcessPlainTest {
 
     @Test
     void noCapacity_membershipIsRejected() {
+        // given
         when(claimMembershipUseCase.claimMembership(any())).thenReturn(false);
-
         Membership membership = new Membership(new Email("jack@example.com"), new Name("Jack"), new Age(40));
         MembershipId id = membership.id();
         membershipProcess.startProcess(membership);
-
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
-        continueToNextWaitState(processEngine);
 
+        // when
+        execute(job("startEvent_submitRegistration", instance));
+        execute(job("serviceTask_sendRejectionMail", instance));
+
+        // then
         assertThat(instance)
                 .isEnded()
                 .hasPassedInOrder(

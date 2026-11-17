@@ -129,12 +129,14 @@ cibseven:
 ### 4. Happy-Path-Test schreiben
 
 Ersetze den Platzhalter in `src/test/java/io/miragon/training/process/MembershipProcessTest.java`
-(markiert mit `TODO Exercise 4`). Für die Ausführung der Jobs nutzt du den vorgegebenen Helfer
-`process/util/ProcessEngineTestUtils`:
+(markiert mit `TODO Exercise 4`). So treibst du die Instanz voran:
 
-- `continueToNextWaitState(processEngine)` führt die offenen Jobs aus, bis die Instanz den nächsten
-  Wait State oder ihr Ende erreicht.
-- `findProcessInstance(runtimeService, membershipId)` sucht die Instanz zur `membershipId`.
+- `execute(job("<element-id>", instance))` aus CIB seven Assert (`BpmnAwareTests`) führt den Job an
+  einer Transaktionsgrenze aus, genau wie ein Durchlauf des Job Executors. Die Instanz läuft bis zur
+  nächsten Grenze oder zum nächsten Wait State weiter und hält dort. Jedes `asyncBefore` und
+  `asyncAfter` aus der Tabelle in Schritt 1 wird im Test zu einem `execute(job(...))`.
+- `findProcessInstance(runtimeService, membershipId)` aus dem vorgegebenen Helfer
+  `process/util/ProcessEngineTestUtils` sucht die Instanz zur `membershipId`.
 
 Das Gerüst ist für jeden Prozess-Test gleich:
 
@@ -160,36 +162,33 @@ class MembershipProcessTest {
 }
 ```
 
-Der Happy Path folgt der Form Given – When – Then. Ersetze jeden Platzhalter `"<…>"` durch die
-Element-ID aus deinem Modell:
+Der Happy Path folgt der Form Given – When – Then, mit genau einem Block je Teil: `given` mockt
+und startet die Instanz, `when` treibt den Prozess Job für Job voran, `then` enthält die
+abschließenden Prüfungen. Ersetze jeden Platzhalter `"<…>"` durch die Element-ID aus deinem Modell:
 
 ```java
 @Test
 void happyPath_membershipIsConfirmedAndWelcomeMailIsSent() {
-    // Given: die Kapazitätsprüfung gewährt einen Platz
+    // given
     when(claimMembershipUseCase.claimMembership(any())).thenReturn(true);
-
-    // When: die Instanz startet und läuft bis zum ersten Wait State
     Membership membership = new Membership(new Email("jane@example.com"), new Name("Jane"), new Age(30));
     membershipProcess.startProcess(membership);
     ProcessInstance instance = findProcessInstance(runtimeService, membership.id().value().toString());
-    continueToNextWaitState(processEngine);
 
-    // Then: die Instanz wartet am User Task
-    assertThat(instance).isWaitingAt("<user-task-id>");
-
-    // When: der User Task wird abgeschlossen
+    // when
+    execute(job("<start-event-id>", instance));
+    execute(job("<confirmation-mail-task-id>", instance));
     String taskId = taskService.createTaskQuery()
             .processInstanceId(instance.getProcessInstanceId()).singleResult().getId();
     taskService.complete(taskId);
-    continueToNextWaitState(processEngine);
+    execute(job("<user-task-id>", instance));
+    execute(job("<welcome-mail-task-id>", instance));
 
-    // Then: die Instanz endet über den Bestätigungspfad
+    // then
     assertThat(instance)
             .isEnded()
             .hasPassedInOrder("<start>", "<…Aktivitäten des Bestätigungspfads, in Reihenfolge…>", "<confirmed-end>")
             .hasNotPassed("<reject-activity>", "<rejected-end>");
-
     verify(sendWelcomeMailUseCase).sendWelcomeMail(membership.id());
 }
 ```

@@ -156,7 +156,9 @@ Ergänze drei Tests und mocke dafür `RevokeClaimUseCase`, `ReSendConfirmationMa
 `NotifyCommunityUseCase`:
 
 - **Timeout:** Feuere den Timer mit `fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID)`
-  aus `ProcessEngineTestUtils`, führe die offenen Jobs aus und prüfe den Pfad mit `hasPassedInOrder`:
+  aus `ProcessEngineTestUtils`. Das Event trägt `asyncAfter`, führe diesen Job deshalb danach mit
+  `execute(job(jobQuery().messages().activityId(FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID), instance))`
+  aus und prüfe den Pfad mit `hasPassedInOrder`:
 
   ```java
   var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
@@ -167,8 +169,10 @@ Ergänze drei Tests und mocke dafür `RevokeClaimUseCase`, `ReSendConfirmationMa
 
 - **Rückzug:** Rufe statt des Timers `membershipProcess.rejectMembership(id)` auf. Der Pfad läuft
   über `eventConfirmationRejected()`.
-- **Erinnerung:** Feuere `FlowNodes.EventResendEveryDay.ELEMENT_ID` und prüfe, dass
-  `reSendConfirmationMailUseCase` aufgerufen wurde und die Instanz weiter am User Task wartet.
+- **Erinnerung:** Feuere `FlowNodes.EventResendEveryDay.ELEMENT_ID`, führe dann den `asyncAfter`-Job
+  des Events und den Job des Re-Send-Tasks aus, je ein `execute(job(...))`. Der Cycle-Timer plant
+  seinen nächsten Lauf am selben Element ein, wähle den Async-Job deshalb mit `jobQuery().messages()`.
+  Prüfe, dass `reSendConfirmationMailUseCase` aufgerufen wurde und die Instanz weiter am User Task wartet.
 
 ## Randbedingungen
 

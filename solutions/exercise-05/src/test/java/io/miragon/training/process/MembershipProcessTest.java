@@ -26,11 +26,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import static io.miragon.training.process.util.ProcessEngineTestUtils.continueToNextWaitState;
 import static io.miragon.training.process.util.ProcessEngineTestUtils.findProcessInstance;
 import static io.miragon.training.process.util.ProcessEngineTestUtils.fireTimer;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.assertThat;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.execute;
 import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.init;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.job;
+import static org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests.jobQuery;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -90,8 +92,8 @@ class MembershipProcessTest {
         when(claimMembershipUseCase.claimMembership(any())).thenReturn(true);
         membershipProcess.startProcess(new Membership(id, new Email(email), new Name(name), new Age(30)));
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
-        continueToNextWaitState(processEngine);
-        assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
+        execute(job(FlowNodes.StartEventSubmitRegistration.ELEMENT_ID, instance));
+        execute(job(FlowNodes.ServiceTaskSendConfirmationMail.ELEMENT_ID, instance));
         return instance;
     }
 
@@ -101,20 +103,21 @@ class MembershipProcessTest {
                 .singleResult()
                 .getId();
         taskService.complete(taskId);
-        continueToNextWaitState(processEngine);
-
-        // After confirmation the flow forks: Send Welcome Mail and Notify community run in parallel.
-        // Both are in-engine delegates here, so they execute synchronously and the parallel join
-        // fires on its own — no external worker to stand in for.
+        execute(job(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID, instance));
+        execute(job(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, instance));
+        execute(job(FlowNodes.ServiceTaskNotifyCommunity.ELEMENT_ID, instance));
     }
 
     @Test
     void happyPath_membershipIsActivated() {
+        // given
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, "jane@example.com", "Jane");
 
+        // when
         completeConfirmationTask(instance);
 
+        // then
         // The subprocess is a scope bracket: onto() steps onto it without recording it, inside() walks
         // its interior and resumes on the subprocess, so the step to the fork is checked again.
         var happyPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
@@ -152,13 +155,17 @@ class MembershipProcessTest {
 
     @Test
     void noCapacity_membershipIsRejected() {
+        // given
         when(claimMembershipUseCase.claimMembership(any())).thenReturn(false);
         MembershipId id = new MembershipId();
         membershipProcess.startProcess(new Membership(id, new Email("jack@example.com"), new Name("Jack"), new Age(40)));
-
         ProcessInstance instance = findProcessInstance(runtimeService, id.value().toString());
-        continueToNextWaitState(processEngine);
 
+        // when
+        execute(job(FlowNodes.StartEventSubmitRegistration.ELEMENT_ID, instance));
+        execute(job(FlowNodes.ServiceTaskSendRejectionMail.ELEMENT_ID, instance));
+
+        // then
         var rejectionPath = PathWalk.from(FlowNodes.startEventSubmitRegistration())
                 .then(next -> next.serviceTaskClaimMembership())
                 .then(next -> next.gatewayHasEmptySpots())
@@ -176,12 +183,15 @@ class MembershipProcessTest {
 
     @Test
     void abortTimer_interruptsSubprocessAndRevokesClaim() {
+        // given
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, "amy@example.com", "Amy");
 
+        // when
         fireTimer(processEngine, FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID);
-        continueToNextWaitState(processEngine);
+        execute(job(jobQuery().messages().activityId(FlowNodes.EventAbortAfter3HalfDays.ELEMENT_ID), instance));
 
+        // then
         var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
                 .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
                 .then(next -> next.serviceTaskRevokeClaim())
@@ -198,12 +208,15 @@ class MembershipProcessTest {
 
     @Test
     void rejectMessage_interruptsSubprocessAndRevokesClaim() {
+        // given
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, "ben@example.com", "Ben");
 
+        // when
         membershipProcess.rejectMembership(id);
-        continueToNextWaitState(processEngine);
+        execute(job(FlowNodes.EventConfirmationRejected.ELEMENT_ID, instance));
 
+        // then
         var rejectPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
                 .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventConfirmationRejected())
                 .then(next -> next.serviceTaskRevokeClaim())
@@ -219,20 +232,24 @@ class MembershipProcessTest {
 
     @Test
     void resendTimer_nonInterrupting_resendsConfirmationMailAndKeepsWaiting() {
+        // given
         MembershipId id = new MembershipId();
         ProcessInstance instance = startWaitingAtConfirmation(id, "cara@example.com", "Cara");
-        verify(sendConfirmationMailUseCase, times(1)).sendConfirmationMail(id);
 
+        // when
         fireTimer(processEngine, FlowNodes.EventResendEveryDay.ELEMENT_ID);
-        continueToNextWaitState(processEngine);
-
-        assertThat(instance).isWaitingAt(FlowNodes.UserTaskConfirmMembership.ELEMENT_ID);
-        verify(reSendConfirmationMailUseCase, times(1)).reSendConfirmationMail(id);
-
+        execute(job(jobQuery().messages().activityId(FlowNodes.EventResendEveryDay.ELEMENT_ID), instance));
+        execute(job(FlowNodes.ServiceTaskReSendConfirmationMail.ELEMENT_ID, instance));
         completeConfirmationTask(instance);
 
+        // then
         assertThat(instance)
                 .isEnded()
-                .hasPassed(FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID, FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
+                .hasPassed(
+                        FlowNodes.ServiceTaskReSendConfirmationMail.ELEMENT_ID,
+                        FlowNodes.ServiceTaskSendWelcomeMail.ELEMENT_ID,
+                        FlowNodes.EndEventMembershipActivated.ELEMENT_ID);
+        verify(sendConfirmationMailUseCase, times(1)).sendConfirmationMail(id);
+        verify(reSendConfirmationMailUseCase, times(1)).reSendConfirmationMail(id);
     }
 }

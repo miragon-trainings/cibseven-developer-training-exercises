@@ -129,12 +129,14 @@ cibseven:
 ### 4. Write the happy-path test
 
 Replace the placeholder in `src/test/java/io/miragon/training/process/MembershipProcessTest.java`
-(marked with `TODO Exercise 4`). To drive the instance, use the provided helper
-`process/util/ProcessEngineTestUtils`:
+(marked with `TODO Exercise 4`). To drive the instance:
 
-- `continueToNextWaitState(processEngine)` executes the open jobs until the instance reaches its
-  next wait state or its end.
-- `findProcessInstance(runtimeService, membershipId)` looks up the instance for the `membershipId`.
+- `execute(job("<element-id>", instance))` from CIB seven Assert (`BpmnAwareTests`) runs the job at
+  one transaction boundary, just like one run of the job executor. The instance runs on to the next
+  boundary or wait state and stops there. Every `asyncBefore` and `asyncAfter` from the table in
+  step 1 becomes one `execute(job(...))` in the test.
+- `findProcessInstance(runtimeService, membershipId)` from the provided helper
+  `process/util/ProcessEngineTestUtils` looks up the instance for the `membershipId`.
 
 The scaffold is the same for every process test:
 
@@ -160,36 +162,33 @@ class MembershipProcessTest {
 }
 ```
 
-The happy path follows the Given – When – Then shape. Replace each placeholder `"<…>"` with the
-element ID from your model:
+The happy path follows the Given – When – Then shape, with exactly one block each: `given` mocks
+and starts the instance, `when` drives the process one job at a time, `then` holds the final
+assertions. Replace each placeholder `"<…>"` with the element ID from your model:
 
 ```java
 @Test
 void happyPath_membershipIsConfirmedAndWelcomeMailIsSent() {
-    // Given: the capacity check grants a spot
+    // given
     when(claimMembershipUseCase.claimMembership(any())).thenReturn(true);
-
-    // When: the instance starts and runs to the first wait state
     Membership membership = new Membership(new Email("jane@example.com"), new Name("Jane"), new Age(30));
     membershipProcess.startProcess(membership);
     ProcessInstance instance = findProcessInstance(runtimeService, membership.id().value().toString());
-    continueToNextWaitState(processEngine);
 
-    // Then: the instance waits at the user task
-    assertThat(instance).isWaitingAt("<user-task-id>");
-
-    // When: the user task is completed
+    // when
+    execute(job("<start-event-id>", instance));
+    execute(job("<confirmation-mail-task-id>", instance));
     String taskId = taskService.createTaskQuery()
             .processInstanceId(instance.getProcessInstanceId()).singleResult().getId();
     taskService.complete(taskId);
-    continueToNextWaitState(processEngine);
+    execute(job("<user-task-id>", instance));
+    execute(job("<welcome-mail-task-id>", instance));
 
-    // Then: the instance ends along the confirm path
+    // then
     assertThat(instance)
             .isEnded()
             .hasPassedInOrder("<start>", "<…confirm-path activities, in order…>", "<confirmed-end>")
             .hasNotPassed("<reject-activity>", "<rejected-end>");
-
     verify(sendWelcomeMailUseCase).sendWelcomeMail(membership.id());
 }
 ```

@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -23,18 +24,18 @@ public class MicrosoftTeamsMessagePublisher implements NotificationPublisherOutP
     private static final Logger log = LoggerFactory.getLogger(MicrosoftTeamsMessagePublisher.class);
 
     private final RestClient restClient;
-    private final String webhookUrl;
+    private final URI webhookUri;
 
     public MicrosoftTeamsMessagePublisher(RestClient restClient,
                                           @Value("${notification.teams.webhook-url}") String webhookUrl) {
         this.restClient = restClient;
-        this.webhookUrl = webhookUrl;
+        this.webhookUri = URI.create(webhookUrl);
     }
 
     @Override
     public void publish(Notification notification) {
         restClient.post()
-                .uri(webhookUrl)
+                .uri(webhookUri)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(adaptiveCardMessage(notification))
                 .retrieve()

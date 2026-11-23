@@ -194,6 +194,7 @@ class MembershipProcessTest {
         // handler finishes before the end event that throws the compensation.
         var abortPath = PathWalk.from(MembershipProcessApi.FlowNodes.userTaskConfirmMembership())
                 .interruptedBy(MembershipProcessApi.FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+                .then(next -> next.gatewayDeclineJoin())
                 .then(next -> next.callActivityHandleRejection())
                 .end(next -> next.endEventMembershipDeclined())
                 .throwingCompensation(MembershipProcessApi.FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());
@@ -227,6 +228,7 @@ class MembershipProcessTest {
         // then
         var rejectPath = PathWalk.from(MembershipProcessApi.FlowNodes.userTaskConfirmMembership())
                 .interruptedBy(MembershipProcessApi.FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventConfirmationRejected())
+                .then(next -> next.gatewayDeclineJoin())
                 .then(next -> next.callActivityHandleRejection())
                 .end(next -> next.endEventMembershipDeclined())
                 .throwingCompensation(MembershipProcessApi.FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());

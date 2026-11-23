@@ -63,13 +63,15 @@ Ergänze die Pfade hinter den Boundary Events:
 | Element | Typ | Element-ID | Name | Konfiguration |
 |---|---|---|---|---|
 | Erinnerungsmail | Service Task | `serviceTask_reSendConfirmationMail` | Re-Send confirmation mail | `#{reSendConfirmationMailDelegate}` |
+| Abbruch-Join | Exclusive Gateway | `gateway_declineJoin` | | führt beide unterbrechenden Pfade zusammen |
 | Platz freigeben | Service Task | `serviceTask_revokeClaim` | Revoke claim | `#{revokeClaimDelegate}` |
 | Ende Erinnerung | End Event | `endEvent_mailSentAgain` | Mail sent again | Ende des Erinnerungszweigs |
 | Ende Abbruch | End Event | `endEvent_membershipDeclined` | Membership declined | nach `Revoke claim` |
-| Ende Aktivierung | End Event | `endEvent_membershipActivated` | Membership activated | nach dem Join |
+| Ende Aktivierung | End Event | `endEvent_membershipActivated` | Membership activated | nach `gateway_notifyJoin` |
 
-Beide unterbrechenden Boundary Events führen auf `serviceTask_revokeClaim` und von dort auf
-`endEvent_membershipDeclined`.
+Beide unterbrechenden Boundary Events führen auf `gateway_declineJoin`, von dort auf
+`serviceTask_revokeClaim` und weiter auf `endEvent_membershipDeclined`. Das Gateway führt die beiden
+Pfade sichtbar zusammen, statt beide Flows direkt in den Task laufen zu lassen.
 
 ### 4. Parallel Gateway einsetzen
 
@@ -163,6 +165,7 @@ Ergänze drei Tests und mocke dafür `RevokeClaimUseCase`, `ReSendConfirmationMa
   ```java
   var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
           .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+          .then(next -> next.gatewayDeclineJoin())
           .then(next -> next.serviceTaskRevokeClaim())
           .end(next -> next.endEventMembershipDeclined());
   ```
@@ -200,8 +203,8 @@ an `Membership activated`.
 ## Selbstcheck
 
 - [ ] Alle drei Boundary Events hängen am Subprozess, die Unterbrechungs-Semantik stimmt
-- [ ] Beide unterbrechenden Pfade führen über `Revoke claim` zu `Membership declined`
-- [ ] Fork und Join sind Parallel Gateways, beide Zweige tragen `asyncBefore`
+- [ ] Beide unterbrechenden Pfade treffen sich am Exclusive Gateway `gateway_declineJoin` und führen über `Revoke claim` zu `Membership declined`
+- [ ] `gateway_notifyFork` und `gateway_notifyJoin` sind Parallel Gateways, beide Zweige tragen `asyncBefore`
 - [ ] `POST /api/memberships/{id}/reject` bricht eine wartende Instanz ab
 - [ ] Die drei neuen Prozess-Tests sind grün
 

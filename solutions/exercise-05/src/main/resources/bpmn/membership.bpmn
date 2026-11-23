@@ -50,9 +50,14 @@
     <bpmn:endEvent id="endEvent_membershipDeclined" name="Membership declined">
       <bpmn:incoming>flow_revokeClaimToMembershipDeclined</bpmn:incoming>
     </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="gateway_declineJoin">
+      <bpmn:incoming>flow_confirmationRejectedToDeclineJoin</bpmn:incoming>
+      <bpmn:incoming>flow_abortAfter3HalfDaysToDeclineJoin</bpmn:incoming>
+      <bpmn:outgoing>flow_declineJoinToRevokeClaim</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="flow_declineJoinToRevokeClaim" sourceRef="gateway_declineJoin" targetRef="serviceTask_revokeClaim" />
     <bpmn:serviceTask id="serviceTask_revokeClaim" name="Revoke claim" camunda:delegateExpression="#{revokeClaimDelegate}">
-      <bpmn:incoming>flow_confirmationRejectedToRevokeClaim</bpmn:incoming>
-      <bpmn:incoming>flow_abortAfter3HalfDaysToRevokeClaim</bpmn:incoming>
+      <bpmn:incoming>flow_declineJoinToRevokeClaim</bpmn:incoming>
       <bpmn:outgoing>flow_revokeClaimToMembershipDeclined</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:serviceTask id="serviceTask_claimMembership" name="Claim membership" camunda:delegateExpression="#{claimMembershipDelegate}">
@@ -87,7 +92,7 @@
     <bpmn:sequenceFlow id="flow_hasEmptySpotsToConfirmMembership" name="Yes" sourceRef="gateway_hasEmptySpots" targetRef="subProcess_confirmMembership" />
     <bpmn:sequenceFlow id="flow_confirmMembershipToNotifyFork" sourceRef="subProcess_confirmMembership" targetRef="gateway_notifyFork" />
     <bpmn:sequenceFlow id="flow_revokeClaimToMembershipDeclined" sourceRef="serviceTask_revokeClaim" targetRef="endEvent_membershipDeclined" />
-    <bpmn:sequenceFlow id="flow_confirmationRejectedToRevokeClaim" sourceRef="event_confirmationRejected" targetRef="serviceTask_revokeClaim" />
+    <bpmn:sequenceFlow id="flow_confirmationRejectedToDeclineJoin" sourceRef="event_confirmationRejected" targetRef="gateway_declineJoin" />
     <bpmn:sequenceFlow id="flow_claimMembershipToHasEmptySpots" sourceRef="serviceTask_claimMembership" targetRef="gateway_hasEmptySpots" />
     <bpmn:sequenceFlow id="flow_hasEmptySpotsToSendRejectionMail" name="No" sourceRef="gateway_hasEmptySpots" targetRef="serviceTask_sendRejectionMail">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!hasEmptySpots}</bpmn:conditionExpression>
@@ -101,15 +106,15 @@
         <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">R/P1D</bpmn:timeCycle>
       </bpmn:timerEventDefinition>
     </bpmn:boundaryEvent>
-    <bpmn:sequenceFlow id="flow_abortAfter3HalfDaysToRevokeClaim" sourceRef="event_abortAfter3HalfDays" targetRef="serviceTask_revokeClaim" />
+    <bpmn:sequenceFlow id="flow_abortAfter3HalfDaysToDeclineJoin" sourceRef="event_abortAfter3HalfDays" targetRef="gateway_declineJoin" />
     <bpmn:boundaryEvent id="event_abortAfter3HalfDays" name="After 3&#10;1/2 days" attachedToRef="subProcess_confirmMembership" camunda:asyncAfter="true">
-      <bpmn:outgoing>flow_abortAfter3HalfDaysToRevokeClaim</bpmn:outgoing>
+      <bpmn:outgoing>flow_abortAfter3HalfDaysToDeclineJoin</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_1u5smk2">
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P3DT12H</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:boundaryEvent>
     <bpmn:boundaryEvent id="event_confirmationRejected" name="Confirmation rejected" attachedToRef="subProcess_confirmMembership" camunda:asyncAfter="true">
-      <bpmn:outgoing>flow_confirmationRejectedToRevokeClaim</bpmn:outgoing>
+      <bpmn:outgoing>flow_confirmationRejectedToDeclineJoin</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_09neu9p" messageRef="Message_ConfirmationRejected" />
     </bpmn:boundaryEvent>
   </bpmn:process>
@@ -276,10 +281,10 @@
         <di:waypoint x="880" y="243" />
         <di:waypoint x="932" y="243" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_confirmationRejectedToRevokeClaim_di" bpmnElement="flow_confirmationRejectedToRevokeClaim">
+      <bpmndi:BPMNEdge id="flow_confirmationRejectedToDeclineJoin_di" bpmnElement="flow_confirmationRejectedToDeclineJoin">
         <di:waypoint x="600" y="332" />
         <di:waypoint x="600" y="243" />
-        <di:waypoint x="780" y="243" />
+        <di:waypoint x="645" y="243" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_claimMembershipToHasEmptySpots_di" bpmnElement="flow_claimMembershipToHasEmptySpots">
         <di:waypoint x="40" y="450" />
@@ -306,9 +311,15 @@
         <di:waypoint x="880" y="670" />
         <di:waypoint x="932" y="670" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_abortAfter3HalfDaysToRevokeClaim_di" bpmnElement="flow_abortAfter3HalfDaysToRevokeClaim">
+      <bpmndi:BPMNEdge id="flow_abortAfter3HalfDaysToDeclineJoin_di" bpmnElement="flow_abortAfter3HalfDaysToDeclineJoin">
         <di:waypoint x="670" y="332" />
-        <di:waypoint x="670" y="243" />
+        <di:waypoint x="670" y="268" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="gateway_declineJoin_di" bpmnElement="gateway_declineJoin" isMarkerVisible="true">
+        <dc:Bounds x="645" y="218" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_declineJoinToRevokeClaim_di" bpmnElement="flow_declineJoinToRevokeClaim">
+        <di:waypoint x="695" y="243" />
         <di:waypoint x="780" y="243" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>

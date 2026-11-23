@@ -94,15 +94,15 @@ The yes-path gets the condition `${isHighValue}`.
 
 ### 5. Use the Call Activity
 
-In the main process, place a Call Activity between the two abort boundary events and the
-Compensating End Event:
+In the main process, place a Call Activity between `gateway_declineJoin` and the Compensating End
+Event:
 
 | Element | Type | ID | Name | Configuration |
 |---|---|---|---|---|
 | Rejection handling | Call Activity | `callActivity_handleRejection` | Handle rejection | Called Element: `handleRejection` |
 
-Incoming flows come from `event_abortAfter3HalfDays` and `event_confirmationRejected`, the
-outgoing flow goes to `endEvent_membershipDeclined`. Under **In Mapping**, add one pair each for
+The incoming flow comes from `gateway_declineJoin`, which still joins `event_abortAfter3HalfDays`
+and `event_confirmationRejected`. The outgoing flow goes to `endEvent_membershipDeclined`. Under **In Mapping**, add one pair each for
 `membershipId` and `age`. Without `age` the decision table has no input. In the XML this produces:
 
 ```xml
@@ -121,6 +121,7 @@ Call Activity and ends at the Compensating End Event, which triggers the handler
 ```java
 var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
         .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+        .then(next -> next.gatewayDeclineJoin())
         .then(next -> next.callActivityHandleRejection())
         .end(next -> next.endEventMembershipDeclined())
         .throwingCompensation(FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());

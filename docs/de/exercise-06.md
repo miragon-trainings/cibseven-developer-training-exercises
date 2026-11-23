@@ -94,15 +94,15 @@ Der Ja-Pfad bekommt die Bedingung `${isHighValue}`.
 
 ### 5. Die Call Activity einsetzen
 
-Setze im Hauptprozess eine Call Activity zwischen die beiden Abbruch-Boundary-Events und das
-Compensating End Event:
+Setze im Hauptprozess eine Call Activity zwischen `gateway_declineJoin` und das Compensating End
+Event:
 
 | Element | Typ | Element-ID | Name | Konfiguration |
 |---|---|---|---|---|
 | Ablehnungsbehandlung | Call Activity | `callActivity_handleRejection` | Handle rejection | Called Element: `handleRejection` |
 
-Eingehende Flows kommen von `event_abortAfter3HalfDays` und `event_confirmationRejected`, der
-ausgehende Flow geht auf `endEvent_membershipDeclined`. Lege unter **In Mapping** je ein Paar für
+Der eingehende Flow kommt von `gateway_declineJoin`, das weiterhin `event_abortAfter3HalfDays` und
+`event_confirmationRejected` zusammenführt. Der ausgehende Flow geht auf `endEvent_membershipDeclined`. Lege unter **In Mapping** je ein Paar für
 `membershipId` und `age` an. Ohne `age` hat die Entscheidungstabelle keine Eingabe. Im XML entsteht:
 
 ```xml
@@ -121,6 +121,7 @@ Activity und endet am Compensating End Event, das den Handler auslöst:
 ```java
 var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
         .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+        .then(next -> next.gatewayDeclineJoin())
         .then(next -> next.callActivityHandleRejection())
         .end(next -> next.endEventMembershipDeclined())
         .throwingCompensation(FlowNodes.eventCompensateClaim(), boundary -> boundary.serviceTaskRevokeClaim());

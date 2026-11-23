@@ -194,6 +194,7 @@ class MembershipProcessTest {
         // then
         var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
                 .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+                .then(next -> next.gatewayDeclineJoin())
                 .then(next -> next.serviceTaskRevokeClaim())
                 .end(next -> next.endEventMembershipDeclined());
 
@@ -219,6 +220,7 @@ class MembershipProcessTest {
         // then
         var rejectPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
                 .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventConfirmationRejected())
+                .then(next -> next.gatewayDeclineJoin())
                 .then(next -> next.serviceTaskRevokeClaim())
                 .end(next -> next.endEventMembershipDeclined());
 

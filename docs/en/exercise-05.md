@@ -63,13 +63,15 @@ Add the paths behind the boundary events:
 | Element | Type | Element ID | Name | Configuration |
 |---|---|---|---|---|
 | Reminder mail | Service Task | `serviceTask_reSendConfirmationMail` | Re-Send confirmation mail | `#{reSendConfirmationMailDelegate}` |
+| Cancellation join | Exclusive Gateway | `gateway_declineJoin` | | joins both interrupting paths |
 | Release spot | Service Task | `serviceTask_revokeClaim` | Revoke claim | `#{revokeClaimDelegate}` |
 | End reminder | End Event | `endEvent_mailSentAgain` | Mail sent again | end of the reminder branch |
 | End cancellation | End Event | `endEvent_membershipDeclined` | Membership declined | after `Revoke claim` |
 | End activation | End Event | `endEvent_membershipActivated` | Membership activated | after the join |
 
-Both interrupting boundary events lead to `serviceTask_revokeClaim` and from there to
-`endEvent_membershipDeclined`.
+Both interrupting boundary events lead to `gateway_declineJoin`, from there to
+`serviceTask_revokeClaim` and on to `endEvent_membershipDeclined`. The gateway joins the two paths
+visibly, instead of letting both flows run straight into the task.
 
 ### 4. Add the Parallel Gateway
 
@@ -163,6 +165,7 @@ Add three tests and mock `RevokeClaimUseCase`, `ReSendConfirmationMailUseCase`, 
   ```java
   var abortPath = PathWalk.from(FlowNodes.userTaskConfirmMembership())
           .interruptedBy(FlowNodes.subProcessConfirmMembership(), boundary -> boundary.eventAbortAfter3HalfDays())
+          .then(next -> next.gatewayDeclineJoin())
           .then(next -> next.serviceTaskRevokeClaim())
           .end(next -> next.endEventMembershipDeclined());
   ```

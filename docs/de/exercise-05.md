@@ -67,7 +67,7 @@ Ergänze die Pfade hinter den Boundary Events:
 | Platz freigeben | Service Task | `serviceTask_revokeClaim` | Revoke claim | `#{revokeClaimDelegate}` |
 | Ende Erinnerung | End Event | `endEvent_mailSentAgain` | Mail sent again | Ende des Erinnerungszweigs |
 | Ende Abbruch | End Event | `endEvent_membershipDeclined` | Membership declined | nach `Revoke claim` |
-| Ende Aktivierung | End Event | `endEvent_membershipActivated` | Membership activated | nach dem Join |
+| Ende Aktivierung | End Event | `endEvent_membershipActivated` | Membership activated | nach `gateway_notifyJoin` |
 
 Beide unterbrechenden Boundary Events führen auf `gateway_declineJoin`, von dort auf
 `serviceTask_revokeClaim` und weiter auf `endEvent_membershipDeclined`. Das Gateway führt die beiden
@@ -203,8 +203,8 @@ an `Membership activated`.
 ## Selbstcheck
 
 - [ ] Alle drei Boundary Events hängen am Subprozess, die Unterbrechungs-Semantik stimmt
-- [ ] Beide unterbrechenden Pfade führen über `Revoke claim` zu `Membership declined`
-- [ ] Fork und Join sind Parallel Gateways, beide Zweige tragen `asyncBefore`
+- [ ] Beide unterbrechenden Pfade treffen sich am Exclusive Gateway `gateway_declineJoin` und führen über `Revoke claim` zu `Membership declined`
+- [ ] `gateway_notifyFork` und `gateway_notifyJoin` sind Parallel Gateways, beide Zweige tragen `asyncBefore`
 - [ ] `POST /api/memberships/{id}/reject` bricht eine wartende Instanz ab
 - [ ] Die drei neuen Prozess-Tests sind grün
 

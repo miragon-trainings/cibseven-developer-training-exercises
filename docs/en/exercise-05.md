@@ -67,7 +67,7 @@ Add the paths behind the boundary events:
 | Release spot | Service Task | `serviceTask_revokeClaim` | Revoke claim | `#{revokeClaimDelegate}` |
 | End reminder | End Event | `endEvent_mailSentAgain` | Mail sent again | end of the reminder branch |
 | End cancellation | End Event | `endEvent_membershipDeclined` | Membership declined | after `Revoke claim` |
-| End activation | End Event | `endEvent_membershipActivated` | Membership activated | after the join |
+| End activation | End Event | `endEvent_membershipActivated` | Membership activated | after `gateway_notifyJoin` |
 
 Both interrupting boundary events lead to `gateway_declineJoin`, from there to
 `serviceTask_revokeClaim` and on to `endEvent_membershipDeclined`. The gateway joins the two paths
@@ -203,8 +203,8 @@ at `Membership activated`.
 ## Self-check
 
 - [ ] All three boundary events attach to the subprocess, and the interruption semantics are correct
-- [ ] Both interrupting paths lead through `Revoke claim` to `Membership declined`
-- [ ] Fork and join are Parallel Gateways, both branches carry `asyncBefore`
+- [ ] Both interrupting paths meet at the Exclusive Gateway `gateway_declineJoin` and lead through `Revoke claim` to `Membership declined`
+- [ ] `gateway_notifyFork` and `gateway_notifyJoin` are Parallel Gateways, both branches carry `asyncBefore`
 - [ ] `POST /api/memberships/{id}/reject` cancels a waiting instance
 - [ ] The three new process tests are green
 

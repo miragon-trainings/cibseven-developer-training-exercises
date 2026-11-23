@@ -209,12 +209,12 @@
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_callActivityHandleRejection_di" bpmnElement="callActivity_handleRejection">
-        <dc:Bounds x="-20" y="-975" width="100" height="80" />
+        <dc:Bounds x="-100" y="-975" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_1rl3e7i" bpmnElement="endEvent_membershipDeclined">
-        <dc:Bounds x="132" y="-953" width="36" height="36" />
+        <dc:Bounds x="52" y="-953" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="120" y="-910" width="61" height="27" />
+          <dc:Bounds x="40" y="-910" width="61" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_13d1co3_di" bpmnElement="gateway_notifyFork">
@@ -259,17 +259,16 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="BPMNEdge_01oybl0" bpmnElement="flow_abortAfter3HalfDaysToDeclineJoin">
         <di:waypoint x="-200" y="-838" />
-        <di:waypoint x="-200" y="-935" />
-        <di:waypoint x="-95" y="-935" />
+        <di:waypoint x="-200" y="-910" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="BPMNEdge_1mexfn5" bpmnElement="flow_confirmationRejectedToDeclineJoin">
         <di:waypoint x="-270" y="-838" />
         <di:waypoint x="-270" y="-935" />
-        <di:waypoint x="-95" y="-935" />
+        <di:waypoint x="-225" y="-935" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="BPMNEdge_Flow14y1unw" bpmnElement="flow_handleRejectionToMembershipDeclined">
-        <di:waypoint x="80" y="-935" />
-        <di:waypoint x="132" y="-935" />
+        <di:waypoint x="0" y="-935" />
+        <di:waypoint x="52" y="-935" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_submitRegistrationToClaimMembership_di" bpmnElement="flow_submitRegistrationToClaimMembership">
         <di:waypoint x="-1002" y="-720" />
@@ -341,11 +340,11 @@
         <di:waypoint x="-810" y="-935" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="gateway_declineJoin_di" bpmnElement="gateway_declineJoin" isMarkerVisible="true">
-        <dc:Bounds x="-95" y="-960" width="50" height="50" />
+        <dc:Bounds x="-225" y="-960" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="flow_declineJoinToHandleRejection_di" bpmnElement="flow_declineJoinToHandleRejection">
-        <di:waypoint x="-45" y="-935" />
-        <di:waypoint x="-20" y="-935" />
+        <di:waypoint x="-175" y="-935" />
+        <di:waypoint x="-100" y="-935" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
